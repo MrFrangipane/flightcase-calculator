@@ -14,6 +14,7 @@ from PySide6.QtGui import (
     QPolygonF,
     QMouseEvent,
     QWheelEvent,
+    QSurfaceFormat,
 )
 from PySide6.QtWidgets import (
     QWidget,
@@ -52,6 +53,12 @@ class Schema3DCanvas(QOpenGLWidget):
         super().__init__(parent)
         self.setMinimumSize(400, 350)
         self.setMouseTracking(True)
+
+        # Configure OpenGL surface format for hardware antialiasing (4x MSAA)
+        gl_format = QSurfaceFormat()
+        gl_format.setSamples(4)
+        gl_format.setDepthBufferSize(24)
+        self.setFormat(gl_format)
 
         # Camera & Projection state
         self.azimuth_deg: float = 45.0
@@ -232,6 +239,9 @@ class Schema3DCanvas(QOpenGLWidget):
         GL.glDepthFunc(GL.GL_LEQUAL)
         GL.glEnable(GL.GL_BLEND)
         GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
+        GL.glEnable(GL.GL_MULTISAMPLE)
+        GL.glEnable(GL.GL_LINE_SMOOTH)
+        GL.glHint(GL.GL_LINE_SMOOTH_HINT, GL.GL_NICEST)
         GL.glEnable(GL.GL_POLYGON_OFFSET_FILL)
         GL.glPolygonOffset(1.2, 1.2)
 

@@ -5,7 +5,7 @@ import sys
 import os
 from typing import Optional, List
 from PySide6.QtCore import Qt, QSettings
-from PySide6.QtGui import QIcon, QAction, QCloseEvent
+from PySide6.QtGui import QIcon, QAction, QCloseEvent, QSurfaceFormat
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -133,47 +133,58 @@ class FlightCaseMainWindow(QMainWindow):
         menu_bar = self.menuBar()
 
         # File Menu
-        file_menu = menu_bar.addMenu("&File")
+        self.file_menu = menu_bar.addMenu("&File")
 
         new_action = QAction("&New Project", self)
         new_action.setShortcut("Ctrl+N")
         new_action.setStatusTip("Create a new flightcase project")
         new_action.triggered.connect(self._new_project)
-        file_menu.addAction(new_action)
+        self.file_menu.addAction(new_action)
 
         open_action = QAction("&Open Project...", self)
         open_action.setShortcut("Ctrl+O")
         open_action.setStatusTip("Open an existing flightcase project file")
         open_action.triggered.connect(self._open_project)
-        file_menu.addAction(open_action)
+        self.file_menu.addAction(open_action)
 
         save_action = QAction("&Save Project", self)
         save_action.setShortcut("Ctrl+S")
         save_action.setStatusTip("Save the current flightcase project")
         save_action.triggered.connect(self._save_project)
-        file_menu.addAction(save_action)
+        self.file_menu.addAction(save_action)
 
         save_as_action = QAction("Save Project &As...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
         save_as_action.setStatusTip("Save the flightcase project to a new file")
         save_as_action.triggered.connect(self._save_project_as)
-        file_menu.addAction(save_as_action)
+        self.file_menu.addAction(save_as_action)
 
-        file_menu.addSeparator()
+        # Open Recent Section (up to 5 recent files, directly in the menu, no submenu)
+        self.recent_section_action = self.file_menu.addSection("Open Recent")
+        self.recent_file_actions: List[QAction] = []
+        for _ in range(5):
+            act = QAction(self)
+            act.setVisible(False)
+            self.file_menu.addAction(act)
+            self.recent_file_actions.append(act)
+
+        self._update_recent_files_menu()
+
+        self.file_menu.addSeparator()
 
         export_action = QAction("&Export Full Cut List...", self)
         export_action.setShortcut("Ctrl+E")
         export_action.setStatusTip("Export comprehensive Bill of Materials to CSV")
         export_action.triggered.connect(self._export_full_report)
-        file_menu.addAction(export_action)
+        self.file_menu.addAction(export_action)
 
-        file_menu.addSeparator()
+        self.file_menu.addSeparator()
 
         exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
         exit_action.setStatusTip("Exit Flightcase Calculator")
         exit_action.triggered.connect(self.close)
-        file_menu.addAction(exit_action)
+        self.file_menu.addAction(exit_action)
 
         # View Menu
         view_menu = menu_bar.addMenu("&View")
@@ -187,6 +198,73 @@ class FlightCaseMainWindow(QMainWindow):
         about_action = QAction("&About Flightcase Calculator", self)
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
+
+    def _get_recent_files(self) -> List[str]:
+        """Returns the list of up to 5 recently opened/saved project file paths."""
+        settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+        raw = settings.value("recentProjects", [])
+        if isinstance(raw, str):
+            raw = [raw] if raw else []
+        elif not isinstance(raw, list):
+            raw = []
+
+        seen = set()
+        valid: List[str] = []
+        for p in raw:
+            if isinstance(p, str) and p and p not in seen:
+                seen.add(p)
+                if os.path.isfile(p):
+                    valid.append(p)
+        return valid[:5]
+
+    def _add_recent_file(self, file_path: str) -> None:
+        """Adds a project file path to the recent files list and refreshes the menu."""
+        if not file_path:
+            return
+        abs_path = os.path.abspath(file_path)
+        recent = self._get_recent_files()
+        if abs_path in recent:
+            recent.remove(abs_path)
+        recent.insert(0, abs_path)
+        recent = recent[:5]
+
+        settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+        settings.setValue("recentProjects", recent)
+        self._update_recent_files_menu()
+
+    def _update_recent_files_menu(self) -> None:
+        """Updates the 5 recent file actions directly in the File menu (no submenu)."""
+        if not hasattr(self, "recent_file_actions"):
+            return
+
+        recent_files = self._get_recent_files()
+        if not recent_files:
+            if hasattr(self, "recent_section_action"):
+                self.recent_section_action.setVisible(False)
+            for act in self.recent_file_actions:
+                act.setVisible(False)
+            return
+
+        if hasattr(self, "recent_section_action"):
+            self.recent_section_action.setVisible(True)
+
+        for i in range(5):
+            act = self.recent_file_actions[i]
+            if i < len(recent_files):
+                file_path = recent_files[i]
+                file_name = os.path.basename(file_path)
+                act.setText(f"&{i + 1} {file_name}")
+                act.setStatusTip(file_path)
+                act.setToolTip(file_path)
+                try:
+                    act.triggered.disconnect()
+                except Exception:
+                    pass
+                act.triggered.connect(lambda checked=False, p=file_path: self._load_project_file(p))
+                act.setEnabled(True)
+                act.setVisible(True)
+            else:
+                act.setVisible(False)
 
     def _get_current_ui_settings(self) -> UISettingsDTO:
         """Gathers active UI settings including 3D camera transform, toggles, active tab, and compartment settings."""
@@ -312,6 +390,7 @@ class FlightCaseMainWindow(QMainWindow):
             if update_settings:
                 settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
                 settings.setValue("lastProjectPath", file_path)
+            self._add_recent_file(file_path)
             self.status_bar.showMessage(f"Project loaded from {os.path.basename(file_path)}")
         except Exception as e:
             QMessageBox.critical(self, "Load Project Error", f"Failed to load project from {file_path}:\n{str(e)}")
@@ -343,6 +422,7 @@ class FlightCaseMainWindow(QMainWindow):
             self._update_window_title()
             settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
             settings.setValue("lastProjectPath", file_path)
+            self._add_recent_file(file_path)
             self.status_bar.showMessage(f"Project saved to {os.path.basename(file_path)}")
         except Exception as e:
             QMessageBox.critical(self, "Save Project Error", f"Failed to save project to {file_path}:\n{str(e)}")
@@ -480,6 +560,12 @@ class FlightCaseMainWindow(QMainWindow):
 
 def run_app() -> int:
     """Entry point to start the PySide6 Qt Application."""
+    # Configure surface format for hardware antialiasing (4x MSAA)
+    gl_format = QSurfaceFormat()
+    gl_format.setSamples(4)
+    gl_format.setDepthBufferSize(24)
+    QSurfaceFormat.setDefaultFormat(gl_format)
+
     app = QApplication.instance()
     if app is None:
         app = QApplication(sys.argv)

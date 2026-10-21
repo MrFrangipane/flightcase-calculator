@@ -210,6 +210,9 @@ class Schema3DGeometryBuilder:
             segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
             segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
 
+        # Aluminum profile offset: height induced by profile on each half (base & lid)
+        profile_h = max(0.0, case.lid_alu_profile_offset / 2.0)
+
         # --- 1. Base Box Volumetric Panels with Panel Thickness ---
         # Base Bottom Floor Panel: spans [0, L] x [0, W] x [0, t_wood]
         add_solid_box(
@@ -221,42 +224,42 @@ class Schema3DGeometryBuilder:
         )
 
         # Base Long Sides (Front & Back Panels):
-        # Front panel: [0, L] x [0, t_wood] x [t_wood, z_base_top]
+        # Front panel: [0, L] x [0, t_wood] x [t_wood, z_base_top - profile_h]
         add_solid_box(
             Point3D(0, 0, z_base_bot + t_wood),
-            Point3D(L, t_wood, z_base_top),
+            Point3D(L, t_wood, z_base_top - profile_h),
             color_group="base",
             label="Base Front Panel",
-            highlight_top_endgrain=True,
+            highlight_top_endgrain=(profile_h == 0.0),
             layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
-        # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top]
+        # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top - profile_h]
         add_solid_box(
             Point3D(0, W - t_wood, z_base_bot + t_wood),
-            Point3D(L, W, z_base_top),
+            Point3D(L, W, z_base_top - profile_h),
             color_group="base",
             label="Base Back Panel",
-            highlight_top_endgrain=True,
+            highlight_top_endgrain=(profile_h == 0.0),
             layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
 
         # Base Short Sides (Left & Right Panels, inset between front and back):
-        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [t_wood, z_base_top]
+        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
         add_solid_box(
             Point3D(0, t_wood, z_base_bot + t_wood),
-            Point3D(t_wood, W - t_wood, z_base_top),
+            Point3D(t_wood, W - t_wood, z_base_top - profile_h),
             color_group="base",
             label="Base Left Panel",
-            highlight_top_endgrain=True,
+            highlight_top_endgrain=(profile_h == 0.0),
             layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
-        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top]
+        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
         add_solid_box(
             Point3D(L - t_wood, t_wood, z_base_bot + t_wood),
-            Point3D(L, W - t_wood, z_base_top),
+            Point3D(L, W - t_wood, z_base_top - profile_h),
             color_group="base",
             label="Base Right Panel",
-            highlight_top_endgrain=True,
+            highlight_top_endgrain=(profile_h == 0.0),
             layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
 
@@ -271,17 +274,17 @@ class Schema3DGeometryBuilder:
         )
 
         # Lid Long Sides (Front & Back Panels):
-        # Front panel: [0, L] x [0, t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        # Front panel: [0, L] x [0, t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
-            Point3D(0, 0, z_lid_bot),
+            Point3D(0, 0, z_lid_bot + profile_h),
             Point3D(L, t_wood, z_lid_top - t_wood),
             color_group="lid",
             label="Lid Front Panel",
             layer_order=ComponentLayer.LID_WALLS,
         )
-        # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot, z_lid_top - t_wood]
+        # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
-            Point3D(0, W - t_wood, z_lid_bot),
+            Point3D(0, W - t_wood, z_lid_bot + profile_h),
             Point3D(L, W, z_lid_top - t_wood),
             color_group="lid",
             label="Lid Back Panel",
@@ -289,17 +292,17 @@ class Schema3DGeometryBuilder:
         )
 
         # Lid Short Sides (Left & Right Panels):
-        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
-            Point3D(0, t_wood, z_lid_bot),
+            Point3D(0, t_wood, z_lid_bot + profile_h),
             Point3D(t_wood, W - t_wood, z_lid_top - t_wood),
             color_group="lid",
             label="Lid Left Panel",
             layer_order=ComponentLayer.LID_WALLS,
         )
-        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
-            Point3D(L - t_wood, t_wood, z_lid_bot),
+            Point3D(L - t_wood, t_wood, z_lid_bot + profile_h),
             Point3D(L, W - t_wood, z_lid_top - t_wood),
             color_group="lid",
             label="Lid Right Panel",
@@ -307,66 +310,66 @@ class Schema3DGeometryBuilder:
         )
 
         # --- 3. Aluminum Location Profile Mating Extrusions ---
-        alu_h = min(12.0, max(4.0, (H_base - t_wood) / 4.0))
-        # Rim along Base top edge
-        add_solid_box(
-            Point3D(0, 0, z_base_top - alu_h),
-            Point3D(L, t_wood, z_base_top),
-            color_group="profile",
-            label="Base Top Profile (Front)",
-            layer_order=ComponentLayer.BASE_ALU,
-        )
-        add_solid_box(
-            Point3D(0, W - t_wood, z_base_top - alu_h),
-            Point3D(L, W, z_base_top),
-            color_group="profile",
-            label="Base Top Profile (Back)",
-            layer_order=ComponentLayer.BASE_ALU,
-        )
-        add_solid_box(
-            Point3D(0, t_wood, z_base_top - alu_h),
-            Point3D(t_wood, W - t_wood, z_base_top),
-            color_group="profile",
-            label="Base Top Profile (Left)",
-            layer_order=ComponentLayer.BASE_ALU,
-        )
-        add_solid_box(
-            Point3D(L - t_wood, t_wood, z_base_top - alu_h),
-            Point3D(L, W - t_wood, z_base_top),
-            color_group="profile",
-            label="Base Top Profile (Right)",
-            layer_order=ComponentLayer.BASE_ALU,
-        )
+        if profile_h > 0.0:
+            # Rim along Base top edge
+            add_solid_box(
+                Point3D(0, 0, z_base_top - profile_h),
+                Point3D(L, t_wood, z_base_top),
+                color_group="profile",
+                label="Base Top Profile (Front)",
+                layer_order=ComponentLayer.BASE_ALU,
+            )
+            add_solid_box(
+                Point3D(0, W - t_wood, z_base_top - profile_h),
+                Point3D(L, W, z_base_top),
+                color_group="profile",
+                label="Base Top Profile (Back)",
+                layer_order=ComponentLayer.BASE_ALU,
+            )
+            add_solid_box(
+                Point3D(0, t_wood, z_base_top - profile_h),
+                Point3D(t_wood, W - t_wood, z_base_top),
+                color_group="profile",
+                label="Base Top Profile (Left)",
+                layer_order=ComponentLayer.BASE_ALU,
+            )
+            add_solid_box(
+                Point3D(L - t_wood, t_wood, z_base_top - profile_h),
+                Point3D(L, W - t_wood, z_base_top),
+                color_group="profile",
+                label="Base Top Profile (Right)",
+                layer_order=ComponentLayer.BASE_ALU,
+            )
 
-        # Rim along Lid bottom edge
-        add_solid_box(
-            Point3D(0, 0, z_lid_bot),
-            Point3D(L, t_wood, z_lid_bot + alu_h),
-            color_group="profile",
-            label="Lid Bottom Profile (Front)",
-            layer_order=ComponentLayer.LID_WALLS,
-        )
-        add_solid_box(
-            Point3D(0, W - t_wood, z_lid_bot),
-            Point3D(L, W, z_lid_bot + alu_h),
-            color_group="profile",
-            label="Lid Bottom Profile (Back)",
-            layer_order=ComponentLayer.LID_WALLS,
-        )
-        add_solid_box(
-            Point3D(0, t_wood, z_lid_bot),
-            Point3D(t_wood, W - t_wood, z_lid_bot + alu_h),
-            color_group="profile",
-            label="Lid Bottom Profile (Left)",
-            layer_order=ComponentLayer.LID_WALLS,
-        )
-        add_solid_box(
-            Point3D(L - t_wood, t_wood, z_lid_bot),
-            Point3D(L, W - t_wood, z_lid_bot + alu_h),
-            color_group="profile",
-            label="Lid Bottom Profile (Right)",
-            layer_order=ComponentLayer.LID_WALLS,
-        )
+            # Rim along Lid bottom edge
+            add_solid_box(
+                Point3D(0, 0, z_lid_bot),
+                Point3D(L, t_wood, z_lid_bot + profile_h),
+                color_group="profile",
+                label="Lid Bottom Profile (Front)",
+                layer_order=ComponentLayer.LID_WALLS,
+            )
+            add_solid_box(
+                Point3D(0, W - t_wood, z_lid_bot),
+                Point3D(L, W, z_lid_bot + profile_h),
+                color_group="profile",
+                label="Lid Bottom Profile (Back)",
+                layer_order=ComponentLayer.LID_WALLS,
+            )
+            add_solid_box(
+                Point3D(0, t_wood, z_lid_bot),
+                Point3D(t_wood, W - t_wood, z_lid_bot + profile_h),
+                color_group="profile",
+                label="Lid Bottom Profile (Left)",
+                layer_order=ComponentLayer.LID_WALLS,
+            )
+            add_solid_box(
+                Point3D(L - t_wood, t_wood, z_lid_bot),
+                Point3D(L, W - t_wood, z_lid_bot + profile_h),
+                color_group="profile",
+                label="Lid Bottom Profile (Right)",
+                layer_order=ComponentLayer.LID_WALLS,
+            )
 
         # --- 4. Inside Partition Walls (Volumetric Panels with Thickness) ---
         inner_x0 = t_wood

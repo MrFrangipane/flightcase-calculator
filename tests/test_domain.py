@@ -364,3 +364,56 @@ def test_self_cut_lid_domain_and_geometry():
     assert any(f.layer_order == ComponentLayer.BASE_FLOOR for f in mesh.faces)
     assert any(f.layer_order == ComponentLayer.LID_WALLS for f in mesh.faces)
     assert any(f.layer_order == ComponentLayer.OUTER_BASE_WALLS for f in mesh.faces)
+
+
+def test_schema_3d_lid_alu_profile_offset_dimensions():
+    # Case with 20mm total profile offset (10mm base profile, 10mm lid profile)
+    case = FlightCase(
+        dimensions=Dimensions3D(970.0, 570.0, 270.0),
+        lid_height=70.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=20.0,
+    )
+    H_base = case.base_height  # 200.0
+    half_offset = 10.0
+    gap = 40.0
+
+    mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=gap)
+
+    # 1. Base profile faces span z in [H_base - half_offset, H_base] = [190.0, 200.0]
+    base_alu_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.BASE_ALU]
+    assert len(base_alu_faces) == 24
+    base_alu_z_coords = [v.z for f in base_alu_faces for v in f.vertices]
+    assert min(base_alu_z_coords) == pytest.approx(190.0)
+    assert max(base_alu_z_coords) == pytest.approx(200.0)
+
+    # 2. Base wood walls span z in [wood_thickness, H_base - half_offset] = [9.0, 190.0]
+    base_wood_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.OUTER_BASE_WALLS]
+    base_wood_z_coords = [v.z for f in base_wood_faces for v in f.vertices]
+    assert min(base_wood_z_coords) == pytest.approx(9.0)
+    assert max(base_wood_z_coords) == pytest.approx(190.0)
+
+    # 3. Lid profile faces span z in [H_base + gap, H_base + gap + half_offset] = [240.0, 250.0]
+    lid_alu_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_WALLS and f.color_group == "profile"]
+    assert len(lid_alu_faces) == 24
+    lid_alu_z_coords = [v.z for f in lid_alu_faces for v in f.vertices]
+    assert min(lid_alu_z_coords) == pytest.approx(240.0)
+    assert max(lid_alu_z_coords) == pytest.approx(250.0)
+
+    # 4. Lid wood walls span z in [250.0, 310.0 - 9.0 = 301.0]
+    lid_wood_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_WALLS and f.color_group == "lid"]
+    assert len(lid_wood_faces) == 24
+    lid_wood_z_coords = [v.z for f in lid_wood_faces for v in f.vertices]
+    assert min(lid_wood_z_coords) == pytest.approx(250.0)
+    assert max(lid_wood_z_coords) == pytest.approx(301.0)
+
+    # 5. Case with 0mm profile offset has no profile faces and wood walls extend completely
+    case_no_profile = FlightCase(
+        dimensions=Dimensions3D(970.0, 570.0, 270.0),
+        lid_height=70.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=0.0,
+    )
+    mesh_no_profile = Schema3DGeometryBuilder.build_geometry(case_no_profile, lid_exploded_gap_mm=gap)
+    assert not any(f.layer_order == ComponentLayer.BASE_ALU for f in mesh_no_profile.faces)
+    assert not any(f.color_group == "profile" for f in mesh_no_profile.faces)

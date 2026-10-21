@@ -653,3 +653,95 @@ def test_compartment_auto_equalize_comprehensive(qapp):
     # Toggle row 1 back to unchecked -> should become editable again
     chk1.setChecked(False)
     assert widget._get_comp_tab_space_spinbox(1).isEnabled() is True
+
+
+def test_schema_3d_canvas_antialiasing(qapp):
+    """Validates that Schema3DCanvas configures hardware multisample antialiasing (MSAA)."""
+    from flightcase.ui.widgets.schema_3d_widget import Schema3DCanvas
+    from flightcase.domain import FlightCase, Dimensions3D, Schema3DGeometryBuilder
+
+    canvas = Schema3DCanvas()
+    canvas.resize(600, 400)
+    assert canvas.format().samples() >= 4
+
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 300.0),
+        lid_height=80.0,
+        wood_thickness=10.0,
+    )
+    mesh = Schema3DGeometryBuilder.build_geometry(case)
+    canvas.set_mesh(mesh)
+    canvas.show()
+    canvas.repaint()
+    canvas.close()
+
+
+def test_open_recent_menu_section(qapp, tmp_path):
+    """Validates that the File menu contains an Open Recent section with max 5 files directly in the menu (no submenu)."""
+    from flightcase.ui import FlightCaseMainWindow
+    from flightcase.application import CaseInputDTO, SaveProjectUseCase
+
+    # Clean up settings for test isolation
+    from PySide6.QtCore import QSettings
+    settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+    settings.remove("recentProjects")
+
+    # Create 6 distinct project files on disk
+    project_paths = []
+    for i in range(6):
+        path = str(tmp_path / f"test_project_{i + 1}.fcproj")
+        dto = CaseInputDTO(outer_length=800.0 + i * 50.0, outer_width=500.0, total_height=300.0)
+        SaveProjectUseCase.execute(dto, path)
+        project_paths.append(path)
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Verify File menu structure
+    assert hasattr(window, "recent_section_action")
+    assert hasattr(window, "recent_file_actions")
+    assert len(window.recent_file_actions) == 5
+
+    # Initially empty
+    assert window._get_recent_files() == []
+    assert window.recent_section_action.isVisible() is False
+
+    # 2. Open 6 project files sequentially
+    for path in project_paths:
+        window._load_project_file(path)
+
+    # 3. Verify exactly 5 most recent files are kept in MRU order (newest first)
+    recent = window._get_recent_files()
+    assert len(recent) == 5
+    assert recent[0] == project_paths[5]  # project 6
+    assert recent[1] == project_paths[4]  # project 5
+    assert recent[2] == project_paths[3]  # project 4
+    assert recent[3] == project_paths[2]  # project 3
+    assert recent[4] == project_paths[1]  # project 2
+    assert project_paths[0] not in recent  # project 1 fell off (limit 5)
+
+    # 4. Verify menu actions are visible directly in the File menu
+    assert window.recent_section_action.isVisible() is True
+    for i in range(5):
+        act = window.recent_file_actions[i]
+        assert act.isVisible() is True
+        assert act.isEnabled() is True
+        assert f"&{i + 1} test_project_" in act.text()
+        assert act.statusTip() == recent[i]
+
+    # 5. Trigger recent file action 2 (project 4) and verify it loads and moves to top
+    act_proj4 = window.recent_file_actions[2]
+    assert "test_project_4" in act_proj4.text()
+    act_proj4.trigger()
+
+    assert window._current_project_path == project_paths[3]
+    assert window.input_panel.spin_length.value() == 950.0  # 800 + 3*50
+    assert window._get_recent_files()[0] == project_paths[3]
+
+    # 6. Save a new project and verify it adds to recent files
+    new_saved_path = str(tmp_path / "brand_new_case.fcproj")
+    window._save_project_file(new_saved_path)
+    assert window._get_recent_files()[0] == new_saved_path
+    assert window.recent_file_actions[0].text() == "&1 brand_new_case.fcproj"
+
+    window.close()
+    settings.remove("recentProjects")
