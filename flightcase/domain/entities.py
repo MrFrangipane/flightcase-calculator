@@ -35,11 +35,12 @@ class FlightCase:
     """
     Aggregate Root representing the entire Flightcase specification.
     Enforces all domain invariants, material calculations, and interior partitions.
+    Input dimensions represent the internal usable cavity (inner case dimensions).
     """
-    dimensions: Dimensions3D
-    lid_height: float
+    dimensions: Dimensions3D  # Represents inner length, inner width, and inner total height
+    lid_height: float         # Represents inner lid height (clearance inside lid)
     wood_thickness: float
-    lid_alu_profile_offset: float = 10.0  # Added dimension subtracted from height
+    lid_alu_profile_offset: float = 10.0  # Added dimension subtracted from wood height
     corner_extrusion_rebate: float = 0.0
     edge_profile_width: float = 30.0
     self_cut_lid: bool = False
@@ -51,11 +52,11 @@ class FlightCase:
     def validate(self) -> None:
         """Enforces all domain invariants."""
         if self.lid_height <= 0.0:
-            raise InvalidDimensionError(f"Lid height must be positive, got {self.lid_height}mm")
+            raise InvalidDimensionError(f"Inner lid height must be positive, got {self.lid_height}mm")
 
         if self.lid_height >= self.dimensions.height_mm:
             raise InvalidLidConfigurationError(
-                f"Lid height ({self.lid_height}mm) must be strictly less than total height ({self.dimensions.height_mm}mm)"
+                f"Inner lid height ({self.lid_height}mm) must be strictly less than inner total height ({self.dimensions.height_mm}mm)"
             )
 
         if self.lid_alu_profile_offset < 0.0:
@@ -63,25 +64,24 @@ class FlightCase:
                 f"Lid profile offset cannot be negative, got {self.lid_alu_profile_offset}mm"
             )
 
+        if self.wood_thickness <= 0.0:
+            raise InvalidDimensionError(f"Wood thickness must be positive, got {self.wood_thickness}mm")
+
+        if self.dimensions.length_mm <= 0.0 or self.dimensions.width_mm <= 0.0:
+            raise InvalidDimensionError(
+                f"Inner dimensions must be positive (L={self.dimensions.length_mm}mm, W={self.dimensions.width_mm}mm)"
+            )
+
         half_offset = self.lid_alu_profile_offset / 2.0
-        if self.lid_height <= half_offset:
+        if (self.lid_height + self.wood_thickness) <= half_offset:
             raise InvalidLidConfigurationError(
                 f"Lid height ({self.lid_height}mm) is too small for profile offset ({self.lid_alu_profile_offset}mm)"
             )
 
-        base_h = self.dimensions.height_mm - self.lid_height
-        if base_h <= half_offset:
+        base_nominal_h = (self.dimensions.height_mm - self.lid_height) + self.wood_thickness
+        if base_nominal_h <= half_offset:
             raise InvalidLidConfigurationError(
-                f"Base height ({base_h}mm) is too small for profile offset ({self.lid_alu_profile_offset}mm)"
-            )
-
-        if self.wood_thickness <= 0.0:
-            raise InvalidDimensionError(f"Wood thickness must be positive, got {self.wood_thickness}mm")
-
-        if self.inner_length <= 0.0 or self.inner_width <= 0.0:
-            raise InvalidDimensionError(
-                f"Wood thickness ({self.wood_thickness}mm) exceeds case dimensions "
-                f"(L={self.dimensions.length_mm}mm, W={self.dimensions.width_mm}mm)"
+                f"Base height ({base_nominal_h}mm) is too small for profile offset ({self.lid_alu_profile_offset}mm)"
             )
 
         for wall in self._walls:
@@ -103,21 +103,54 @@ class FlightCase:
     # --- Dimension Properties ---
 
     @property
-    def outer_length(self) -> float:
+    def inner_length(self) -> float:
+        """Usable internal length inside the flightcase."""
         return self.dimensions.length_mm
 
     @property
-    def outer_width(self) -> float:
+    def inner_width(self) -> float:
+        """Usable internal width inside the flightcase."""
         return self.dimensions.width_mm
 
     @property
-    def total_height(self) -> float:
+    def inner_total_height(self) -> float:
+        """Usable internal total height inside the closed flightcase (floor to lid roof ceiling)."""
         return self.dimensions.height_mm
+
+    @property
+    def inner_lid_height(self) -> float:
+        """Usable internal height inside the lid box."""
+        return self.lid_height
+
+    @property
+    def inner_base_height(self) -> float:
+        """Usable internal height inside the base box."""
+        return max(0.0, self.inner_total_height - self.inner_lid_height)
+
+    @property
+    def outer_length(self) -> float:
+        """External nominal length including wood panel thickness."""
+        return self.inner_length + (2.0 * self.wood_thickness)
+
+    @property
+    def outer_width(self) -> float:
+        """External nominal width including wood panel thickness."""
+        return self.inner_width + (2.0 * self.wood_thickness)
+
+    @property
+    def total_height(self) -> float:
+        """External nominal total height of the closed flightcase."""
+        return self.inner_total_height + (2.0 * self.wood_thickness)
+
+    @property
+    def outer_lid_height(self) -> float:
+        """Nominal outer height of the lid box."""
+        return self.inner_lid_height + self.wood_thickness
 
     @property
     def base_height(self) -> float:
         """Nominal outer height of the base box."""
-        return max(0.0, self.total_height - self.lid_height)
+        return self.total_height - self.outer_lid_height
 
     @property
     def total_wood_height(self) -> float:
@@ -128,38 +161,13 @@ class FlightCase:
     def lid_wood_height(self) -> float:
         """Wood panel height for lid box sides."""
         half_offset = self.lid_alu_profile_offset / 2.0
-        return max(0.0, self.lid_height - half_offset)
+        return max(0.0, self.outer_lid_height - half_offset)
 
     @property
     def base_wood_height(self) -> float:
         """Wood panel height for base box sides."""
         half_offset = self.lid_alu_profile_offset / 2.0
         return max(0.0, self.base_height - half_offset)
-
-    @property
-    def inner_length(self) -> float:
-        """Usable internal length inside the flightcase."""
-        return max(0.0, self.outer_length - (2.0 * self.wood_thickness))
-
-    @property
-    def inner_width(self) -> float:
-        """Usable internal width inside the flightcase."""
-        return max(0.0, self.outer_width - (2.0 * self.wood_thickness))
-
-    @property
-    def inner_base_height(self) -> float:
-        """Usable internal height inside the base box."""
-        return max(0.0, self.base_wood_height - self.wood_thickness)
-
-    @property
-    def inner_lid_height(self) -> float:
-        """Usable internal height inside the lid box."""
-        return max(0.0, self.lid_wood_height - self.wood_thickness)
-
-    @property
-    def inner_total_height(self) -> float:
-        """Usable internal total height inside the closed flightcase (floor to lid roof ceiling)."""
-        return max(0.0, self.total_height - (2.0 * self.wood_thickness))
 
     @property
     def walls(self) -> List[InsideWall]:

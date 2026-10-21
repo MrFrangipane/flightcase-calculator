@@ -486,8 +486,8 @@ class FlightCaseMainWindow(QMainWindow):
             # 3. Status Bar
             lid_m = result.total_lid_mating_profile_length_mm / 1000.0
             self.status_bar.showMessage(
-                f"✓ Outer: {input_dto.outer_length:.0f}×{input_dto.outer_width:.0f}×{input_dto.total_height:.0f} mm | "
-                f"Inner: {result.inner_length:.0f}×{result.inner_width:.0f}×{result.inner_base_height:.0f} mm | "
+                f"✓ Inner: {input_dto.inner_length:.0f}×{input_dto.inner_width:.0f}×{input_dto.inner_total_height:.0f} mm | "
+                f"Outer: {input_dto.outer_length:.0f}×{input_dto.outer_width:.0f}×{input_dto.total_height:.0f} mm | "
                 f"Lid Alu Profile Required Length: {result.total_lid_mating_profile_length_mm:.1f} mm ({lid_m:.2f} m) | "
                 f"Wood Panels: {len(result.wood_cut_list)} pieces ({result.total_wood_area_m2:.2f} m²)"
             )

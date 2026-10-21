@@ -25,11 +25,11 @@ class CalculateFlightCaseUseCase:
 
     @staticmethod
     def execute(input_dto: CaseInputDTO) -> CalculationResultDTO:
-        # 1. Map input DTO to Domain Aggregate Root
+        # 1. Map input DTO to Domain Aggregate Root (Input dimensions are inner case dimensions)
         dimensions = Dimensions3D(
-            length_mm=input_dto.outer_length,
-            width_mm=input_dto.outer_width,
-            height_mm=input_dto.total_height,
+            length_mm=input_dto.inner_length,
+            width_mm=input_dto.inner_width,
+            height_mm=input_dto.inner_total_height,
         )
 
         domain_walls: List[InsideWall] = []
@@ -49,7 +49,7 @@ class CalculateFlightCaseUseCase:
 
         flight_case = FlightCase(
             dimensions=dimensions,
-            lid_height=input_dto.lid_height,
+            lid_height=input_dto.inner_lid_height,
             wood_thickness=input_dto.wood_thickness,
             lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
             corner_extrusion_rebate=input_dto.corner_extrusion_rebate,
@@ -139,9 +139,9 @@ class GenerateSchema3DUseCase:
         show_dimensions: bool = True
     ) -> WireframeMesh3D:
         dimensions = Dimensions3D(
-            length_mm=input_dto.outer_length,
-            width_mm=input_dto.outer_width,
-            height_mm=input_dto.total_height,
+            length_mm=input_dto.inner_length,
+            width_mm=input_dto.inner_width,
+            height_mm=input_dto.inner_total_height,
         )
 
         domain_walls: List[InsideWall] = []
@@ -161,7 +161,7 @@ class GenerateSchema3DUseCase:
 
         flight_case = FlightCase(
             dimensions=dimensions,
-            lid_height=input_dto.lid_height,
+            lid_height=input_dto.inner_lid_height,
             wood_thickness=input_dto.wood_thickness,
             lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
             corner_extrusion_rebate=input_dto.corner_extrusion_rebate,

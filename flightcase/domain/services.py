@@ -100,7 +100,7 @@ class Schema3DGeometryBuilder:
         W = case.outer_width
         H = case.total_height
         H_base = case.base_height
-        H_lid = case.lid_height
+        H_lid = case.outer_lid_height
         t_wood = case.wood_thickness
         gap = lid_exploded_gap_mm
 

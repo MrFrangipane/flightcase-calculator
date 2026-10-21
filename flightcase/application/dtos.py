@@ -104,11 +104,11 @@ class UISettingsDTO:
 
 @dataclass
 class CaseInputDTO:
-    """DTO representing the complete flightcase specification input."""
-    outer_length: float = 800.0
-    outer_width: float = 500.0
-    total_height: float = 400.0
-    lid_height: float = 100.0
+    """DTO representing the complete flightcase specification input (inner case dimensions)."""
+    inner_length: float = 800.0
+    inner_width: float = 500.0
+    inner_total_height: float = 400.0
+    inner_lid_height: float = 100.0
     wood_thickness: float = 9.0
     lid_alu_profile_offset: float = 10.0  # Added dimension to subtract from height
     corner_extrusion_rebate: float = 0.0
@@ -117,13 +117,84 @@ class CaseInputDTO:
     walls: List[InsideWallDTO] = field(default_factory=list)
     ui_settings: UISettingsDTO = field(default_factory=UISettingsDTO)
 
+    def __init__(
+        self,
+        inner_length: Optional[float] = None,
+        inner_width: Optional[float] = None,
+        inner_total_height: Optional[float] = None,
+        inner_lid_height: Optional[float] = None,
+        wood_thickness: float = 9.0,
+        lid_alu_profile_offset: float = 10.0,
+        corner_extrusion_rebate: float = 0.0,
+        edge_profile_width: float = 30.0,
+        self_cut_lid: bool = False,
+        walls: Optional[List[InsideWallDTO]] = None,
+        ui_settings: Optional[UISettingsDTO] = None,
+        outer_length: Optional[float] = None,
+        outer_width: Optional[float] = None,
+        total_height: Optional[float] = None,
+        lid_height: Optional[float] = None,
+    ):
+        self.wood_thickness = wood_thickness
+        self.lid_alu_profile_offset = lid_alu_profile_offset
+        self.corner_extrusion_rebate = corner_extrusion_rebate
+        self.edge_profile_width = edge_profile_width
+        self.self_cut_lid = self_cut_lid
+        self.walls = list(walls) if walls is not None else []
+        self.ui_settings = ui_settings if ui_settings is not None else UISettingsDTO()
+
+        if inner_length is not None:
+            self.inner_length = inner_length
+        elif outer_length is not None:
+            self.inner_length = outer_length
+        else:
+            self.inner_length = 800.0
+
+        if inner_width is not None:
+            self.inner_width = inner_width
+        elif outer_width is not None:
+            self.inner_width = outer_width
+        else:
+            self.inner_width = 500.0
+
+        if inner_total_height is not None:
+            self.inner_total_height = inner_total_height
+        elif total_height is not None:
+            self.inner_total_height = total_height
+        else:
+            self.inner_total_height = 400.0
+
+        if inner_lid_height is not None:
+            self.inner_lid_height = inner_lid_height
+        elif lid_height is not None:
+            self.inner_lid_height = lid_height
+        else:
+            self.inner_lid_height = 100.0
+
+    # Compatibility properties for outer dimensions
+    @property
+    def outer_length(self) -> float:
+        return self.inner_length + (2.0 * self.wood_thickness)
+
+    @property
+    def outer_width(self) -> float:
+        return self.inner_width + (2.0 * self.wood_thickness)
+
+    @property
+    def total_height(self) -> float:
+        return self.inner_total_height + (2.0 * self.wood_thickness)
+
+    @property
+    def lid_height(self) -> float:
+        return self.inner_lid_height + self.wood_thickness
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "version": "1.0",
-            "outer_length": self.outer_length,
-            "outer_width": self.outer_width,
-            "total_height": self.total_height,
-            "lid_height": self.lid_height,
+            "inner_length": self.inner_length,
+            "inner_width": self.inner_width,
+            "inner_total_height": self.inner_total_height,
+            "inner_lid_height": self.inner_lid_height,
             "wood_thickness": self.wood_thickness,
             "lid_alu_profile_offset": self.lid_alu_profile_offset,
             "corner_extrusion_rebate": self.corner_extrusion_rebate,
@@ -139,12 +210,47 @@ class CaseInputDTO:
         walls = [InsideWallDTO.from_dict(w) for w in raw_walls if isinstance(w, dict)]
         raw_ui = data.get("ui_settings")
         ui_settings = UISettingsDTO.from_dict(raw_ui) if isinstance(raw_ui, dict) else UISettingsDTO()
+
+        t_wood = float(data.get("wood_thickness", 9.0))
+
+        # Check for inner dimension keys first, fallback to legacy outer dimension keys
+        if "inner_length" in data:
+            in_l = float(data["inner_length"])
+        elif "outer_length" in data:
+            in_l = max(0.0, float(data["outer_length"]) - 2.0 * t_wood)
+        else:
+            in_l = 800.0
+
+        if "inner_width" in data:
+            in_w = float(data["inner_width"])
+        elif "outer_width" in data:
+            in_w = max(0.0, float(data["outer_width"]) - 2.0 * t_wood)
+        else:
+            in_w = 500.0
+
+        if "inner_total_height" in data:
+            in_h = float(data["inner_total_height"])
+        elif "total_height" in data:
+            in_h = max(0.0, float(data["total_height"]) - 2.0 * t_wood)
+        elif "inner_height" in data:
+            in_h = float(data["inner_height"])
+        else:
+            in_h = 400.0
+
+        if "inner_lid_height" in data:
+            in_lid_h = float(data["inner_lid_height"])
+        elif "lid_height" in data:
+            # If from old project file, lid_height was outer lid height
+            in_lid_h = max(0.0, float(data["lid_height"]) - t_wood)
+        else:
+            in_lid_h = 100.0
+
         return cls(
-            outer_length=float(data.get("outer_length", 800.0)),
-            outer_width=float(data.get("outer_width", 500.0)),
-            total_height=float(data.get("total_height", 400.0)),
-            lid_height=float(data.get("lid_height", 100.0)),
-            wood_thickness=float(data.get("wood_thickness", 9.0)),
+            inner_length=in_l,
+            inner_width=in_w,
+            inner_total_height=in_h,
+            inner_lid_height=in_lid_h,
+            wood_thickness=t_wood,
             lid_alu_profile_offset=float(data.get("lid_alu_profile_offset", 10.0)),
             corner_extrusion_rebate=float(data.get("corner_extrusion_rebate", 0.0)),
             edge_profile_width=float(data.get("edge_profile_width", 30.0)),

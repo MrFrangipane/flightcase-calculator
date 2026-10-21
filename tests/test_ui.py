@@ -33,12 +33,12 @@ def test_main_window_lifecycle(qapp):
     # Initial recalculation ran
     assert window._current_result is not None
     assert len(window._current_result.wood_cut_list) == 6
-    assert window._current_result.total_lid_mating_profile_length_mm == 5200.0
+    assert window._current_result.total_lid_mating_profile_length_mm == 5344.0
 
     # Test preset change
     window.input_panel.combo_presets.setCurrentIndex(1)  # Large Production Case (1200x600x600)
     assert window.input_panel.spin_length.value() == 1200.0
-    assert window._current_result.total_lid_mating_profile_length_mm == 7200.0  # 2 * 2 * (1200 + 600)
+    assert window._current_result.total_lid_mating_profile_length_mm == 7344.0  # 2 * 2 * (1218 + 618)
 
     # Test adding walls
     window.walls_widget._on_add_wall()
@@ -537,15 +537,15 @@ def test_inside_walls_compartment_spaces_ui(qapp):
     from PySide6.QtWidgets import QDoubleSpinBox, QCheckBox
 
     window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
-    # Set outer dimensions: L = 1000mm, W = 600mm, Wood = 10mm -> inner_length = 980mm, inner_width = 580mm
+    # Set inner dimensions: L = 1000mm, W = 600mm, Wood = 10mm -> inner_length = 1000mm, inner_width = 600mm
     window.input_panel.spin_length.setValue(1000.0)
     window.input_panel.spin_width.setValue(600.0)
     window.input_panel.spin_wood_thickness.setValue(10.0)
     window.recalculate()
 
     # Verify InsideWallsWidget has received context
-    assert window.walls_widget.inner_length == 980.0
-    assert window.walls_widget.inner_width == 580.0
+    assert window.walls_widget.inner_length == 1000.0
+    assert window.walls_widget.inner_width == 600.0
     assert window.walls_widget.wood_thickness == 10.0
 
     # 1. Test adding compartments and configuring clearances directly in InsideWallsWidget
@@ -573,9 +573,9 @@ def test_inside_walls_compartment_spaces_ui(qapp):
     spin_comp1 = window.walls_widget._get_comp_tab_space_spinbox(1)
     spin_comp1.setValue(200.0)
 
-    # Verify auto-equalized compartment 2 space = 980 - 20 (walls) - 300 - 200 = 460 mm
+    # Verify auto-equalized compartment 2 space = 1000 - 20 (walls) - 300 - 200 = 480 mm
     clearances = window.walls_widget._get_comp_tab_clearances()
-    assert pytest.approx(clearances[2]) == 460.0
+    assert pytest.approx(clearances[2]) == 480.0
 
     # Verify that walls are updated dynamically
     updated_walls = window.walls_widget.get_walls()

@@ -38,18 +38,19 @@ def test_flightcase_invariants_and_properties():
         lid_alu_profile_offset=10.0,
     )
 
-    assert case.outer_length == 800.0
-    assert case.outer_width == 500.0
-    assert case.total_height == 400.0
-    assert case.base_height == 300.0
-    assert case.total_wood_height == 390.0
-    assert case.lid_wood_height == 95.0
-    assert case.base_wood_height == 295.0
-    assert case.inner_length == 782.0
-    assert case.inner_width == 482.0
-    assert case.inner_base_height == 286.0
-    assert case.inner_lid_height == 86.0
-    assert case.inner_total_height == 382.0
+    assert case.inner_length == 800.0
+    assert case.inner_width == 500.0
+    assert case.inner_total_height == 400.0
+    assert case.inner_lid_height == 100.0
+    assert case.inner_base_height == 300.0
+    assert case.outer_length == 818.0
+    assert case.outer_width == 518.0
+    assert case.total_height == 418.0
+    assert case.outer_lid_height == 109.0
+    assert case.base_height == 309.0
+    assert case.total_wood_height == 408.0
+    assert case.lid_wood_height == 104.0
+    assert case.base_wood_height == 304.0
 
 
 def test_flightcase_invalid_lid_height():
@@ -62,11 +63,11 @@ def test_flightcase_invalid_lid_height():
         )
 
     with pytest.raises(InvalidLidConfigurationError):
-        # Lid height too small for profile offset (e.g. lid 4mm, offset 10mm -> half offset 5mm > lid)
+        # Lid height too small for profile offset (e.g. lid 4mm + wood 0.5mm = 4.5mm <= half offset 5mm)
         FlightCase(
             dimensions=Dimensions3D(800.0, 500.0, 400.0),
             lid_height=4.0,
-            wood_thickness=9.0,
+            wood_thickness=0.5,
             lid_alu_profile_offset=10.0,
         )
 
@@ -83,20 +84,20 @@ def test_wood_panels_cut_list_calculation():
     assert len(cuts) == 6
 
     bottom = next(p for p in cuts if p.name == "Base Bottom Panel")
-    assert bottom.length_mm == 800.0
-    assert bottom.width_mm == 500.0
+    assert bottom.length_mm == 818.0
+    assert bottom.width_mm == 518.0
     assert bottom.thickness_mm == 9.0
     assert bottom.quantity == 1
     assert bottom.category == CutPieceCategory.WOOD_BASE
 
     base_long = next(p for p in cuts if "Base Long Sides" in p.name)
-    assert base_long.length_mm == 800.0
-    assert base_long.width_mm == 295.0
+    assert base_long.length_mm == 818.0
+    assert base_long.width_mm == 304.0
     assert base_long.quantity == 2
 
     base_short = next(p for p in cuts if "Base Short Sides" in p.name)
-    assert base_short.length_mm == 482.0
-    assert base_short.width_mm == 295.0
+    assert base_short.length_mm == 500.0
+    assert base_short.width_mm == 304.0
     assert base_short.quantity == 2
 
 
@@ -108,14 +109,14 @@ def test_lid_alu_profile_required_length():
         lid_alu_profile_offset=12.0,
     )
 
-    single_perimeter = 2.0 * (1000.0 + 600.0)  # 3200 mm
-    assert case.total_lid_alu_profile_length_mm == 6400.0  # Male + Female = 2 perimeters
+    single_perimeter = 2.0 * (1018.0 + 618.0)  # 3272 mm
+    assert case.total_lid_alu_profile_length_mm == 6544.0  # Male + Female = 2 perimeters
 
     profiles = case.calculate_alu_profiles()
     mating_profiles = [p for p in profiles if p.category == CutPieceCategory.ALU_LID_MATING]
     assert len(mating_profiles) == 4
     total_mating_len = sum(p.length_mm * p.quantity for p in mating_profiles)
-    assert total_mating_len == 6400.0
+    assert total_mating_len == 6544.0
 
 
 def test_inside_walls_addition_and_validation():
@@ -125,7 +126,7 @@ def test_inside_walls_addition_and_validation():
         wood_thickness=9.0,
     )
 
-    # Valid width-wise wall (inner_length is 782)
+    # Valid width-wise wall (inner_length is 800)
     wall1 = InsideWall(
         orientation=WallOrientation.WIDTH_WISE,
         position_mm=250.0,
@@ -135,18 +136,18 @@ def test_inside_walls_addition_and_validation():
     case.add_wall(wall1)
     assert len(case.walls) == 1
 
-    # Out of bounds wall (position >= 782)
+    # Out of bounds wall (position >= 800)
     with pytest.raises(WallOutOfBoundsError):
         case.add_wall(InsideWall(
             orientation=WallOrientation.WIDTH_WISE,
-            position_mm=800.0
+            position_mm=850.0
         ))
 
-    # Out of bounds wall for width (inner_width is 482)
+    # Out of bounds wall for width (inner_width is 500)
     with pytest.raises(WallOutOfBoundsError):
         case.add_wall(InsideWall(
             orientation=WallOrientation.LENGTH_WISE,
-            position_mm=500.0
+            position_mm=550.0
         ))
 
 
@@ -175,16 +176,16 @@ def test_inside_wall_full_height_to_lid_roof():
 
     cuts = case.calculate_wood_cut_list()
     full_wall_cut = next(p for p in cuts if "Full Height Wall" in p.name)
-    assert full_wall_cut.length_mm == 482.0
-    assert full_wall_cut.width_mm == 382.0  # inner total height = 400 - 2*9 = 382.0
+    assert full_wall_cut.length_mm == 500.0  # inner width
+    assert full_wall_cut.width_mm == 400.0  # inner total height
 
     tray_cut = next(p for p in cuts if "Tray Divider" in p.name)
-    assert tray_cut.length_mm == 782.0
+    assert tray_cut.length_mm == 800.0  # inner length
     assert tray_cut.width_mm == 120.0
 
     comps = case.calculate_compartments()
     for c in comps:
-        assert c.height_mm == 382.0
+        assert c.height_mm == 400.0
 
 
 def test_equispaced_walls_and_compartments():
@@ -194,18 +195,18 @@ def test_equispaced_walls_and_compartments():
         wood_thickness=10.0,
     )
 
-    # inner_length = 980, 2 walls (10mm thick each): total wall thickness = 20mm -> usable clearance = 960mm -> 320mm each
+    # inner_length = 1000, 2 walls (10mm thick each): total wall thickness = 20mm -> usable clearance = 980mm -> 326.67mm each
     case.set_equispaced_walls(count=2, orientation=WallOrientation.WIDTH_WISE)
     assert len(case.walls) == 2
-    assert pytest.approx(case.walls[0].position_mm) == 325.0
-    assert pytest.approx(case.walls[1].position_mm) == 655.0
+    assert pytest.approx(case.walls[0].position_mm, rel=1e-3) == 331.67
+    assert pytest.approx(case.walls[1].position_mm, rel=1e-3) == 668.33
 
     comps = case.calculate_compartments()
     assert len(comps) == 3
-    assert pytest.approx(comps[0].length_mm) == 320.0
-    assert pytest.approx(comps[1].length_mm) == 320.0
-    assert pytest.approx(comps[2].length_mm) == 320.0
-    assert pytest.approx(comps[0].width_mm) == 580.0
+    assert pytest.approx(comps[0].length_mm, rel=1e-3) == 326.67
+    assert pytest.approx(comps[1].length_mm, rel=1e-3) == 326.67
+    assert pytest.approx(comps[2].length_mm, rel=1e-3) == 326.67
+    assert pytest.approx(comps[0].width_mm) == 600.0
 
 
 def test_custom_compartment_spaces_configuration():
@@ -214,10 +215,10 @@ def test_custom_compartment_spaces_configuration():
         lid_height=100.0,
         wood_thickness=10.0,
     )
-    # Usable inner_length = 980mm, inner_width = 580mm
-    # We want 3 compartments along length with clearances: 250mm, 350mm, 360mm (sum = 960mm + 2*10mm walls = 980mm)
+    # Inner length = 1000mm, inner width = 600mm
+    # We want 3 compartments along length with clearances: 250mm, 350mm, 380mm (sum = 980mm + 2*10mm walls = 1000mm)
     case.set_walls_from_compartment_spaces(
-        clearances_mm=[250.0, 350.0, 360.0],
+        clearances_mm=[250.0, 350.0, 380.0],
         orientation=WallOrientation.WIDTH_WISE,
         thicknesses_mm=[10.0, 10.0],
     )
@@ -231,13 +232,13 @@ def test_custom_compartment_spaces_configuration():
     assert len(clearances) == 3
     assert pytest.approx(clearances[0]) == 250.0
     assert pytest.approx(clearances[1]) == 350.0
-    assert pytest.approx(clearances[2]) == 360.0
+    assert pytest.approx(clearances[2]) == 380.0
 
     comps = case.calculate_compartments()
     assert len(comps) == 3
     assert pytest.approx(comps[0].length_mm) == 250.0
     assert pytest.approx(comps[1].length_mm) == 350.0
-    assert pytest.approx(comps[2].length_mm) == 360.0
+    assert pytest.approx(comps[2].length_mm) == 380.0
 
 
 def test_domain_calculation_report():
@@ -250,7 +251,7 @@ def test_domain_calculation_report():
     report = FlightCaseDomainService.calculate(case)
     assert report.total_wood_area_m2 > 0.0
     assert report.total_wood_weight_kg > 0.0
-    assert report.total_lid_mating_profile_length_mm == 5200.0
+    assert report.total_lid_mating_profile_length_mm == 5344.0
     assert report.standard_sheets_required > 0.0
 
 
@@ -295,11 +296,11 @@ def test_schema_3d_geometry_generation():
     assert len(lid_wall_faces) == 48   # 4 lid walls * 6 faces + 4 lid profiles * 6 faces
     assert len(lid_roof_faces) == 6    # 1 roof panel * 6 faces
 
-    # Verify length and width callouts exist
+    # Verify length and width callouts exist (outer nominal dimensions)
     dim_labels = [d.label for d in mesh.dimensions]
-    assert any("L = 800" in lbl for lbl in dim_labels)
-    assert any("W = 500" in lbl for lbl in dim_labels)
-    assert any("H = 400" in lbl for lbl in dim_labels)
+    assert any("L = 818" in lbl for lbl in dim_labels)
+    assert any("W = 518" in lbl for lbl in dim_labels)
+    assert any("H = 418" in lbl for lbl in dim_labels)
 
 
 def test_parallel_projector_face_visibility_and_shading():
@@ -334,23 +335,23 @@ def test_self_cut_lid_domain_and_geometry():
     assert sum(c.quantity for c in cuts) == 6
 
     bottom = next(c for c in cuts if c.name == "Bottom Panel")
-    assert bottom.length_mm == 800.0
-    assert bottom.width_mm == 500.0
+    assert bottom.length_mm == 818.0
+    assert bottom.width_mm == 518.0
     assert bottom.quantity == 1
 
     top = next(c for c in cuts if c.name == "Top Panel")
-    assert top.length_mm == 800.0
-    assert top.width_mm == 500.0
+    assert top.length_mm == 818.0
+    assert top.width_mm == 518.0
     assert top.quantity == 1
 
     long_s = next(c for c in cuts if c.name == "Long Sides (Front & Back)")
-    assert long_s.length_mm == 800.0
-    assert long_s.width_mm == 390.0
+    assert long_s.length_mm == 818.0
+    assert long_s.width_mm == 408.0
     assert long_s.quantity == 2
 
     short_s = next(c for c in cuts if c.name == "Short Sides (Left & Right)")
-    assert short_s.length_mm == 482.0
-    assert short_s.width_mm == 390.0
+    assert short_s.length_mm == 500.0
+    assert short_s.width_mm == 408.0
     assert short_s.quantity == 2
 
     # 2. 3D Schema Geometry is kept with the lid, base, and aluminum mating profiles
@@ -374,38 +375,38 @@ def test_schema_3d_lid_alu_profile_offset_dimensions():
         wood_thickness=9.0,
         lid_alu_profile_offset=20.0,
     )
-    H_base = case.base_height  # 200.0
+    H_base = case.base_height  # 209.0
     half_offset = 10.0
     gap = 40.0
 
     mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=gap)
 
-    # 1. Base profile faces span z in [H_base - half_offset, H_base] = [190.0, 200.0]
+    # 1. Base profile faces span z in [H_base - half_offset, H_base] = [199.0, 209.0]
     base_alu_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.BASE_ALU]
     assert len(base_alu_faces) == 24
     base_alu_z_coords = [v.z for f in base_alu_faces for v in f.vertices]
-    assert min(base_alu_z_coords) == pytest.approx(190.0)
-    assert max(base_alu_z_coords) == pytest.approx(200.0)
+    assert min(base_alu_z_coords) == pytest.approx(199.0)
+    assert max(base_alu_z_coords) == pytest.approx(209.0)
 
-    # 2. Base wood walls span z in [wood_thickness, H_base - half_offset] = [9.0, 190.0]
+    # 2. Base wood walls span z in [wood_thickness, H_base - half_offset] = [9.0, 199.0]
     base_wood_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.OUTER_BASE_WALLS]
     base_wood_z_coords = [v.z for f in base_wood_faces for v in f.vertices]
     assert min(base_wood_z_coords) == pytest.approx(9.0)
-    assert max(base_wood_z_coords) == pytest.approx(190.0)
+    assert max(base_wood_z_coords) == pytest.approx(199.0)
 
-    # 3. Lid profile faces span z in [H_base + gap, H_base + gap + half_offset] = [240.0, 250.0]
+    # 3. Lid profile faces span z in [H_base + gap, H_base + gap + half_offset] = [249.0, 259.0]
     lid_alu_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_WALLS and f.color_group == "profile"]
     assert len(lid_alu_faces) == 24
     lid_alu_z_coords = [v.z for f in lid_alu_faces for v in f.vertices]
-    assert min(lid_alu_z_coords) == pytest.approx(240.0)
-    assert max(lid_alu_z_coords) == pytest.approx(250.0)
+    assert min(lid_alu_z_coords) == pytest.approx(249.0)
+    assert max(lid_alu_z_coords) == pytest.approx(259.0)
 
-    # 4. Lid wood walls span z in [250.0, 310.0 - 9.0 = 301.0]
+    # 4. Lid wood walls span z in [259.0, (209 + 40 + 79) - 9 = 319.0]
     lid_wood_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_WALLS and f.color_group == "lid"]
     assert len(lid_wood_faces) == 24
     lid_wood_z_coords = [v.z for f in lid_wood_faces for v in f.vertices]
-    assert min(lid_wood_z_coords) == pytest.approx(250.0)
-    assert max(lid_wood_z_coords) == pytest.approx(301.0)
+    assert min(lid_wood_z_coords) == pytest.approx(259.0)
+    assert max(lid_wood_z_coords) == pytest.approx(319.0)
 
     # 5. Case with 0mm profile offset has no profile faces and wood walls extend completely
     case_no_profile = FlightCase(

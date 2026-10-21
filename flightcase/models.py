@@ -51,11 +51,11 @@ class CutPiece:
 @dataclass
 class CaseParameters:
     """Input dimensions and configuration of the flightcase."""
-    # Outer dimensions (mm)
-    outer_length: float = 800.0
-    outer_width: float = 500.0
-    total_height: float = 400.0
-    lid_height: float = 100.0
+    # Inner dimensions (mm)
+    inner_length: float = 800.0
+    inner_width: float = 500.0
+    inner_total_height: float = 400.0
+    inner_lid_height: float = 100.0
 
     # Wood panel specifications (mm)
     wood_thickness: float = 9.0
@@ -74,6 +74,84 @@ class CaseParameters:
 
     # Internal dividers
     dividers: List[Divider] = field(default_factory=list)
+
+    # Legacy/compatibility aliases for inputs
+    def __init__(
+        self,
+        inner_length: Optional[float] = None,
+        inner_width: Optional[float] = None,
+        inner_total_height: Optional[float] = None,
+        inner_lid_height: Optional[float] = None,
+        wood_thickness: float = 9.0,
+        lid_alu_profile_offset: float = 10.0,
+        corner_extrusion_rebate: float = 0.0,
+        edge_profile_width: float = 30.0,
+        self_cut_lid: bool = False,
+        dividers: Optional[List[Divider]] = None,
+        outer_length: Optional[float] = None,
+        outer_width: Optional[float] = None,
+        total_height: Optional[float] = None,
+        lid_height: Optional[float] = None,
+    ):
+        self.wood_thickness = wood_thickness
+        self.lid_alu_profile_offset = lid_alu_profile_offset
+        self.corner_extrusion_rebate = corner_extrusion_rebate
+        self.edge_profile_width = edge_profile_width
+        self.self_cut_lid = self_cut_lid
+        self.dividers = list(dividers) if dividers is not None else []
+
+        if inner_length is not None:
+            self.inner_length = inner_length
+        elif outer_length is not None:
+            self.inner_length = max(0.0, outer_length - (2.0 * wood_thickness))
+        else:
+            self.inner_length = 800.0
+
+        if inner_width is not None:
+            self.inner_width = inner_width
+        elif outer_width is not None:
+            self.inner_width = max(0.0, outer_width - (2.0 * wood_thickness))
+        else:
+            self.inner_width = 500.0
+
+        if inner_total_height is not None:
+            self.inner_total_height = inner_total_height
+        elif total_height is not None:
+            self.inner_total_height = max(0.0, total_height - (2.0 * wood_thickness))
+        else:
+            self.inner_total_height = 400.0
+
+        if inner_lid_height is not None:
+            self.inner_lid_height = inner_lid_height
+        elif lid_height is not None:
+            self.inner_lid_height = max(0.0, lid_height - wood_thickness)
+        else:
+            self.inner_lid_height = 100.0
+
+    @property
+    def outer_length(self) -> float:
+        """Nominal outer length including wood thickness."""
+        return self.inner_length + (2.0 * self.wood_thickness)
+
+    @property
+    def outer_width(self) -> float:
+        """Nominal outer width including wood thickness."""
+        return self.inner_width + (2.0 * self.wood_thickness)
+
+    @property
+    def total_height(self) -> float:
+        """Nominal outer total height."""
+        return self.inner_total_height + (2.0 * self.wood_thickness)
+
+    @property
+    def lid_height(self) -> float:
+        """Nominal outer lid height."""
+        return self.inner_lid_height + self.wood_thickness
+
+    @property
+    def inner_base_height(self) -> float:
+        """Interior usable height inside base box."""
+        return max(0.0, self.inner_total_height - self.inner_lid_height)
 
     @property
     def base_height(self) -> float:
@@ -96,31 +174,6 @@ class CaseParameters:
         """Wood panel height for base sides (accounting for half profile offset)."""
         half_offset = self.lid_alu_profile_offset / 2.0
         return max(0.0, self.base_height - half_offset)
-
-    @property
-    def inner_length(self) -> float:
-        """Interior usable length inside the case."""
-        return max(0.0, self.outer_length - (2.0 * self.wood_thickness))
-
-    @property
-    def inner_width(self) -> float:
-        """Interior usable width inside the case."""
-        return max(0.0, self.outer_width - (2.0 * self.wood_thickness))
-
-    @property
-    def inner_base_height(self) -> float:
-        """Interior usable height inside base box."""
-        return max(0.0, self.base_wood_height - self.wood_thickness)
-
-    @property
-    def inner_lid_height(self) -> float:
-        """Interior usable height inside lid box."""
-        return max(0.0, self.lid_wood_height - self.wood_thickness)
-
-    @property
-    def inner_total_height(self) -> float:
-        """Interior usable total height inside the case (floor to lid roof ceiling)."""
-        return max(0.0, self.total_height - (2.0 * self.wood_thickness))
 
 
 @dataclass

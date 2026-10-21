@@ -47,13 +47,13 @@ class CaseInputPanel(QWidget):
         preset_layout.addWidget(self.combo_presets)
         main_layout.addWidget(preset_box)
 
-        # 2. Case Outer Dimensions Box
-        dim_box = QGroupBox("Outer Case Dimensions", self)
+        # 2. Case Inner Dimensions Box
+        dim_box = QGroupBox("Inner Case Dimensions", self)
         dim_layout = QGridLayout(dim_box)
         dim_layout.setSpacing(8)
 
         # Length
-        dim_layout.addWidget(QLabel("Outer Length (L):"), 0, 0)
+        dim_layout.addWidget(QLabel("Inner Length (L):"), 0, 0)
         self.spin_length = QDoubleSpinBox(self)
         self.spin_length.setRange(100.0, 5000.0)
         self.spin_length.setValue(800.0)
@@ -63,7 +63,7 @@ class CaseInputPanel(QWidget):
         dim_layout.addWidget(self.spin_length, 0, 1)
 
         # Width
-        dim_layout.addWidget(QLabel("Outer Width (W):"), 1, 0)
+        dim_layout.addWidget(QLabel("Inner Width (W):"), 1, 0)
         self.spin_width = QDoubleSpinBox(self)
         self.spin_width.setRange(100.0, 5000.0)
         self.spin_width.setValue(500.0)
@@ -73,7 +73,7 @@ class CaseInputPanel(QWidget):
         dim_layout.addWidget(self.spin_width, 1, 1)
 
         # Total Height
-        dim_layout.addWidget(QLabel("Total Height (H):"), 2, 0)
+        dim_layout.addWidget(QLabel("Inner Height (H):"), 2, 0)
         self.spin_total_height = QDoubleSpinBox(self)
         self.spin_total_height.setRange(100.0, 5000.0)
         self.spin_total_height.setValue(400.0)
@@ -83,7 +83,7 @@ class CaseInputPanel(QWidget):
         dim_layout.addWidget(self.spin_total_height, 2, 1)
 
         # Lid Height
-        dim_layout.addWidget(QLabel("Lid Height (H_lid):"), 3, 0)
+        dim_layout.addWidget(QLabel("Inner Lid Height (H_lid):"), 3, 0)
         self.spin_lid_height = QDoubleSpinBox(self)
         self.spin_lid_height.setRange(20.0, 2000.0)
         self.spin_lid_height.setValue(100.0)
@@ -189,10 +189,10 @@ class CaseInputPanel(QWidget):
         self.spin_edge_width.blockSignals(True)
         self.chk_self_cut_lid.blockSignals(True)
 
-        self.spin_length.setValue(dto.outer_length)
-        self.spin_width.setValue(dto.outer_width)
-        self.spin_total_height.setValue(dto.total_height)
-        self.spin_lid_height.setValue(dto.lid_height)
+        self.spin_length.setValue(dto.inner_length)
+        self.spin_width.setValue(dto.inner_width)
+        self.spin_total_height.setValue(dto.inner_total_height)
+        self.spin_lid_height.setValue(dto.inner_lid_height)
         self.spin_wood_thickness.setValue(dto.wood_thickness)
         self.spin_profile_offset.setValue(dto.lid_alu_profile_offset)
         self.spin_edge_width.setValue(dto.edge_profile_width)
@@ -211,10 +211,10 @@ class CaseInputPanel(QWidget):
 
     def get_input_dto(self) -> CaseInputDTO:
         return CaseInputDTO(
-            outer_length=self.spin_length.value(),
-            outer_width=self.spin_width.value(),
-            total_height=self.spin_total_height.value(),
-            lid_height=self.spin_lid_height.value(),
+            inner_length=self.spin_length.value(),
+            inner_width=self.spin_width.value(),
+            inner_total_height=self.spin_total_height.value(),
+            inner_lid_height=self.spin_lid_height.value(),
             wood_thickness=self.spin_wood_thickness.value(),
             lid_alu_profile_offset=self.spin_profile_offset.value(),
             edge_profile_width=self.spin_edge_width.value(),

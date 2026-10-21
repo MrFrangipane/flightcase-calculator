@@ -12,90 +12,95 @@ from flightcase.calculator import (
 
 def test_standard_case_dimensions():
     params = CaseParameters(
-        outer_length=800.0,
-        outer_width=500.0,
-        total_height=400.0,
-        lid_height=100.0,
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
         wood_thickness=9.0,
         lid_alu_profile_offset=10.0,
         corner_extrusion_rebate=0.0
     )
 
-    assert params.base_height == 300.0
-    assert params.total_wood_height == 390.0  # 400 - 10
-    assert params.lid_wood_height == 95.0    # 100 - 5
-    assert params.base_wood_height == 295.0  # 300 - 5
-    assert params.lid_wood_height + params.base_wood_height == 390.0
+    assert params.inner_length == 800.0
+    assert params.inner_width == 500.0
+    assert params.inner_total_height == 400.0
+    assert params.inner_lid_height == 100.0
+    assert params.inner_base_height == 300.0
 
-    assert params.inner_length == 800.0 - 18.0  # 782.0
-    assert params.inner_width == 500.0 - 18.0   # 482.0
-    assert params.inner_base_height == 295.0 - 9.0  # 286.0
-    assert params.inner_total_height == 400.0 - 18.0  # 382.0
+    assert params.outer_length == 818.0
+    assert params.outer_width == 518.0
+    assert params.total_height == 418.0
+    assert params.lid_height == 109.0
+    assert params.base_height == 309.0
+    assert params.total_wood_height == 408.0  # 418 - 10
+    assert params.lid_wood_height == 104.0    # 109 - 5
+    assert params.base_wood_height == 304.0   # 309 - 5
+    assert params.lid_wood_height + params.base_wood_height == 408.0
 
     res = calculate_flightcase(params)
     assert len(res.wood_cut_list) == 6  # 2 top/bottom + 2 long base + 2 short base + 2 long lid + 2 short lid = 6 items (each with qty)
 
     # Base Bottom
     bottom = next(p for p in res.wood_cut_list if p.name == "Base Bottom Panel")
-    assert bottom.length_mm == 800.0
-    assert bottom.width_mm == 500.0
+    assert bottom.length_mm == 818.0
+    assert bottom.width_mm == 518.0
     assert bottom.quantity == 1
 
     # Base Long Sides
     base_long = next(p for p in res.wood_cut_list if p.name == "Base Long Sides (Front & Back)")
-    assert base_long.length_mm == 800.0
-    assert base_long.width_mm == 295.0
+    assert base_long.length_mm == 818.0
+    assert base_long.width_mm == 304.0
     assert base_long.quantity == 2
 
     # Base Short Sides (inset between front & back)
     base_short = next(p for p in res.wood_cut_list if p.name == "Base Short Sides (Left & Right)")
-    assert base_short.length_mm == 500.0 - 18.0  # 482.0
-    assert base_short.width_mm == 295.0
+    assert base_short.length_mm == 500.0  # inner_width
+    assert base_short.width_mm == 304.0
     assert base_short.quantity == 2
 
     # Lid Long Sides
     lid_long = next(p for p in res.wood_cut_list if p.name == "Lid Long Sides (Front & Back)")
-    assert lid_long.length_mm == 800.0
-    assert lid_long.width_mm == 95.0
+    assert lid_long.length_mm == 818.0
+    assert lid_long.width_mm == 104.0
     assert lid_long.quantity == 2
 
     # Lid Short Sides
     lid_short = next(p for p in res.wood_cut_list if p.name == "Lid Short Sides (Left & Right)")
-    assert lid_short.length_mm == 482.0
-    assert lid_short.width_mm == 95.0
+    assert lid_short.length_mm == 500.0
+    assert lid_short.width_mm == 104.0
     assert lid_short.quantity == 2
 
 
 def test_lid_alu_profile_calculation():
     params = CaseParameters(
-        outer_length=1000.0,
-        outer_width=600.0,
-        total_height=500.0,
-        lid_height=120.0,
+        inner_length=1000.0,
+        inner_width=600.0,
+        inner_total_height=500.0,
+        inner_lid_height=120.0,
         wood_thickness=9.0,
         lid_alu_profile_offset=12.0
     )
 
     res = calculate_flightcase(params)
-    single_perimeter = 2 * (1000.0 + 600.0)  # 3200.0 mm
-    assert res.total_lid_mating_profile_length_mm == 6400.0  # Male + Female = 2 perimeters
+    single_perimeter = 2 * (1018.0 + 618.0)  # 3272.0 mm
+    assert res.total_lid_mating_profile_length_mm == 6544.0  # Male + Female = 2 perimeters
 
     # Check mating profile items in list
     male_long = next(p for p in res.alu_profiles_list if "Base Male (Long)" in p.name)
-    assert male_long.length_mm == 1000.0
+    assert male_long.length_mm == 1018.0
     assert male_long.quantity == 2
 
     female_short = next(p for p in res.alu_profiles_list if "Lid Female (Short)" in p.name)
-    assert female_short.length_mm == 600.0
+    assert female_short.length_mm == 618.0
     assert female_short.quantity == 2
 
 
 def test_dividers_cut_list():
     params = CaseParameters(
-        outer_length=800.0,
-        outer_width=500.0,
-        total_height=400.0,
-        lid_height=100.0,
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
         wood_thickness=9.0,
         lid_alu_profile_offset=10.0,
         dividers=[
@@ -109,39 +114,39 @@ def test_dividers_cut_list():
     divider_cuts = [p for p in res.wood_cut_list if p.category == "Wood Panel - Divider"]
     assert len(divider_cuts) == 3
 
-    # Width-wise divider length is inner width = 500 - 18 = 482.0
+    # Width-wise divider length is inner width = 500.0
     w_cut = next(p for p in divider_cuts if "Compartment 1 Wall" in p.name)
-    assert w_cut.length_mm == 482.0
-    assert w_cut.width_mm == 382.0  # inner total height up to lid roof: 400 - 18 = 382.0
+    assert w_cut.length_mm == 500.0
+    assert w_cut.width_mm == 400.0  # inner total height up to lid roof
 
-    # Length-wise divider length is inner length = 800 - 18 = 782.0
+    # Length-wise divider length is inner length = 800.0
     l_cut = next(p for p in divider_cuts if "Longitudinal Wall" in p.name)
-    assert l_cut.length_mm == 782.0
-    assert l_cut.width_mm == 382.0
+    assert l_cut.length_mm == 800.0
+    assert l_cut.width_mm == 400.0
 
 
 def test_equispaced_divider_generator():
-    params = CaseParameters(outer_length=1000.0, outer_width=600.0, wood_thickness=10.0)
-    # inner_length = 980, 1 divider (10mm thick) should be at 490 (with clearances 485mm on each side)
+    params = CaseParameters(inner_length=1000.0, inner_width=600.0, wood_thickness=10.0)
+    # inner_length = 1000, 1 divider (10mm thick) should be at 500 (with clearances 495mm on each side)
     divs = generate_equispaced_dividers(1, DividerOrientation.WIDTH_WISE, params, thickness_mm=10.0)
     assert len(divs) == 1
-    assert pytest.approx(divs[0].position_mm) == 490.0
+    assert pytest.approx(divs[0].position_mm) == 500.0
 
-    # 2 dividers along length (each 10mm thick): total wall thickness = 20mm -> usable clearance = 960mm -> 320mm each
-    # Divider 1 at 320 + 5 = 325mm, Divider 2 at 320 + 10 + 320 + 5 = 655mm
+    # 2 dividers along length (each 10mm thick): total wall thickness = 20mm -> usable clearance = 980mm -> 326.67mm each
+    # Divider 1 at 326.67 + 5 = 331.67mm, Divider 2 at 331.67 + 5 + 326.67 + 5 = 668.33mm
     divs2 = generate_equispaced_dividers(2, DividerOrientation.WIDTH_WISE, params, thickness_mm=10.0)
     assert len(divs2) == 2
-    assert pytest.approx(divs2[0].position_mm) == 325.0
-    assert pytest.approx(divs2[1].position_mm) == 655.0
+    assert pytest.approx(divs2[0].position_mm, rel=1e-3) == 331.67
+    assert pytest.approx(divs2[1].position_mm, rel=1e-3) == 668.33
 
 
 def test_generate_dividers_from_compartment_spaces():
-    params = CaseParameters(outer_length=1000.0, outer_width=600.0, wood_thickness=10.0)
-    # 3 compartments with specific clearances: 200mm, 300mm, 460mm
+    params = CaseParameters(inner_length=1000.0, inner_width=600.0, wood_thickness=10.0)
+    # 3 compartments with specific clearances: 200mm, 300mm, 480mm (sum = 980mm + 2*10mm walls = 1000mm)
     # Wall 1: pos = 200 + 5 = 205mm
     # Wall 2: pos = 200 + 10 + 300 + 5 = 515mm
     divs = generate_dividers_from_compartment_spaces(
-        clearances_mm=[200.0, 300.0, 460.0],
+        clearances_mm=[200.0, 300.0, 480.0],
         orientation=DividerOrientation.WIDTH_WISE,
         params=params,
         thicknesses_mm=[10.0, 10.0],
@@ -153,8 +158,8 @@ def test_generate_dividers_from_compartment_spaces():
 
 def test_compartments_calculation():
     params = CaseParameters(
-        outer_length=800.0,
-        outer_width=500.0,
+        inner_length=800.0,
+        inner_width=500.0,
         wood_thickness=9.0,
         dividers=[
             Divider(orientation=DividerOrientation.WIDTH_WISE, position_mm=300.0, thickness_mm=9.0),
@@ -162,19 +167,19 @@ def test_compartments_calculation():
     )
     comps = compute_compartment_dimensions(params)
     assert len(comps) == 2  # 1 width divider splits length into 2 compartments
-    # Inner length = 782mm. Wall at 300mm (half thick 4.5mm)
+    # Inner length = 800mm. Wall at 300mm (half thick 4.5mm)
     # Comp 1 usable length = 300 - 4.5 = 295.5mm
-    # Comp 2 usable length = 782 - 304.5 = 477.5mm
+    # Comp 2 usable length = 800 - 304.5 = 495.5mm
     assert pytest.approx(comps[0][1]) == 295.5
-    assert pytest.approx(comps[1][1]) == 477.5
+    assert pytest.approx(comps[1][1]) == 495.5
 
 
 def test_self_cut_lid_calculation():
     params = CaseParameters(
-        outer_length=800.0,
-        outer_width=500.0,
-        total_height=400.0,
-        lid_height=100.0,
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
         wood_thickness=9.0,
         lid_alu_profile_offset=10.0,
         self_cut_lid=True,
@@ -187,21 +192,21 @@ def test_self_cut_lid_calculation():
     assert total_panels == 6
 
     bottom = next(p for p in res.wood_cut_list if p.name == "Bottom Panel")
-    assert bottom.length_mm == 800.0
-    assert bottom.width_mm == 500.0
+    assert bottom.length_mm == 818.0
+    assert bottom.width_mm == 518.0
     assert bottom.quantity == 1
 
     top = next(p for p in res.wood_cut_list if p.name == "Top Panel")
-    assert top.length_mm == 800.0
-    assert top.width_mm == 500.0
+    assert top.length_mm == 818.0
+    assert top.width_mm == 518.0
     assert top.quantity == 1
 
     long_sides = next(p for p in res.wood_cut_list if p.name == "Long Sides (Front & Back)")
-    assert long_sides.length_mm == 800.0
-    assert long_sides.width_mm == 390.0  # 400 - 10
+    assert long_sides.length_mm == 818.0
+    assert long_sides.width_mm == 408.0  # 418 - 10
     assert long_sides.quantity == 2
 
     short_sides = next(p for p in res.wood_cut_list if p.name == "Short Sides (Left & Right)")
-    assert short_sides.length_mm == 500.0 - 18.0  # 482.0
-    assert short_sides.width_mm == 390.0  # 400 - 10
+    assert short_sides.length_mm == 500.0  # inner width
+    assert short_sides.width_mm == 408.0  # 418 - 10
     assert short_sides.quantity == 2
