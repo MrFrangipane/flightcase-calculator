@@ -3,7 +3,7 @@
 from __future__ import annotations
 import math
 from dataclasses import dataclass, field
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 from .entities import FlightCase, CaseCompartment
 from .value_objects import (
     Point3D,
@@ -12,6 +12,7 @@ from .value_objects import (
     DimensionCallout3D,
     CutPiece,
     WallOrientation,
+    ComponentLayer,
 )
 
 
@@ -115,7 +116,8 @@ class Schema3DGeometryBuilder:
             p_max: Point3D,
             color_group: str,
             label: str = "",
-            highlight_top_endgrain: bool = False
+            highlight_top_endgrain: bool = False,
+            layer_order: int = ComponentLayer.BASE_FLOOR,
         ) -> None:
             x0, y0, z0 = p_min.x, p_min.y, p_min.z
             x1, y1, z1 = p_max.x, p_max.y, p_max.z
@@ -130,7 +132,8 @@ class Schema3DGeometryBuilder:
                 normal=(0.0, 0.0, -1.0),
                 color_group=color_group,
                 label=label,
-                is_endgrain=False
+                is_endgrain=False,
+                layer_order=layer_order,
             ))
 
             # 2. Top (+Z)
@@ -139,7 +142,8 @@ class Schema3DGeometryBuilder:
                 normal=(0.0, 0.0, 1.0),
                 color_group="endgrain" if highlight_top_endgrain else color_group,
                 label=label,
-                is_endgrain=highlight_top_endgrain
+                is_endgrain=highlight_top_endgrain,
+                layer_order=layer_order,
             ))
 
             # 3. Front (-Y)
@@ -148,7 +152,8 @@ class Schema3DGeometryBuilder:
                 normal=(0.0, -1.0, 0.0),
                 color_group=color_group,
                 label=label,
-                is_endgrain=False
+                is_endgrain=False,
+                layer_order=layer_order,
             ))
 
             # 4. Back (+Y)
@@ -157,7 +162,8 @@ class Schema3DGeometryBuilder:
                 normal=(0.0, 1.0, 0.0),
                 color_group=color_group,
                 label=label,
-                is_endgrain=False
+                is_endgrain=False,
+                layer_order=layer_order,
             ))
 
             # 5. Left (-X)
@@ -166,7 +172,8 @@ class Schema3DGeometryBuilder:
                 normal=(-1.0, 0.0, 0.0),
                 color_group=color_group,
                 label=label,
-                is_endgrain=False
+                is_endgrain=False,
+                layer_order=layer_order,
             ))
 
             # 6. Right (+X)
@@ -175,7 +182,8 @@ class Schema3DGeometryBuilder:
                 normal=(1.0, 0.0, 0.0),
                 color_group=color_group,
                 label=label,
-                is_endgrain=False
+                is_endgrain=False,
+                layer_order=layer_order,
             ))
 
             # Wireframe bounding segments (for wireframe modes / fallback)
@@ -201,7 +209,8 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_base_bot),
             Point3D(L, W, z_base_bot + t_wood),
             color_group="base",
-            label="Base Bottom Panel"
+            label="Base Bottom Panel",
+            layer_order=ComponentLayer.BASE_FLOOR,
         )
 
         # Base Long Sides (Front & Back Panels):
@@ -211,7 +220,8 @@ class Schema3DGeometryBuilder:
             Point3D(L, t_wood, z_base_top),
             color_group="base",
             label="Base Front Panel",
-            highlight_top_endgrain=True
+            highlight_top_endgrain=True,
+            layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
         # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top]
         add_solid_box(
@@ -219,7 +229,8 @@ class Schema3DGeometryBuilder:
             Point3D(L, W, z_base_top),
             color_group="base",
             label="Base Back Panel",
-            highlight_top_endgrain=True
+            highlight_top_endgrain=True,
+            layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
 
         # Base Short Sides (Left & Right Panels, inset between front and back):
@@ -229,7 +240,8 @@ class Schema3DGeometryBuilder:
             Point3D(t_wood, W - t_wood, z_base_top),
             color_group="base",
             label="Base Left Panel",
-            highlight_top_endgrain=True
+            highlight_top_endgrain=True,
+            layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
         # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top]
         add_solid_box(
@@ -237,7 +249,8 @@ class Schema3DGeometryBuilder:
             Point3D(L, W - t_wood, z_base_top),
             color_group="base",
             label="Base Right Panel",
-            highlight_top_endgrain=True
+            highlight_top_endgrain=True,
+            layer_order=ComponentLayer.OUTER_BASE_WALLS,
         )
 
         # --- 2. Lid Box Volumetric Panels with Panel Thickness ---
@@ -246,7 +259,8 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_lid_top - t_wood),
             Point3D(L, W, z_lid_top),
             color_group="lid",
-            label="Lid Top Panel"
+            label="Lid Top Panel",
+            layer_order=ComponentLayer.LID_ROOF,
         )
 
         # Lid Long Sides (Front & Back Panels):
@@ -255,14 +269,16 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_lid_bot),
             Point3D(L, t_wood, z_lid_top - t_wood),
             color_group="lid",
-            label="Lid Front Panel"
+            label="Lid Front Panel",
+            layer_order=ComponentLayer.LID_WALLS,
         )
         # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot, z_lid_top - t_wood]
         add_solid_box(
             Point3D(0, W - t_wood, z_lid_bot),
             Point3D(L, W, z_lid_top - t_wood),
             color_group="lid",
-            label="Lid Back Panel"
+            label="Lid Back Panel",
+            layer_order=ComponentLayer.LID_WALLS,
         )
 
         # Lid Short Sides (Left & Right Panels):
@@ -271,14 +287,16 @@ class Schema3DGeometryBuilder:
             Point3D(0, t_wood, z_lid_bot),
             Point3D(t_wood, W - t_wood, z_lid_top - t_wood),
             color_group="lid",
-            label="Lid Left Panel"
+            label="Lid Left Panel",
+            layer_order=ComponentLayer.LID_WALLS,
         )
         # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot, z_lid_top - t_wood]
         add_solid_box(
             Point3D(L - t_wood, t_wood, z_lid_bot),
             Point3D(L, W - t_wood, z_lid_top - t_wood),
             color_group="lid",
-            label="Lid Right Panel"
+            label="Lid Right Panel",
+            layer_order=ComponentLayer.LID_WALLS,
         )
 
         # --- 3. Aluminum Location Profile Mating Extrusions ---
@@ -288,25 +306,29 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_base_top - alu_h),
             Point3D(L, t_wood, z_base_top),
             color_group="profile",
-            label="Base Top Profile (Front)"
+            label="Base Top Profile (Front)",
+            layer_order=ComponentLayer.BASE_ALU,
         )
         add_solid_box(
             Point3D(0, W - t_wood, z_base_top - alu_h),
             Point3D(L, W, z_base_top),
             color_group="profile",
-            label="Base Top Profile (Back)"
+            label="Base Top Profile (Back)",
+            layer_order=ComponentLayer.BASE_ALU,
         )
         add_solid_box(
             Point3D(0, t_wood, z_base_top - alu_h),
             Point3D(t_wood, W - t_wood, z_base_top),
             color_group="profile",
-            label="Base Top Profile (Left)"
+            label="Base Top Profile (Left)",
+            layer_order=ComponentLayer.BASE_ALU,
         )
         add_solid_box(
             Point3D(L - t_wood, t_wood, z_base_top - alu_h),
             Point3D(L, W - t_wood, z_base_top),
             color_group="profile",
-            label="Base Top Profile (Right)"
+            label="Base Top Profile (Right)",
+            layer_order=ComponentLayer.BASE_ALU,
         )
 
         # Rim along Lid bottom edge
@@ -314,25 +336,29 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_lid_bot),
             Point3D(L, t_wood, z_lid_bot + alu_h),
             color_group="profile",
-            label="Lid Bottom Profile (Front)"
+            label="Lid Bottom Profile (Front)",
+            layer_order=ComponentLayer.LID_WALLS,
         )
         add_solid_box(
             Point3D(0, W - t_wood, z_lid_bot),
             Point3D(L, W, z_lid_bot + alu_h),
             color_group="profile",
-            label="Lid Bottom Profile (Back)"
+            label="Lid Bottom Profile (Back)",
+            layer_order=ComponentLayer.LID_WALLS,
         )
         add_solid_box(
             Point3D(0, t_wood, z_lid_bot),
             Point3D(t_wood, W - t_wood, z_lid_bot + alu_h),
             color_group="profile",
-            label="Lid Bottom Profile (Left)"
+            label="Lid Bottom Profile (Left)",
+            layer_order=ComponentLayer.LID_WALLS,
         )
         add_solid_box(
             Point3D(L - t_wood, t_wood, z_lid_bot),
             Point3D(L, W - t_wood, z_lid_bot + alu_h),
             color_group="profile",
-            label="Lid Bottom Profile (Right)"
+            label="Lid Bottom Profile (Right)",
+            layer_order=ComponentLayer.LID_WALLS,
         )
 
         # --- 4. Inside Partition Walls (Volumetric Panels with Thickness) ---
@@ -359,7 +385,8 @@ class Schema3DGeometryBuilder:
                         Point3D(x_b, inner_y1, z_wall_top),
                         color_group="wall",
                         label=lbl,
-                        highlight_top_endgrain=True
+                        highlight_top_endgrain=True,
+                        layer_order=ComponentLayer.INTERNAL_DIVIDERS,
                     )
                 else:
                     y_center = inner_y0 + wall.position_mm
@@ -371,7 +398,8 @@ class Schema3DGeometryBuilder:
                         Point3D(inner_x1, y_b, z_wall_top),
                         color_group="wall",
                         label=lbl,
-                        highlight_top_endgrain=True
+                        highlight_top_endgrain=True,
+                        layer_order=ComponentLayer.INTERNAL_DIVIDERS,
                     )
 
         # --- 5. Dimensions Callouts ---

@@ -16,6 +16,7 @@ from .value_objects import (
     Segment3D,
     PolygonFace3D,
     DimensionCallout3D,
+    ComponentLayer,
 )
 from .entities import (
     FlightCase,
@@ -43,6 +44,7 @@ __all__ = [
     "Segment3D",
     "PolygonFace3D",
     "DimensionCallout3D",
+    "ComponentLayer",
     "FlightCase",
     "CaseCompartment",
     "FlightCaseCalculationReport",

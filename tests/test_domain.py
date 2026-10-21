@@ -9,6 +9,7 @@ from flightcase.domain import (
     CutPieceCategory,
     FlightCaseDomainService,
     Schema3DGeometryBuilder,
+    ComponentLayer,
     InvalidDimensionError,
     InvalidLidConfigurationError,
     WallOutOfBoundsError,
@@ -205,6 +206,22 @@ def test_schema_3d_geometry_generation():
     # Verify end-grain thickness faces
     endgrain_faces = [f for f in mesh.faces if f.is_endgrain]
     assert len(endgrain_faces) > 0
+
+    # Verify structural hierarchy layer orders
+    assert ComponentLayer.BASE_FLOOR < ComponentLayer.INTERNAL_DIVIDERS < ComponentLayer.OUTER_BASE_WALLS < ComponentLayer.BASE_ALU < ComponentLayer.LID_WALLS < ComponentLayer.LID_ROOF
+    base_floor_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.BASE_FLOOR]
+    divider_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.INTERNAL_DIVIDERS]
+    base_wall_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.OUTER_BASE_WALLS]
+    base_alu_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.BASE_ALU]
+    lid_wall_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_WALLS]
+    lid_roof_faces = [f for f in mesh.faces if f.layer_order == ComponentLayer.LID_ROOF]
+
+    assert len(base_floor_faces) == 6
+    assert len(divider_faces) == 6
+    assert len(base_wall_faces) == 24  # 4 base walls * 6 faces
+    assert len(base_alu_faces) == 24   # 4 base profiles * 6 faces
+    assert len(lid_wall_faces) == 48   # 4 lid walls * 6 faces + 4 lid profiles * 6 faces
+    assert len(lid_roof_faces) == 6    # 1 roof panel * 6 faces
 
     # Verify length and width callouts exist
     dim_labels = [d.label for d in mesh.dimensions]

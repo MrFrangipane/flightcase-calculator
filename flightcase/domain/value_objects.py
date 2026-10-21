@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Optional, Tuple
 from .exceptions import InvalidDimensionError
 
@@ -119,6 +119,19 @@ class Segment3D:
     color_group: str = "case"  # "case", "lid", "profile", "wall", "dimension"
 
 
+class ComponentLayer(IntEnum):
+    """
+    Topological structural hierarchy layer for flightcase 3D rendering.
+    Ordered from bottom-most interior upward to exterior and lid.
+    """
+    BASE_FLOOR = 10
+    INTERNAL_DIVIDERS = 20
+    OUTER_BASE_WALLS = 30
+    BASE_ALU = 40
+    LID_WALLS = 50
+    LID_ROOF = 60
+
+
 @dataclass(frozen=True)
 class PolygonFace3D:
     """Planar 3D polygonal face for solid volumetric panel rendering without hidden lines."""
@@ -127,6 +140,7 @@ class PolygonFace3D:
     color_group: str = "base"  # "base", "lid", "wall", "profile", "endgrain"
     label: str = ""
     is_endgrain: bool = False
+    layer_order: int = ComponentLayer.BASE_FLOOR
 
     @property
     def centroid(self) -> Point3D:
