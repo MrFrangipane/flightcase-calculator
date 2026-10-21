@@ -8,6 +8,7 @@ from .entities import FlightCase, CaseCompartment
 from .value_objects import (
     Point3D,
     Segment3D,
+    PolygonFace3D,
     DimensionCallout3D,
     CutPiece,
     WallOrientation,
@@ -34,7 +35,8 @@ class FlightCaseCalculationReport:
 
 @dataclass
 class WireframeMesh3D:
-    """Calculated 3D wireframe elements and dimension callouts for no-perspective schema."""
+    """Calculated 3D mesh elements, solid faces, and dimension callouts for schema rendering."""
+    faces: List[PolygonFace3D] = field(default_factory=list)
     segments: List[Segment3D] = field(default_factory=list)
     dimensions: List[DimensionCallout3D] = field(default_factory=list)
     bounding_box: Tuple[Point3D, Point3D] = (Point3D(0, 0, 0), Point3D(0, 0, 0))
@@ -78,7 +80,8 @@ class FlightCaseDomainService:
 class Schema3DGeometryBuilder:
     """
     Constructs an axonometric / isometric parallel-projection 3D schema
-    with exact dimensions, inside walls, lid separation, and callouts (without perspective distortion).
+    with solid volumetric panels showing exact panel thicknesses, partition walls,
+    lid separation, and callouts without perspective distortion or hidden lines.
     """
 
     @staticmethod
@@ -88,6 +91,7 @@ class Schema3DGeometryBuilder:
         show_inside_walls: bool = True,
         show_dimensions: bool = True
     ) -> WireframeMesh3D:
+        faces: List[PolygonFace3D] = []
         segments: List[Segment3D] = []
         dimensions: List[DimensionCallout3D] = []
 
@@ -105,104 +109,272 @@ class Schema3DGeometryBuilder:
         z_lid_bot = H_base + gap
         z_lid_top = H_base + gap + H_lid
 
-        # Helper to add a 3D box wireframe
-        def add_box_wireframe(p_min: Point3D, p_max: Point3D, color_group: str, style: str = "solid"):
+        # Helper to add a solid volumetric cuboid box with 6 outward-facing polygonal faces and wireframe segments
+        def add_solid_box(
+            p_min: Point3D,
+            p_max: Point3D,
+            color_group: str,
+            label: str = "",
+            highlight_top_endgrain: bool = False
+        ) -> None:
             x0, y0, z0 = p_min.x, p_min.y, p_min.z
             x1, y1, z1 = p_max.x, p_max.y, p_max.z
 
-            # Bottom rectangle
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x1, y0, z0), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y1, z0), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x0, y1, z0), style, color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y0, z0), style, color_group))
+            # Avoid degenerate zero-volume boxes
+            if x1 <= x0 or y1 <= y0 or z1 <= z0:
+                return
 
-            # Top rectangle
-            segments.append(Segment3D(Point3D(x0, y0, z1), Point3D(x1, y0, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z1), Point3D(x1, y1, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z1), Point3D(x0, y1, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z1), Point3D(x0, y0, z1), style, color_group))
+            # 1. Bottom (-Z)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x0, y0, z0), Point3D(x0, y1, z0), Point3D(x1, y1, z0), Point3D(x1, y0, z0)),
+                normal=(0.0, 0.0, -1.0),
+                color_group=color_group,
+                label=label,
+                is_endgrain=False
+            ))
 
-            # 4 Vertical pillars
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x0, y0, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y0, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), style, color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), style, color_group))
+            # 2. Top (+Z)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x0, y0, z1), Point3D(x1, y0, z1), Point3D(x1, y1, z1), Point3D(x0, y1, z1)),
+                normal=(0.0, 0.0, 1.0),
+                color_group="endgrain" if highlight_top_endgrain else color_group,
+                label=label,
+                is_endgrain=highlight_top_endgrain
+            ))
 
-        # 1. Base Box Outer Frame
-        add_box_wireframe(
+            # 3. Front (-Y)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x0, y0, z0), Point3D(x1, y0, z0), Point3D(x1, y0, z1), Point3D(x0, y0, z1)),
+                normal=(0.0, -1.0, 0.0),
+                color_group=color_group,
+                label=label,
+                is_endgrain=False
+            ))
+
+            # 4. Back (+Y)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x1, y1, z0), Point3D(x0, y1, z0), Point3D(x0, y1, z1), Point3D(x1, y1, z1)),
+                normal=(0.0, 1.0, 0.0),
+                color_group=color_group,
+                label=label,
+                is_endgrain=False
+            ))
+
+            # 5. Left (-X)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x0, y1, z0), Point3D(x0, y0, z0), Point3D(x0, y0, z1), Point3D(x0, y1, z1)),
+                normal=(-1.0, 0.0, 0.0),
+                color_group=color_group,
+                label=label,
+                is_endgrain=False
+            ))
+
+            # 6. Right (+X)
+            faces.append(PolygonFace3D(
+                vertices=(Point3D(x1, y0, z0), Point3D(x1, y1, z0), Point3D(x1, y1, z1), Point3D(x1, y0, z1)),
+                normal=(1.0, 0.0, 0.0),
+                color_group=color_group,
+                label=label,
+                is_endgrain=False
+            ))
+
+            # Wireframe bounding segments (for wireframe modes / fallback)
+            # Bottom
+            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x1, y0, z0), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y1, z0), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x0, y1, z0), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y0, z0), "solid", color_group))
+            # Top
+            segments.append(Segment3D(Point3D(x0, y0, z1), Point3D(x1, y0, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y0, z1), Point3D(x1, y1, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y1, z1), Point3D(x0, y1, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y1, z1), Point3D(x0, y0, z1), "solid", color_group))
+            # Verticals
+            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x0, y0, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y0, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), "solid", color_group))
+
+        # --- 1. Base Box Volumetric Panels with Panel Thickness ---
+        # Base Bottom Floor Panel: spans [0, L] x [0, W] x [0, t_wood]
+        add_solid_box(
             Point3D(0, 0, z_base_bot),
+            Point3D(L, W, z_base_bot + t_wood),
+            color_group="base",
+            label="Base Bottom Panel"
+        )
+
+        # Base Long Sides (Front & Back Panels):
+        # Front panel: [0, L] x [0, t_wood] x [t_wood, z_base_top]
+        add_solid_box(
+            Point3D(0, 0, z_base_bot + t_wood),
+            Point3D(L, t_wood, z_base_top),
+            color_group="base",
+            label="Base Front Panel",
+            highlight_top_endgrain=True
+        )
+        # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top]
+        add_solid_box(
+            Point3D(0, W - t_wood, z_base_bot + t_wood),
             Point3D(L, W, z_base_top),
             color_group="base",
-            style="solid"
+            label="Base Back Panel",
+            highlight_top_endgrain=True
         )
 
-        # 2. Lid Box Outer Frame
-        add_box_wireframe(
-            Point3D(0, 0, z_lid_bot),
+        # Base Short Sides (Left & Right Panels, inset between front and back):
+        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [t_wood, z_base_top]
+        add_solid_box(
+            Point3D(0, t_wood, z_base_bot + t_wood),
+            Point3D(t_wood, W - t_wood, z_base_top),
+            color_group="base",
+            label="Base Left Panel",
+            highlight_top_endgrain=True
+        )
+        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top]
+        add_solid_box(
+            Point3D(L - t_wood, t_wood, z_base_bot + t_wood),
+            Point3D(L, W - t_wood, z_base_top),
+            color_group="base",
+            label="Base Right Panel",
+            highlight_top_endgrain=True
+        )
+
+        # --- 2. Lid Box Volumetric Panels with Panel Thickness ---
+        # Lid Top Roof Panel: spans [0, L] x [0, W] x [z_lid_top - t_wood, z_lid_top]
+        add_solid_box(
+            Point3D(0, 0, z_lid_top - t_wood),
             Point3D(L, W, z_lid_top),
             color_group="lid",
-            style="solid"
+            label="Lid Top Panel"
         )
 
-        # 3. Alu Profile Band (Mating Extrusion indicator at split)
-        # Rim along Base top
-        segments.append(Segment3D(Point3D(0, 0, z_base_top), Point3D(L, 0, z_base_top), "profile", "profile"))
-        segments.append(Segment3D(Point3D(L, 0, z_base_top), Point3D(L, W, z_base_top), "profile", "profile"))
-        segments.append(Segment3D(Point3D(L, W, z_base_top), Point3D(0, W, z_base_top), "profile", "profile"))
-        segments.append(Segment3D(Point3D(0, W, z_base_top), Point3D(0, 0, z_base_top), "profile", "profile"))
+        # Lid Long Sides (Front & Back Panels):
+        # Front panel: [0, L] x [0, t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        add_solid_box(
+            Point3D(0, 0, z_lid_bot),
+            Point3D(L, t_wood, z_lid_top - t_wood),
+            color_group="lid",
+            label="Lid Front Panel"
+        )
+        # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot, z_lid_top - t_wood]
+        add_solid_box(
+            Point3D(0, W - t_wood, z_lid_bot),
+            Point3D(L, W, z_lid_top - t_wood),
+            color_group="lid",
+            label="Lid Back Panel"
+        )
 
-        # Rim along Lid bottom
-        segments.append(Segment3D(Point3D(0, 0, z_lid_bot), Point3D(L, 0, z_lid_bot), "profile", "profile"))
-        segments.append(Segment3D(Point3D(L, 0, z_lid_bot), Point3D(L, W, z_lid_bot), "profile", "profile"))
-        segments.append(Segment3D(Point3D(L, W, z_lid_bot), Point3D(0, W, z_lid_bot), "profile", "profile"))
-        segments.append(Segment3D(Point3D(0, W, z_lid_bot), Point3D(0, 0, z_lid_bot), "profile", "profile"))
+        # Lid Short Sides (Left & Right Panels):
+        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        add_solid_box(
+            Point3D(0, t_wood, z_lid_bot),
+            Point3D(t_wood, W - t_wood, z_lid_top - t_wood),
+            color_group="lid",
+            label="Lid Left Panel"
+        )
+        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot, z_lid_top - t_wood]
+        add_solid_box(
+            Point3D(L - t_wood, t_wood, z_lid_bot),
+            Point3D(L, W - t_wood, z_lid_top - t_wood),
+            color_group="lid",
+            label="Lid Right Panel"
+        )
 
-        # 4. Interior Cavity Cavity Boundary (dashed inner wood boundaries)
+        # --- 3. Aluminum Location Profile Mating Extrusions ---
+        alu_h = min(12.0, max(4.0, (H_base - t_wood) / 4.0))
+        # Rim along Base top edge
+        add_solid_box(
+            Point3D(0, 0, z_base_top - alu_h),
+            Point3D(L, t_wood, z_base_top),
+            color_group="profile",
+            label="Base Top Profile (Front)"
+        )
+        add_solid_box(
+            Point3D(0, W - t_wood, z_base_top - alu_h),
+            Point3D(L, W, z_base_top),
+            color_group="profile",
+            label="Base Top Profile (Back)"
+        )
+        add_solid_box(
+            Point3D(0, t_wood, z_base_top - alu_h),
+            Point3D(t_wood, W - t_wood, z_base_top),
+            color_group="profile",
+            label="Base Top Profile (Left)"
+        )
+        add_solid_box(
+            Point3D(L - t_wood, t_wood, z_base_top - alu_h),
+            Point3D(L, W - t_wood, z_base_top),
+            color_group="profile",
+            label="Base Top Profile (Right)"
+        )
+
+        # Rim along Lid bottom edge
+        add_solid_box(
+            Point3D(0, 0, z_lid_bot),
+            Point3D(L, t_wood, z_lid_bot + alu_h),
+            color_group="profile",
+            label="Lid Bottom Profile (Front)"
+        )
+        add_solid_box(
+            Point3D(0, W - t_wood, z_lid_bot),
+            Point3D(L, W, z_lid_bot + alu_h),
+            color_group="profile",
+            label="Lid Bottom Profile (Back)"
+        )
+        add_solid_box(
+            Point3D(0, t_wood, z_lid_bot),
+            Point3D(t_wood, W - t_wood, z_lid_bot + alu_h),
+            color_group="profile",
+            label="Lid Bottom Profile (Left)"
+        )
+        add_solid_box(
+            Point3D(L - t_wood, t_wood, z_lid_bot),
+            Point3D(L, W - t_wood, z_lid_bot + alu_h),
+            color_group="profile",
+            label="Lid Bottom Profile (Right)"
+        )
+
+        # --- 4. Inside Partition Walls (Volumetric Panels with Thickness) ---
         inner_x0 = t_wood
         inner_x1 = L - t_wood
         inner_y0 = t_wood
         inner_y1 = W - t_wood
-        inner_z0 = t_wood
+        inner_z0 = t_wood  # resting on top of base bottom floor panel
 
-        # Inner floor outline
-        segments.append(Segment3D(Point3D(inner_x0, inner_y0, inner_z0), Point3D(inner_x1, inner_y0, inner_z0), "dashed", "inner"))
-        segments.append(Segment3D(Point3D(inner_x1, inner_y0, inner_z0), Point3D(inner_x1, inner_y1, inner_z0), "dashed", "inner"))
-        segments.append(Segment3D(Point3D(inner_x1, inner_y1, inner_z0), Point3D(inner_x0, inner_y1, inner_z0), "dashed", "inner"))
-        segments.append(Segment3D(Point3D(inner_x0, inner_y1, inner_z0), Point3D(inner_x0, inner_y0, inner_z0), "dashed", "inner"))
-
-        # 5. Inside Partition Walls
         if show_inside_walls:
-            for wall in case.walls:
+            for i, wall in enumerate(case.walls, start=1):
                 w_thick = wall.thickness_mm if wall.thickness_mm > 0 else t_wood
                 w_height = wall.height_mm if (wall.height_mm is not None and wall.height_mm > 0) else case.inner_base_height
-                z_top = inner_z0 + w_height
+                z_wall_top = min(z_base_top, inner_z0 + w_height)
+                lbl = wall.label or f"Wall #{i}"
 
                 if wall.orientation == WallOrientation.WIDTH_WISE:
-                    # Wall placed at position_mm along inner length
                     x_center = inner_x0 + wall.position_mm
                     x_a = max(inner_x0, x_center - (w_thick / 2.0))
                     x_b = min(inner_x1, x_center + (w_thick / 2.0))
 
-                    add_box_wireframe(
+                    add_solid_box(
                         Point3D(x_a, inner_y0, inner_z0),
-                        Point3D(x_b, inner_y1, z_top),
+                        Point3D(x_b, inner_y1, z_wall_top),
                         color_group="wall",
-                        style="wall"
+                        label=lbl,
+                        highlight_top_endgrain=True
                     )
                 else:
-                    # Wall placed at position_mm along inner width
                     y_center = inner_y0 + wall.position_mm
                     y_a = max(inner_y0, y_center - (w_thick / 2.0))
                     y_b = min(inner_y1, y_center + (w_thick / 2.0))
 
-                    add_box_wireframe(
+                    add_solid_box(
                         Point3D(inner_x0, y_a, inner_z0),
-                        Point3D(inner_x1, y_b, z_top),
+                        Point3D(inner_x1, y_b, z_wall_top),
                         color_group="wall",
-                        style="wall"
+                        label=lbl,
+                        highlight_top_endgrain=True
                     )
 
-        # 6. Dimensions Callouts
+        # --- 5. Dimensions Callouts ---
         if show_dimensions:
             # Dimension: Length (front edge along X)
             dimensions.append(DimensionCallout3D(
@@ -234,7 +406,7 @@ class Schema3DGeometryBuilder:
                 dimension_type="height"
             ))
 
-            # Dimension: Base Height & Lid Height (back-left or front-left)
+            # Dimension: Base Height & Lid Height
             dimensions.append(DimensionCallout3D(
                 start=Point3D(0, W, 0),
                 end=Point3D(0, W, H_base),
@@ -267,6 +439,7 @@ class Schema3DGeometryBuilder:
                     ))
 
         return WireframeMesh3D(
+            faces=faces,
             segments=segments,
             dimensions=dimensions,
             bounding_box=(Point3D(0, 0, 0), Point3D(L, W, H + gap))
@@ -316,3 +489,37 @@ class ParallelProjector:
         depth_z = y_rot * cos_p - z_rot * sin_p
 
         return screen_x, screen_y, depth_z
+
+    def is_face_facing_camera(self, normal: Tuple[float, float, float]) -> bool:
+        """Determines if a 3D surface normal is facing towards the parallel projection camera."""
+        nx, ny, nz = normal
+        theta = math.radians(self.azimuth_deg)
+        phi = math.radians(self.elevation_deg)
+
+        cos_t, sin_t = math.cos(theta), math.sin(theta)
+        cos_p, sin_p = math.cos(phi), math.sin(phi)
+
+        n_rot_y = nx * sin_t + ny * cos_t
+        n_cam_z = n_rot_y * cos_p - nz * sin_p
+        # Faces pointing towards camera have negative camera Z normal component
+        return n_cam_z < -1e-6
+
+    def compute_face_shade(
+        self,
+        normal: Tuple[float, float, float],
+        light_dir: Tuple[float, float, float] = (0.5, -0.6, 0.7)
+    ) -> float:
+        """Computes directional lighting intensity factor for a face normal."""
+        nx, ny, nz = normal
+        lx, ly, lz = light_dir
+        l_len = math.sqrt(lx**2 + ly**2 + lz**2)
+        if l_len > 0:
+            lx, ly, lz = lx / l_len, ly / l_len, lz / l_len
+
+        dot = nx * lx + ny * ly + nz * lz
+        factor = 0.75 + 0.25 * max(0.0, dot)
+        if nz > 0.8:
+            factor = min(1.2, factor + 0.15)
+        elif nz < -0.8:
+            factor = max(0.55, factor - 0.15)
+        return factor

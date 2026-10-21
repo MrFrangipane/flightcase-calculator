@@ -187,13 +187,44 @@ def test_schema_3d_geometry_generation():
         lid_height=100.0,
         wood_thickness=9.0,
     )
+    case.add_wall(InsideWall(orientation=WallOrientation.WIDTH_WISE, position_mm=300.0, thickness_mm=12.0))
 
     mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=50.0)
+    assert len(mesh.faces) > 0
     assert len(mesh.segments) > 0
     assert len(mesh.dimensions) > 0
+
+    # Verify panel faces with thickness exist (base, lid, endgrain, profile, wall)
+    color_groups = {f.color_group for f in mesh.faces}
+    assert "base" in color_groups
+    assert "lid" in color_groups
+    assert "profile" in color_groups
+    assert "wall" in color_groups
+    assert "endgrain" in color_groups
+
+    # Verify end-grain thickness faces
+    endgrain_faces = [f for f in mesh.faces if f.is_endgrain]
+    assert len(endgrain_faces) > 0
 
     # Verify length and width callouts exist
     dim_labels = [d.label for d in mesh.dimensions]
     assert any("L = 800" in lbl for lbl in dim_labels)
     assert any("W = 500" in lbl for lbl in dim_labels)
     assert any("H = 400" in lbl for lbl in dim_labels)
+
+
+def test_parallel_projector_face_visibility_and_shading():
+    from flightcase.domain import ParallelProjector
+
+    projector = ParallelProjector(azimuth_deg=45.0, elevation_deg=30.0)
+
+    # Top face normal (0, 0, 1) is visible from above (elevation=30°)
+    assert projector.is_face_facing_camera((0.0, 0.0, 1.0)) is True
+
+    # Bottom face normal (0, 0, -1) is culled when looking from above
+    assert projector.is_face_facing_camera((0.0, 0.0, -1.0)) is False
+
+    # Shading produces valid brightness factor
+    shade_top = projector.compute_face_shade((0.0, 0.0, 1.0))
+    shade_bottom = projector.compute_face_shade((0.0, 0.0, -1.0))
+    assert shade_top > shade_bottom

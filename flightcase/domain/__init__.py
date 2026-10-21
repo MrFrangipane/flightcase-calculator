@@ -14,6 +14,7 @@ from .value_objects import (
     CutPiece,
     Point3D,
     Segment3D,
+    PolygonFace3D,
     DimensionCallout3D,
 )
 from .entities import (
@@ -40,6 +41,7 @@ __all__ = [
     "CutPiece",
     "Point3D",
     "Segment3D",
+    "PolygonFace3D",
     "DimensionCallout3D",
     "FlightCase",
     "CaseCompartment",

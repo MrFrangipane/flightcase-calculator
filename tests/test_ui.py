@@ -44,19 +44,35 @@ def test_main_window_lifecycle(qapp):
 
 def test_schema_3d_canvas_rendering(qapp):
     from flightcase.ui.widgets import Schema3DWidget
-    from flightcase.domain import Dimensions3D, FlightCase, Schema3DGeometryBuilder
+    from flightcase.domain import Dimensions3D, FlightCase, InsideWall, WallOrientation, Schema3DGeometryBuilder
 
     widget = Schema3DWidget()
     case = FlightCase(Dimensions3D(800.0, 500.0, 400.0), lid_height=100.0, wood_thickness=9.0)
+    case.add_wall(InsideWall(orientation=WallOrientation.WIDTH_WISE, position_mm=300.0, thickness_mm=10.0))
     mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=30.0)
 
     widget.set_mesh(mesh)
     assert widget.canvas.mesh is not None
+    assert len(widget.canvas.mesh.faces) > 0
 
     # Test view resets
     widget.canvas.reset_view(45.0, 30.0)
     assert widget.canvas.azimuth_deg == 45.0
     assert widget.canvas.elevation_deg == 30.0
+
+    # Test front, side, top views
+    widget.canvas.reset_view(0.0, 0.0)
+    widget.canvas.repaint()
+    widget.canvas.reset_view(90.0, 0.0)
+    widget.canvas.repaint()
+    widget.canvas.reset_view(0.0, 89.0)
+    widget.canvas.repaint()
+
+    # Test toggles
+    widget.chk_dims.setChecked(False)
+    assert widget.canvas.show_dimensions is False
+    widget.chk_walls.setChecked(False)
+    assert widget.canvas.show_inside_walls is False
 
     # Trigger repaint
     widget.canvas.repaint()

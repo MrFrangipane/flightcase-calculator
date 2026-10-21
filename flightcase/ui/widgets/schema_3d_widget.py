@@ -31,6 +31,7 @@ from PySide6.QtWidgets import (
 from ...domain import (
     Point3D,
     Segment3D,
+    PolygonFace3D,
     DimensionCallout3D,
     WireframeMesh3D,
     ParallelProjector,
@@ -39,7 +40,7 @@ from ..theme import COLORS
 
 
 class Schema3DCanvas(QWidget):
-    """QPainter canvas rendering 3D wireframe mesh and dimensions without perspective."""
+    """QPainter canvas rendering 3D solid schema and dimensions without perspective or hidden lines."""
 
     view_changed = Signal()
 
@@ -167,14 +168,11 @@ class Schema3DCanvas(QWidget):
         # 3. Draw Background Grid / Center Ground Marker
         self._draw_ground_grid(painter, projector, p_max)
 
-        # 4. Draw 3D Segments (Base, Lid, Profiles, Walls)
-        for seg in self.mesh.segments:
-            p1_sx, p1_sy, _ = projector.project_point(seg.p1)
-            p2_sx, p2_sy, _ = projector.project_point(seg.p2)
-
-            pen = self._get_pen_for_segment(seg)
-            painter.setPen(pen)
-            painter.drawLine(QPointF(p1_sx, p1_sy), QPointF(p2_sx, p2_sy))
+        # 4. Draw Solid Volumetric Panels without hidden lines
+        if self.mesh.faces:
+            self._draw_solid_faces(painter, projector)
+        else:
+            self._draw_fallback_segments(painter, projector)
 
         # 5. Draw Dimension Callouts & Leader Lines
         if self.show_dimensions:
@@ -187,6 +185,84 @@ class Schema3DCanvas(QWidget):
 
         # 7. Draw HUD Overlay (Angles, Scale, Projection Label)
         self._draw_hud(painter)
+
+    def _draw_solid_faces(self, painter: QPainter, projector: ParallelProjector) -> None:
+        """
+        Renders solid volumetric panel faces with Painter's algorithm depth sorting,
+        directional shading, and backface culling to eliminate hidden lines.
+        """
+        if not self.mesh or not self.mesh.faces:
+            return
+
+        visible_faces = []
+        for face in self.mesh.faces:
+            # Filter partition walls if toggle unchecked
+            if face.color_group == "wall" and not self.show_inside_walls:
+                continue
+
+            # 1. Backface culling: only keep faces oriented towards the camera
+            if not projector.is_face_facing_camera(face.normal):
+                continue
+
+            # 2. Compute depth for Painter's algorithm (project face centroid)
+            _, _, depth_z = projector.project_point(face.centroid)
+            visible_faces.append((depth_z, face))
+
+        # 3. Sort faces by depth_z descending (deepest / furthest away drawn first)
+        visible_faces.sort(key=lambda item: item[0], reverse=True)
+
+        # 4. Draw each visible face as a shaded filled polygon with boundary edges
+        for depth_z, face in visible_faces:
+            polygon = QPolygonF()
+            for v in face.vertices:
+                sx, sy, _ = projector.project_point(v)
+                polygon.append(QPointF(sx, sy))
+
+            # Lighting shade factor
+            shade = projector.compute_face_shade(face.normal)
+
+            # Colors and pen stroke
+            fill_color, edge_color, line_width = self._get_face_styling(face, shade)
+
+            painter.setBrush(QBrush(fill_color))
+            painter.setPen(QPen(edge_color, line_width, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+            painter.drawPolygon(polygon)
+
+    def _get_face_styling(self, face: PolygonFace3D, shade: float) -> Tuple[QColor, QColor, float]:
+        """Calculates shaded fill color, edge color, and line width for a 3D panel face."""
+        base_fill_hex = COLORS.get(f"{face.color_group}_fill", COLORS["base_fill"])
+        base_edge_hex = COLORS.get(f"{face.color_group}_edge", COLORS["base_edge"])
+        line_width = 1.6
+
+        if face.is_endgrain:
+            base_fill_hex = COLORS.get("endgrain_fill", "#334155")
+            base_edge_hex = COLORS.get("endgrain_edge", "#60a5fa")
+            line_width = 2.0
+        elif face.color_group == "profile":
+            line_width = 2.0
+        elif face.color_group == "wall":
+            line_width = 1.8
+
+        raw_color = QColor(base_fill_hex)
+        r = max(0, min(255, int(raw_color.red() * shade)))
+        g = max(0, min(255, int(raw_color.green() * shade)))
+        b = max(0, min(255, int(raw_color.blue() * shade)))
+        fill_color = QColor(r, g, b, 248)
+
+        edge_color = QColor(base_edge_hex)
+        return fill_color, edge_color, line_width
+
+    def _draw_fallback_segments(self, painter: QPainter, projector: ParallelProjector) -> None:
+        """Fallback wireframe segment drawing if no solid faces are present."""
+        if not self.mesh:
+            return
+        for seg in self.mesh.segments:
+            p1_sx, p1_sy, _ = projector.project_point(seg.p1)
+            p2_sx, p2_sy, _ = projector.project_point(seg.p2)
+
+            pen = self._get_pen_for_segment(seg)
+            painter.setPen(pen)
+            painter.drawLine(QPointF(p1_sx, p1_sy), QPointF(p2_sx, p2_sy))
 
     def _draw_ground_grid(self, painter: QPainter, projector: ParallelProjector, p_max: Point3D) -> None:
         grid_pen = QPen(QColor(COLORS["grid_line"]), 1, Qt.DotLine)

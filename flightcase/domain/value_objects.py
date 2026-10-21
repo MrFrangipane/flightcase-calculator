@@ -120,6 +120,28 @@ class Segment3D:
 
 
 @dataclass(frozen=True)
+class PolygonFace3D:
+    """Planar 3D polygonal face for solid volumetric panel rendering without hidden lines."""
+    vertices: Tuple[Point3D, ...]
+    normal: Tuple[float, float, float]
+    color_group: str = "base"  # "base", "lid", "wall", "profile", "endgrain"
+    label: str = ""
+    is_endgrain: bool = False
+
+    @property
+    def centroid(self) -> Point3D:
+        """Computes geometric centroid of the face."""
+        n = len(self.vertices)
+        if n == 0:
+            return Point3D(0, 0, 0)
+        return Point3D(
+            sum(p.x for p in self.vertices) / n,
+            sum(p.y for p in self.vertices) / n,
+            sum(p.z for p in self.vertices) / n,
+        )
+
+
+@dataclass(frozen=True)
 class DimensionCallout3D:
     """Dimension annotation in 3D space with text label and offset direction."""
     start: Point3D
