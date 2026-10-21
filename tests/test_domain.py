@@ -1,0 +1,199 @@
+"""Unit tests for Flightcase Domain layer (Entities, Value Objects, Domain Services)."""
+
+import pytest
+from flightcase.domain import (
+    Dimensions3D,
+    FlightCase,
+    InsideWall,
+    WallOrientation,
+    CutPieceCategory,
+    FlightCaseDomainService,
+    Schema3DGeometryBuilder,
+    InvalidDimensionError,
+    InvalidLidConfigurationError,
+    WallOutOfBoundsError,
+)
+
+
+def test_dimensions_3d_validation():
+    dims = Dimensions3D(800.0, 500.0, 400.0)
+    assert dims.length_mm == 800.0
+    assert dims.width_mm == 500.0
+    assert dims.height_mm == 400.0
+    assert pytest.approx(dims.volume_m3) == 0.16
+
+    with pytest.raises(InvalidDimensionError):
+        Dimensions3D(-100.0, 500.0, 400.0)
+
+    with pytest.raises(InvalidDimensionError):
+        Dimensions3D(800.0, 0.0, 400.0)
+
+
+def test_flightcase_invariants_and_properties():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+
+    assert case.outer_length == 800.0
+    assert case.outer_width == 500.0
+    assert case.total_height == 400.0
+    assert case.base_height == 300.0
+    assert case.total_wood_height == 390.0
+    assert case.lid_wood_height == 95.0
+    assert case.base_wood_height == 295.0
+    assert case.inner_length == 782.0
+    assert case.inner_width == 482.0
+    assert case.inner_base_height == 286.0
+    assert case.inner_lid_height == 86.0
+
+
+def test_flightcase_invalid_lid_height():
+    with pytest.raises(InvalidLidConfigurationError):
+        # Lid height >= total height
+        FlightCase(
+            dimensions=Dimensions3D(800.0, 500.0, 400.0),
+            lid_height=400.0,
+            wood_thickness=9.0,
+        )
+
+    with pytest.raises(InvalidLidConfigurationError):
+        # Lid height too small for profile offset (e.g. lid 4mm, offset 10mm -> half offset 5mm > lid)
+        FlightCase(
+            dimensions=Dimensions3D(800.0, 500.0, 400.0),
+            lid_height=4.0,
+            wood_thickness=9.0,
+            lid_alu_profile_offset=10.0,
+        )
+
+
+def test_wood_panels_cut_list_calculation():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+
+    cuts = case.calculate_wood_cut_list()
+    assert len(cuts) == 6
+
+    bottom = next(p for p in cuts if p.name == "Base Bottom Panel")
+    assert bottom.length_mm == 800.0
+    assert bottom.width_mm == 500.0
+    assert bottom.thickness_mm == 9.0
+    assert bottom.quantity == 1
+    assert bottom.category == CutPieceCategory.WOOD_BASE
+
+    base_long = next(p for p in cuts if "Base Long Sides" in p.name)
+    assert base_long.length_mm == 800.0
+    assert base_long.width_mm == 295.0
+    assert base_long.quantity == 2
+
+    base_short = next(p for p in cuts if "Base Short Sides" in p.name)
+    assert base_short.length_mm == 482.0
+    assert base_short.width_mm == 295.0
+    assert base_short.quantity == 2
+
+
+def test_lid_alu_profile_required_length():
+    case = FlightCase(
+        dimensions=Dimensions3D(1000.0, 600.0, 500.0),
+        lid_height=120.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=12.0,
+    )
+
+    single_perimeter = 2.0 * (1000.0 + 600.0)  # 3200 mm
+    assert case.total_lid_alu_profile_length_mm == 6400.0  # Male + Female = 2 perimeters
+
+    profiles = case.calculate_alu_profiles()
+    mating_profiles = [p for p in profiles if p.category == CutPieceCategory.ALU_LID_MATING]
+    assert len(mating_profiles) == 4
+    total_mating_len = sum(p.length_mm * p.quantity for p in mating_profiles)
+    assert total_mating_len == 6400.0
+
+
+def test_inside_walls_addition_and_validation():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+    )
+
+    # Valid width-wise wall (inner_length is 782)
+    wall1 = InsideWall(
+        orientation=WallOrientation.WIDTH_WISE,
+        position_mm=250.0,
+        thickness_mm=9.0,
+        label="Compartment Wall 1"
+    )
+    case.add_wall(wall1)
+    assert len(case.walls) == 1
+
+    # Out of bounds wall (position >= 782)
+    with pytest.raises(WallOutOfBoundsError):
+        case.add_wall(InsideWall(
+            orientation=WallOrientation.WIDTH_WISE,
+            position_mm=800.0
+        ))
+
+    # Out of bounds wall for width (inner_width is 482)
+    with pytest.raises(WallOutOfBoundsError):
+        case.add_wall(InsideWall(
+            orientation=WallOrientation.LENGTH_WISE,
+            position_mm=500.0
+        ))
+
+
+def test_equispaced_walls_and_compartments():
+    case = FlightCase(
+        dimensions=Dimensions3D(1000.0, 600.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=10.0,
+    )
+
+    # inner_length = 980
+    case.set_equispaced_walls(count=2, orientation=WallOrientation.WIDTH_WISE)
+    assert len(case.walls) == 2
+    assert pytest.approx(case.walls[0].position_mm, rel=1e-3) == 980.0 / 3.0
+    assert pytest.approx(case.walls[1].position_mm, rel=1e-3) == (980.0 / 3.0) * 2.0
+
+    comps = case.calculate_compartments()
+    assert len(comps) == 3
+    assert pytest.approx(comps[0].length_mm, rel=1e-3) == 980.0 / 3.0
+    assert pytest.approx(comps[0].width_mm) == 580.0
+
+
+def test_domain_calculation_report():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+    )
+
+    report = FlightCaseDomainService.calculate(case)
+    assert report.total_wood_area_m2 > 0.0
+    assert report.total_wood_weight_kg > 0.0
+    assert report.total_lid_mating_profile_length_mm == 5200.0
+    assert report.standard_sheets_required > 0.0
+
+
+def test_schema_3d_geometry_generation():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+    )
+
+    mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=50.0)
+    assert len(mesh.segments) > 0
+    assert len(mesh.dimensions) > 0
+
+    # Verify length and width callouts exist
+    dim_labels = [d.label for d in mesh.dimensions]
+    assert any("L = 800" in lbl for lbl in dim_labels)
+    assert any("W = 500" in lbl for lbl in dim_labels)
+    assert any("H = 400" in lbl for lbl in dim_labels)
