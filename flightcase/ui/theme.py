@@ -202,6 +202,10 @@ COLORS = {
     "wall_fill": "#3b1734",       # Deep magenta
     "endgrain_edge": "#60a5fa",   # Blue/slate edge highlight
     "endgrain_fill": "#334155",   # Wood panel thickness cross-section
+    "highlight_edge": "#fde047",  # Bright glowing electric yellow/gold
+    "highlight_fill": "#d97706",  # Rich glowing amber
+    "highlight_endgrain_edge": "#fef08a",  # Brilliant yellow highlight
+    "highlight_endgrain_fill": "#f59e0b",  # Radiant amber endgrain
     "inner_edge": "#64748b",      # Muted slate
     "dim_line": "#e2e8f0",        # Crisp white/silver
     "dim_text": "#fbbf24",        # Warm yellow

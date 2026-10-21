@@ -15,6 +15,7 @@ from .domain import (
 from .application import (
     CaseInputDTO,
     InsideWallDTO,
+    UISettingsDTO,
     CalculationResultDTO,
     CutPieceDTO,
     CalculateFlightCaseUseCase,
@@ -38,6 +39,7 @@ __all__ = [
     "InvalidLidConfigurationError",
     "CaseInputDTO",
     "InsideWallDTO",
+    "UISettingsDTO",
     "CalculationResultDTO",
     "CutPieceDTO",
     "CalculateFlightCaseUseCase",

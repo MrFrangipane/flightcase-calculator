@@ -69,6 +69,9 @@ class CaseParameters:
     # Aluminum angle profile width (mm) for edge calculations (e.g. 30mm x 30mm)
     edge_profile_width: float = 30.0
 
+    # User self-cuts the lid from an uncut 6-wall closed box
+    self_cut_lid: bool = False
+
     # Internal dividers
     dividers: List[Divider] = field(default_factory=list)
 
@@ -113,6 +116,11 @@ class CaseParameters:
     def inner_lid_height(self) -> float:
         """Interior usable height inside lid box."""
         return max(0.0, self.lid_wood_height - self.wood_thickness)
+
+    @property
+    def inner_total_height(self) -> float:
+        """Interior usable total height inside the case (floor to lid roof ceiling)."""
+        return max(0.0, self.total_height - (2.0 * self.wood_thickness))
 
 
 @dataclass

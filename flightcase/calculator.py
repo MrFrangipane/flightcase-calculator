@@ -31,78 +31,118 @@ def calculate_flightcase(params: CaseParameters) -> CalculationResult:
     # Base heights and Lid heights with aluminum profile offset subtracted
     h_base_wood = params.base_wood_height
     h_lid_wood = params.lid_wood_height
+    h_total_wood = params.total_wood_height
 
-    # 1. Base Panels
-    wood_cuts.append(CutPiece(
-        name="Base Bottom Panel",
-        category="Wood Panel - Base",
-        length_mm=cut_outer_length,
-        width_mm=cut_outer_width,
-        thickness_mm=t_wood,
-        quantity=1,
-        notes="Main floor panel of the flightcase"
-    ))
+    if params.self_cut_lid:
+        # 6 Walls of uncut closed box to be sawn open by user
+        wood_cuts.append(CutPiece(
+            name="Bottom Panel",
+            category="Wood Panel - Base",
+            length_mm=cut_outer_length,
+            width_mm=cut_outer_width,
+            thickness_mm=t_wood,
+            quantity=1,
+            notes="Floor panel of 6-sided uncut box"
+        ))
+        wood_cuts.append(CutPiece(
+            name="Top Panel",
+            category="Wood Panel - Lid",
+            length_mm=cut_outer_length,
+            width_mm=cut_outer_width,
+            thickness_mm=t_wood,
+            quantity=1,
+            notes="Roof panel of 6-sided uncut box"
+        ))
+        wood_cuts.append(CutPiece(
+            name="Long Sides (Front & Back)",
+            category="Wood Panel - Base",
+            length_mm=cut_outer_length,
+            width_mm=h_total_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes=f"Full-height long sides to be cut open by user (height adjusted for lid profile: -{params.lid_alu_profile_offset:.1f}mm)"
+        ))
+        wood_cuts.append(CutPiece(
+            name="Short Sides (Left & Right)",
+            category="Wood Panel - Base",
+            length_mm=cut_short_side_length,
+            width_mm=h_total_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes="Full-height short sides inset between front and back panels"
+        ))
+    else:
+        # 1. Base Panels
+        wood_cuts.append(CutPiece(
+            name="Base Bottom Panel",
+            category="Wood Panel - Base",
+            length_mm=cut_outer_length,
+            width_mm=cut_outer_width,
+            thickness_mm=t_wood,
+            quantity=1,
+            notes="Main floor panel of the flightcase"
+        ))
 
-    wood_cuts.append(CutPiece(
-        name="Base Long Sides (Front & Back)",
-        category="Wood Panel - Base",
-        length_mm=cut_outer_length,
-        width_mm=h_base_wood,
-        thickness_mm=t_wood,
-        quantity=2,
-        notes=f"Height adjusted for alu profile (-{params.lid_alu_profile_offset / 2:.1f}mm)"
-    ))
+        wood_cuts.append(CutPiece(
+            name="Base Long Sides (Front & Back)",
+            category="Wood Panel - Base",
+            length_mm=cut_outer_length,
+            width_mm=h_base_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes=f"Height adjusted for alu profile (-{params.lid_alu_profile_offset / 2:.1f}mm)"
+        ))
 
-    wood_cuts.append(CutPiece(
-        name="Base Short Sides (Left & Right)",
-        category="Wood Panel - Base",
-        length_mm=cut_short_side_length,
-        width_mm=h_base_wood,
-        thickness_mm=t_wood,
-        quantity=2,
-        notes="Inset between front and back panels"
-    ))
+        wood_cuts.append(CutPiece(
+            name="Base Short Sides (Left & Right)",
+            category="Wood Panel - Base",
+            length_mm=cut_short_side_length,
+            width_mm=h_base_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes="Inset between front and back panels"
+        ))
 
-    # 2. Lid Panels
-    wood_cuts.append(CutPiece(
-        name="Lid Top Panel",
-        category="Wood Panel - Lid",
-        length_mm=cut_outer_length,
-        width_mm=cut_outer_width,
-        thickness_mm=t_wood,
-        quantity=1,
-        notes="Main roof panel of the flightcase"
-    ))
+        # 2. Lid Panels
+        wood_cuts.append(CutPiece(
+            name="Lid Top Panel",
+            category="Wood Panel - Lid",
+            length_mm=cut_outer_length,
+            width_mm=cut_outer_width,
+            thickness_mm=t_wood,
+            quantity=1,
+            notes="Main roof panel of the flightcase"
+        ))
 
-    wood_cuts.append(CutPiece(
-        name="Lid Long Sides (Front & Back)",
-        category="Wood Panel - Lid",
-        length_mm=cut_outer_length,
-        width_mm=h_lid_wood,
-        thickness_mm=t_wood,
-        quantity=2,
-        notes=f"Height adjusted for alu profile (-{params.lid_alu_profile_offset / 2:.1f}mm)"
-    ))
+        wood_cuts.append(CutPiece(
+            name="Lid Long Sides (Front & Back)",
+            category="Wood Panel - Lid",
+            length_mm=cut_outer_length,
+            width_mm=h_lid_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes=f"Height adjusted for alu profile (-{params.lid_alu_profile_offset / 2:.1f}mm)"
+        ))
 
-    wood_cuts.append(CutPiece(
-        name="Lid Short Sides (Left & Right)",
-        category="Wood Panel - Lid",
-        length_mm=cut_short_side_length,
-        width_mm=h_lid_wood,
-        thickness_mm=t_wood,
-        quantity=2,
-        notes="Inset between front and back lid panels"
-    ))
+        wood_cuts.append(CutPiece(
+            name="Lid Short Sides (Left & Right)",
+            category="Wood Panel - Lid",
+            length_mm=cut_short_side_length,
+            width_mm=h_lid_wood,
+            thickness_mm=t_wood,
+            quantity=2,
+            notes="Inset between front and back lid panels"
+        ))
 
     # 3. Inside Dividers / Partition Walls
     inner_w = params.inner_width
     inner_l = params.inner_length
-    inner_base_h = params.inner_base_height
+    inner_total_h = params.inner_total_height
 
     for i, div in enumerate(params.dividers, start=1):
         lbl = div.label or f"Divider #{i}"
         div_thickness = div.thickness_mm if div.thickness_mm > 0 else t_wood
-        div_height = div.height_mm if (div.height_mm is not None and div.height_mm > 0) else inner_base_h
+        div_height = div.height_mm if (div.height_mm is not None and div.height_mm > 0) else inner_total_h
 
         if div.orientation == DividerOrientation.WIDTH_WISE:
             wood_cuts.append(CutPiece(
@@ -293,7 +333,7 @@ def compute_compartment_dimensions(params: CaseParameters) -> List[Tuple[str, fl
 
     inner_l = params.inner_length
     inner_w = params.inner_width
-    inner_h = params.inner_base_height
+    inner_h = params.inner_total_height
 
     # Segments along Length
     x_bounds = [0.0]

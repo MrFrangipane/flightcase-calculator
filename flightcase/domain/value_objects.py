@@ -117,6 +117,8 @@ class Segment3D:
     p2: Point3D
     style: str = "solid"  # "solid", "dashed", "axis", "profile", "wall"
     color_group: str = "case"  # "case", "lid", "profile", "wall", "dimension"
+    label: str = ""
+    wall_index: Optional[int] = None
 
 
 class ComponentLayer(IntEnum):
@@ -141,6 +143,7 @@ class PolygonFace3D:
     label: str = ""
     is_endgrain: bool = False
     layer_order: int = ComponentLayer.BASE_FLOOR
+    wall_index: Optional[int] = None
 
     @property
     def centroid(self) -> Point3D:

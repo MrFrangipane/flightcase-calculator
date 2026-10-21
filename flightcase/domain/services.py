@@ -118,6 +118,7 @@ class Schema3DGeometryBuilder:
             label: str = "",
             highlight_top_endgrain: bool = False,
             layer_order: int = ComponentLayer.BASE_FLOOR,
+            wall_index: Optional[int] = None,
         ) -> None:
             x0, y0, z0 = p_min.x, p_min.y, p_min.z
             x1, y1, z1 = p_max.x, p_max.y, p_max.z
@@ -134,6 +135,7 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=False,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # 2. Top (+Z)
@@ -144,6 +146,7 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=highlight_top_endgrain,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # 3. Front (-Y)
@@ -154,6 +157,7 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=False,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # 4. Back (+Y)
@@ -164,6 +168,7 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=False,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # 5. Left (-X)
@@ -174,6 +179,7 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=False,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # 6. Right (+X)
@@ -184,24 +190,25 @@ class Schema3DGeometryBuilder:
                 label=label,
                 is_endgrain=False,
                 layer_order=layer_order,
+                wall_index=wall_index,
             ))
 
             # Wireframe bounding segments (for wireframe modes / fallback)
             # Bottom
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x1, y0, z0), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y1, z0), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x0, y1, z0), "solid", color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y0, z0), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x1, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x0, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
             # Top
-            segments.append(Segment3D(Point3D(x0, y0, z1), Point3D(x1, y0, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z1), Point3D(x1, y1, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z1), Point3D(x0, y1, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z1), Point3D(x0, y0, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y0, z1), Point3D(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y0, z1), Point3D(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y1, z1), Point3D(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x0, y1, z1), Point3D(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
             # Verticals
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x0, y0, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y0, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), "solid", color_group))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), "solid", color_group))
+            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
 
         # --- 1. Base Box Volumetric Panels with Panel Thickness ---
         # Base Bottom Floor Panel: spans [0, L] x [0, W] x [0, t_wood]
@@ -371,8 +378,8 @@ class Schema3DGeometryBuilder:
         if show_inside_walls:
             for i, wall in enumerate(case.walls, start=1):
                 w_thick = wall.thickness_mm if wall.thickness_mm > 0 else t_wood
-                w_height = wall.height_mm if (wall.height_mm is not None and wall.height_mm > 0) else case.inner_base_height
-                z_wall_top = min(z_base_top, inner_z0 + w_height)
+                w_height = wall.height_mm if (wall.height_mm is not None and wall.height_mm > 0) else case.inner_total_height
+                z_wall_top = inner_z0 + min(w_height, case.inner_total_height)
                 lbl = wall.label or f"Wall #{i}"
 
                 if wall.orientation == WallOrientation.WIDTH_WISE:
@@ -387,6 +394,7 @@ class Schema3DGeometryBuilder:
                         label=lbl,
                         highlight_top_endgrain=True,
                         layer_order=ComponentLayer.INTERNAL_DIVIDERS,
+                        wall_index=i-1,
                     )
                 else:
                     y_center = inner_y0 + wall.position_mm
@@ -400,6 +408,7 @@ class Schema3DGeometryBuilder:
                         label=lbl,
                         highlight_top_endgrain=True,
                         layer_order=ComponentLayer.INTERNAL_DIVIDERS,
+                        wall_index=i-1,
                     )
 
         # --- 5. Dimensions Callouts ---

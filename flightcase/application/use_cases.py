@@ -54,6 +54,7 @@ class CalculateFlightCaseUseCase:
             lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
             corner_extrusion_rebate=input_dto.corner_extrusion_rebate,
             edge_profile_width=input_dto.edge_profile_width,
+            self_cut_lid=input_dto.self_cut_lid,
             _walls=domain_walls,
         )
 
@@ -117,6 +118,7 @@ class CalculateFlightCaseUseCase:
             inner_width=flight_case.inner_width,
             inner_base_height=flight_case.inner_base_height,
             inner_lid_height=flight_case.inner_lid_height,
+            inner_total_height=flight_case.inner_total_height,
             base_wood_height=flight_case.base_wood_height,
             lid_wood_height=flight_case.lid_wood_height,
             total_wood_height=flight_case.total_wood_height,
@@ -164,6 +166,7 @@ class GenerateSchema3DUseCase:
             lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
             corner_extrusion_rebate=input_dto.corner_extrusion_rebate,
             edge_profile_width=input_dto.edge_profile_width,
+            self_cut_lid=input_dto.self_cut_lid,
             _walls=domain_walls,
         )
 
@@ -173,3 +176,23 @@ class GenerateSchema3DUseCase:
             show_inside_walls=show_inside_walls,
             show_dimensions=show_dimensions,
         )
+
+
+class SaveProjectUseCase:
+    """Use case to serialize and save flightcase project configuration to a file."""
+
+    @staticmethod
+    def execute(input_dto: CaseInputDTO, file_path: str) -> None:
+        json_content = input_dto.to_json(indent=2)
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(json_content)
+
+
+class LoadProjectUseCase:
+    """Use case to load and deserialize flightcase project configuration from a file."""
+
+    @staticmethod
+    def execute(file_path: str) -> CaseInputDTO:
+        with open(file_path, "r", encoding="utf-8") as f:
+            json_content = f.read()
+        return CaseInputDTO.from_json(json_content)

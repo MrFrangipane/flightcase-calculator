@@ -49,6 +49,7 @@ def test_flightcase_invariants_and_properties():
     assert case.inner_width == 482.0
     assert case.inner_base_height == 286.0
     assert case.inner_lid_height == 86.0
+    assert case.inner_total_height == 382.0
 
 
 def test_flightcase_invalid_lid_height():
@@ -149,6 +150,43 @@ def test_inside_walls_addition_and_validation():
         ))
 
 
+def test_inside_wall_full_height_to_lid_roof():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+    # Default full height wall (height_mm is None)
+    case.add_wall(InsideWall(
+        orientation=WallOrientation.WIDTH_WISE,
+        position_mm=250.0,
+        thickness_mm=9.0,
+        label="Full Height Wall",
+    ))
+    # Custom partial height wall
+    case.add_wall(InsideWall(
+        orientation=WallOrientation.LENGTH_WISE,
+        position_mm=150.0,
+        thickness_mm=9.0,
+        height_mm=120.0,
+        label="Tray Divider",
+    ))
+
+    cuts = case.calculate_wood_cut_list()
+    full_wall_cut = next(p for p in cuts if "Full Height Wall" in p.name)
+    assert full_wall_cut.length_mm == 482.0
+    assert full_wall_cut.width_mm == 382.0  # inner total height = 400 - 2*9 = 382.0
+
+    tray_cut = next(p for p in cuts if "Tray Divider" in p.name)
+    assert tray_cut.length_mm == 782.0
+    assert tray_cut.width_mm == 120.0
+
+    comps = case.calculate_compartments()
+    for c in comps:
+        assert c.height_mm == 382.0
+
+
 def test_equispaced_walls_and_compartments():
     case = FlightCase(
         dimensions=Dimensions3D(1000.0, 600.0, 400.0),
@@ -245,3 +283,50 @@ def test_parallel_projector_face_visibility_and_shading():
     shade_top = projector.compute_face_shade((0.0, 0.0, 1.0))
     shade_bottom = projector.compute_face_shade((0.0, 0.0, -1.0))
     assert shade_top > shade_bottom
+
+
+def test_self_cut_lid_domain_and_geometry():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+        self_cut_lid=True,
+    )
+
+    # 1. Wood cut list has 4 entries representing 6 outer walls
+    cuts = case.calculate_wood_cut_list()
+    assert len(cuts) == 4
+    assert sum(c.quantity for c in cuts) == 6
+
+    bottom = next(c for c in cuts if c.name == "Bottom Panel")
+    assert bottom.length_mm == 800.0
+    assert bottom.width_mm == 500.0
+    assert bottom.quantity == 1
+
+    top = next(c for c in cuts if c.name == "Top Panel")
+    assert top.length_mm == 800.0
+    assert top.width_mm == 500.0
+    assert top.quantity == 1
+
+    long_s = next(c for c in cuts if c.name == "Long Sides (Front & Back)")
+    assert long_s.length_mm == 800.0
+    assert long_s.width_mm == 390.0
+    assert long_s.quantity == 2
+
+    short_s = next(c for c in cuts if c.name == "Short Sides (Left & Right)")
+    assert short_s.length_mm == 482.0
+    assert short_s.width_mm == 390.0
+    assert short_s.quantity == 2
+
+    # 2. 3D Schema Geometry is kept with the lid, base, and aluminum mating profiles
+    mesh = Schema3DGeometryBuilder.build_geometry(case, lid_exploded_gap_mm=20.0)
+    color_groups = {f.color_group for f in mesh.faces}
+    assert "base" in color_groups
+    assert "lid" in color_groups
+    assert "profile" in color_groups
+    # Ensure lid roof and base floor faces exist
+    assert any(f.layer_order == ComponentLayer.LID_ROOF for f in mesh.faces)
+    assert any(f.layer_order == ComponentLayer.BASE_FLOOR for f in mesh.faces)
+    assert any(f.layer_order == ComponentLayer.LID_WALLS for f in mesh.faces)
+    assert any(f.layer_order == ComponentLayer.OUTER_BASE_WALLS for f in mesh.faces)

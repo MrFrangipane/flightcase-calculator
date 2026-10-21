@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 import sys
-from typing import Optional
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QIcon, QAction
+import os
+from typing import Optional, List
+from PySide6.QtCore import Qt, QSettings
+from PySide6.QtGui import QIcon, QAction, QCloseEvent
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -16,13 +17,18 @@ from PySide6.QtWidgets import (
     QStatusBar,
     QMessageBox,
     QFileDialog,
+    QScrollArea,
+    QFrame,
 )
 
 from ..domain.exceptions import FlightCaseDomainError
 from ..application import (
     CaseInputDTO,
+    UISettingsDTO,
     CalculateFlightCaseUseCase,
     GenerateSchema3DUseCase,
+    SaveProjectUseCase,
+    LoadProjectUseCase,
     CalculationResultDTO,
 )
 from .theme import DARK_THEME_QSS
@@ -38,20 +44,34 @@ from .widgets import (
 class FlightCaseMainWindow(QMainWindow):
     """Main window coordinating inputs, domain calculations, 3D schema, and cut lists."""
 
-    def __init__(self, parent: Optional[QWidget] = None):
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        restore_settings: bool = True,
+        load_last_project: bool = True,
+    ):
         super().__init__(parent)
-        self.setWindowTitle("Flightcase Calculator — DDD (PySide6)")
+        self.setWindowTitle("Flightcase Calculator — Untitled")
         self.resize(1280, 800)
         self.setMinimumSize(960, 600)
 
         self._current_result: Optional[CalculationResultDTO] = None
+        self._current_project_path: Optional[str] = None
 
         self._init_ui()
         self._init_menus()
         self._connect_signals()
 
-        # Initial calculation
-        self.recalculate()
+        # Restore window geometry and splitter state
+        if restore_settings:
+            self._restore_settings()
+
+        # Load last project or perform initial calculation
+        if load_last_project:
+            self._load_startup_project()
+        else:
+            self.recalculate()
+            self._update_window_title()
 
     def _init_ui(self) -> None:
         central_widget = QWidget(self)
@@ -59,34 +79,50 @@ class FlightCaseMainWindow(QMainWindow):
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # Main horizontal splitter
-        splitter = QSplitter(Qt.Horizontal, self)
+        # Main horizontal splitter with 3 sections:
+        # [ Left: Output Tables | Center: 3D Viewport | Right: Dimensions & Inside Walls Config ]
+        self.main_splitter = QSplitter(Qt.Horizontal, self)
 
-        # 1. Left Pane: Input Tabs
-        left_tabs = QTabWidget(self)
-        self.input_panel = CaseInputPanel(self)
-        self.walls_widget = InsideWallsWidget(self)
-
-        left_tabs.addTab(self.input_panel, "1. Dimensions & Specs")
-        left_tabs.addTab(self.walls_widget, "2. Inside Walls / Partitions")
-        splitter.addWidget(left_tabs)
-
-        # 2. Right Pane: Output Tabs
-        self.right_tabs = QTabWidget(self)
-        self.schema_widget = Schema3DWidget(self)
+        # 1. Left Pane: Tabs containing dimensions / cutlist output tables
+        self.tabs = QTabWidget(self)
         self.cutlist_widget = CutListTableWidget(self)
         self.alu_widget = AluProfilesWidget(self)
 
-        self.right_tabs.addTab(self.schema_widget, "📐 3D Schema & Dimensions")
-        self.right_tabs.addTab(self.cutlist_widget, "🪵 Wood Panels Dimensions")
-        self.right_tabs.addTab(self.alu_widget, "🔩 Lid Alu Profile Lengths")
-        splitter.addWidget(self.right_tabs)
+        self.tabs.addTab(self.cutlist_widget, "Wood Cut List")
+        self.tabs.addTab(self.alu_widget, "Alu Profiles")
+        self.main_splitter.addWidget(self.tabs)
 
-        # Set splitter proportions (38% left, 62% right)
-        splitter.setStretchFactor(0, 38)
-        splitter.setStretchFactor(1, 62)
+        # 2. Center Pane: 3D Viewport (always visible)
+        self.schema_widget = Schema3DWidget(self)
+        self.main_splitter.addWidget(self.schema_widget)
 
-        main_layout.addWidget(splitter)
+        # 3. Right Pane: Permanent Configuration Panel (Dimensions & Specs + Inside Walls)
+        self.input_panel = CaseInputPanel(self)
+        self.walls_widget = InsideWallsWidget(self)
+
+        self.config_scroll = QScrollArea(self)
+        self.config_scroll.setWidgetResizable(True)
+        self.config_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.config_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.config_scroll.setFrameShape(QFrame.Shape.NoFrame)
+
+        self.config_container = QWidget()
+        config_layout = QVBoxLayout(self.config_container)
+        config_layout.setContentsMargins(0, 0, 0, 0)
+        config_layout.setSpacing(12)
+        config_layout.addWidget(self.input_panel)
+        config_layout.addWidget(self.walls_widget)
+        config_layout.addStretch(1)
+
+        self.config_scroll.setWidget(self.config_container)
+        self.main_splitter.addWidget(self.config_scroll)
+
+        # Set splitter proportions (32% left output tables, 44% center 3D schema, 24% right config panel)
+        self.main_splitter.setStretchFactor(0, 32)
+        self.main_splitter.setStretchFactor(1, 44)
+        self.main_splitter.setStretchFactor(2, 24)
+
+        main_layout.addWidget(self.main_splitter)
 
         # Status Bar
         self.status_bar = QStatusBar(self)
@@ -99,8 +135,35 @@ class FlightCaseMainWindow(QMainWindow):
         # File Menu
         file_menu = menu_bar.addMenu("&File")
 
+        new_action = QAction("&New Project", self)
+        new_action.setShortcut("Ctrl+N")
+        new_action.setStatusTip("Create a new flightcase project")
+        new_action.triggered.connect(self._new_project)
+        file_menu.addAction(new_action)
+
+        open_action = QAction("&Open Project...", self)
+        open_action.setShortcut("Ctrl+O")
+        open_action.setStatusTip("Open an existing flightcase project file")
+        open_action.triggered.connect(self._open_project)
+        file_menu.addAction(open_action)
+
+        save_action = QAction("&Save Project", self)
+        save_action.setShortcut("Ctrl+S")
+        save_action.setStatusTip("Save the current flightcase project")
+        save_action.triggered.connect(self._save_project)
+        file_menu.addAction(save_action)
+
+        save_as_action = QAction("Save Project &As...", self)
+        save_as_action.setShortcut("Ctrl+Shift+S")
+        save_as_action.setStatusTip("Save the flightcase project to a new file")
+        save_as_action.triggered.connect(self._save_project_as)
+        file_menu.addAction(save_as_action)
+
+        file_menu.addSeparator()
+
         export_action = QAction("&Export Full Cut List...", self)
         export_action.setShortcut("Ctrl+E")
+        export_action.setStatusTip("Export comprehensive Bill of Materials to CSV")
         export_action.triggered.connect(self._export_full_report)
         file_menu.addAction(export_action)
 
@@ -108,6 +171,7 @@ class FlightCaseMainWindow(QMainWindow):
 
         exit_action = QAction("E&xit", self)
         exit_action.setShortcut("Ctrl+Q")
+        exit_action.setStatusTip("Exit Flightcase Calculator")
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -124,11 +188,201 @@ class FlightCaseMainWindow(QMainWindow):
         about_action.triggered.connect(self._show_about)
         help_menu.addAction(about_action)
 
+    def _get_current_ui_settings(self) -> UISettingsDTO:
+        """Gathers active UI settings including 3D camera transform, toggles, and active tab."""
+        ui_dto = self.schema_widget.get_ui_settings()
+        ui_dto.active_tab_index = self.tabs.currentIndex()
+        count, orient = self.walls_widget.get_generator_settings()
+        ui_dto.equispaced_walls_count = count
+        ui_dto.equispaced_walls_orientation = orient
+        return ui_dto
+
+    def _apply_ui_settings(self, settings: UISettingsDTO) -> None:
+        """Applies UI settings into 3D schema widget, active tab, and generator controls."""
+        self.schema_widget.set_ui_settings(settings)
+        if 0 <= settings.active_tab_index < self.tabs.count():
+            self.tabs.setCurrentIndex(settings.active_tab_index)
+        self.walls_widget.set_generator_settings(
+            settings.equispaced_walls_count,
+            settings.equispaced_walls_orientation,
+        )
+
+    def _save_settings(self) -> None:
+        """Saves window geometry, splitter sizes, tabs, and project state to QSettings."""
+        settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("windowState", self.saveState())
+        if hasattr(self, "main_splitter"):
+            settings.setValue("mainSplitter", self.main_splitter.saveState())
+        if hasattr(self, "tabs"):
+            settings.setValue("currentTab", self.tabs.currentIndex())
+        if self._current_project_path:
+            settings.setValue("lastProjectPath", self._current_project_path)
+        try:
+            input_dto = self.input_panel.get_input_dto()
+            input_dto.walls = self.walls_widget.get_walls()
+            input_dto.ui_settings = self._get_current_ui_settings()
+            settings.setValue("lastProjectSnapshot", input_dto.to_json())
+        except Exception:
+            pass
+
+    def _restore_settings(self) -> None:
+        """Restores window geometry, state, and splitter states from QSettings."""
+        settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+        geom = settings.value("geometry")
+        if geom:
+            self.restoreGeometry(geom)
+
+        state = settings.value("windowState")
+        if state:
+            self.restoreState(state)
+
+        splitter_state = settings.value("mainSplitter")
+        if splitter_state and hasattr(self, "main_splitter"):
+            self.main_splitter.restoreState(splitter_state)
+
+        tab_idx = settings.value("currentTab")
+        if tab_idx is not None and hasattr(self, "tabs"):
+            try:
+                self.tabs.setCurrentIndex(int(tab_idx))
+            except (ValueError, TypeError):
+                pass
+
+    def _load_startup_project(self) -> None:
+        """Loads last project from file or snapshot at startup."""
+        settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+        last_path = settings.value("lastProjectPath")
+        if last_path and isinstance(last_path, str) and os.path.isfile(last_path):
+            try:
+                self._load_project_file(last_path, update_settings=False)
+                return
+            except Exception:
+                pass
+
+        last_snapshot = settings.value("lastProjectSnapshot")
+        if last_snapshot and isinstance(last_snapshot, str):
+            try:
+                dto = CaseInputDTO.from_json(last_snapshot)
+                self._apply_project_dto(dto)
+                self._update_window_title()
+                return
+            except Exception:
+                pass
+
+        self.recalculate()
+        self._update_window_title()
+
+    def _update_window_title(self) -> None:
+        if self._current_project_path:
+            name = os.path.basename(self._current_project_path)
+            self.setWindowTitle(f"Flightcase Calculator — {name}")
+        else:
+            self.setWindowTitle("Flightcase Calculator — Untitled")
+
+    def _apply_project_dto(self, dto: CaseInputDTO) -> None:
+        self.input_panel.set_input_dto(dto)
+        self.walls_widget.set_walls(dto.walls)
+        if dto.ui_settings:
+            self._apply_ui_settings(dto.ui_settings)
+        self.recalculate()
+
+    def _new_project(self) -> None:
+        default_dto = CaseInputDTO()
+        self._current_project_path = None
+        self._apply_project_dto(default_dto)
+        self.schema_widget.canvas.reset_view(45.0, 30.0)
+        self._update_window_title()
+        self.status_bar.showMessage("New project created with default dimensions.")
+
+    def _open_project(self) -> None:
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Flightcase Project",
+            "",
+            "Flightcase Project (*.fcproj *.json);;All Files (*)",
+        )
+        if file_path:
+            self._load_project_file(file_path)
+
+    def _load_project_file(self, file_path: str, update_settings: bool = True) -> None:
+        try:
+            dto = LoadProjectUseCase.execute(file_path)
+            self._current_project_path = file_path
+            self._apply_project_dto(dto)
+            self._update_window_title()
+            if update_settings:
+                settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+                settings.setValue("lastProjectPath", file_path)
+            self.status_bar.showMessage(f"Project loaded from {os.path.basename(file_path)}")
+        except Exception as e:
+            QMessageBox.critical(self, "Load Project Error", f"Failed to load project from {file_path}:\n{str(e)}")
+
+    def _save_project(self) -> None:
+        if self._current_project_path:
+            self._save_project_file(self._current_project_path)
+        else:
+            self._save_project_as()
+
+    def _save_project_as(self) -> None:
+        default_name = os.path.basename(self._current_project_path) if self._current_project_path else "my_flightcase.fcproj"
+        file_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "Save Flightcase Project As",
+            default_name,
+            "Flightcase Project (*.fcproj *.json);;All Files (*)",
+        )
+        if file_path:
+            self._save_project_file(file_path)
+
+    def _save_project_file(self, file_path: str) -> None:
+        try:
+            input_dto = self.input_panel.get_input_dto()
+            input_dto.walls = self.walls_widget.get_walls()
+            input_dto.ui_settings = self._get_current_ui_settings()
+            SaveProjectUseCase.execute(input_dto, file_path)
+            self._current_project_path = file_path
+            self._update_window_title()
+            settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
+            settings.setValue("lastProjectPath", file_path)
+            self.status_bar.showMessage(f"Project saved to {os.path.basename(file_path)}")
+        except Exception as e:
+            QMessageBox.critical(self, "Save Project Error", f"Failed to save project to {file_path}:\n{str(e)}")
+
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self._save_settings()
+        super().closeEvent(event)
+
     def _connect_signals(self) -> None:
         self.input_panel.input_changed.connect(self.recalculate)
         self.walls_widget.walls_changed.connect(self.recalculate)
         self.schema_widget.lid_exploded_changed.connect(self._update_schema_geometry)
         self.schema_widget.toggles_changed.connect(self._update_schema_geometry)
+
+        # Highlight synchronization across dimension tables and 3D schema
+        self.walls_widget.wall_selection_changed.connect(self._on_wall_selection_changed)
+        self.cutlist_widget.piece_selection_changed.connect(self._on_piece_selection_changed)
+        self.alu_widget.profile_selection_changed.connect(self._on_profile_selection_changed)
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _on_wall_selection_changed(self, indices: List[int], labels: List[str]) -> None:
+        self.schema_widget.set_highlights(wall_indices=indices, labels=labels)
+
+    def _on_piece_selection_changed(self, names: List[str]) -> None:
+        self.schema_widget.set_highlights(labels=names)
+
+    def _on_profile_selection_changed(self, names: List[str]) -> None:
+        self.schema_widget.set_highlights(labels=names)
+
+    def _on_tab_changed(self, index: int) -> None:
+        current_widget = self.tabs.widget(index)
+        if current_widget == self.walls_widget:
+            self.walls_widget.emit_current_selection()
+        elif current_widget == self.cutlist_widget:
+            self.cutlist_widget.emit_current_selection()
+        elif current_widget == self.alu_widget:
+            self.alu_widget.emit_current_selection()
+        else:
+            self.schema_widget.clear_highlights()
 
     def recalculate(self) -> None:
         """Executes application use cases to update all outputs live."""

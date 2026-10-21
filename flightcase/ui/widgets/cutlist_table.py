@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from typing import Optional, List
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -23,6 +23,8 @@ from ...application import CalculationResultDTO, CutPieceDTO
 
 class CutListTableWidget(QWidget):
     """Widget displaying all wood panels cutting dimensions and metrics."""
+
+    piece_selection_changed = Signal(list)  # List of selected panel/piece names
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -71,6 +73,7 @@ class CutListTableWidget(QWidget):
         t_layout.setSpacing(8)
 
         self.table = QTableWidget(0, 8, self)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels([
             "Panel Description",
             "Category",
@@ -81,15 +84,21 @@ class CutListTableWidget(QWidget):
             "Total Area (m²)",
             "Notes / Alignment",
         ])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.Stretch)
+        self.table.horizontalHeader().setMinimumSectionSize(60)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(7, QHeaderView.ResizeMode.Interactive)
+        self.table.setColumnWidth(0, 180)
+        self.table.setColumnWidth(7, 240)
         self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        self.table.itemSelectionChanged.connect(self._on_selection_changed)
         t_layout.addWidget(self.table)
 
         # Bottom Buttons
@@ -118,9 +127,28 @@ class CutListTableWidget(QWidget):
         self.lbl_utilization.setText(f"{result.sheet_utilization_pct:.1f} %")
 
         # Update Table
+        self.table.blockSignals(True)
         self.table.setRowCount(len(result.wood_cut_list))
         for row, item in enumerate(result.wood_cut_list):
             self._set_table_row(row, item)
+        self.table.blockSignals(False)
+        self.emit_current_selection()
+
+    def _on_selection_changed(self) -> None:
+        self.emit_current_selection()
+
+    def emit_current_selection(self) -> None:
+        if not self.current_result:
+            self.piece_selection_changed.emit([])
+            return
+
+        selected_rows = sorted(set(idx.row() for idx in self.table.selectedIndexes()))
+        selected_pieces = [
+            self.current_result.wood_cut_list[r].name
+            for r in selected_rows
+            if 0 <= r < len(self.current_result.wood_cut_list)
+        ]
+        self.piece_selection_changed.emit(selected_pieces)
 
     def _set_table_row(self, row: int, item: CutPieceDTO) -> None:
         # 0: Name

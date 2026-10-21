@@ -34,6 +34,7 @@ from ...domain import (
     DimensionCallout3D,
     WireframeMesh3D,
 )
+from ...application import UISettingsDTO
 from ..theme import COLORS
 
 
@@ -68,6 +69,10 @@ class Schema3DCanvas(QOpenGLWidget):
         # Geometry Data
         self.mesh: Optional[WireframeMesh3D] = None
 
+        # Highlight state for selected elements
+        self.highlighted_wall_indices: set[int] = set()
+        self.highlighted_labels: set[str] = set()
+
         # Mouse interaction state
         self._last_mouse_pos: Optional[QPoint] = None
         self._mouse_button_down: Optional[Qt.MouseButton] = None
@@ -98,6 +103,89 @@ class Schema3DCanvas(QOpenGLWidget):
         self.pan_offset_y = 0.0
         self.update()
         self.view_changed.emit()
+
+    def set_view_state(
+        self,
+        azimuth_deg: float = 45.0,
+        elevation_deg: float = 30.0,
+        zoom_factor: float = 1.0,
+        pan_offset_x: float = 0.0,
+        pan_offset_y: float = 0.0,
+        is_perspective: bool = False,
+        show_dimensions: bool = True,
+        show_inside_walls: bool = True,
+        show_axes: bool = True,
+    ) -> None:
+        """Sets full camera transform and visibility states."""
+        self.azimuth_deg = float(azimuth_deg)
+        self.elevation_deg = float(elevation_deg)
+        self.zoom_factor = float(zoom_factor)
+        self.pan_offset_x = float(pan_offset_x)
+        self.pan_offset_y = float(pan_offset_y)
+        self.show_dimensions = bool(show_dimensions)
+        self.show_inside_walls = bool(show_inside_walls)
+        self.show_axes = bool(show_axes)
+        self.set_perspective(bool(is_perspective))
+        self.update()
+        self.view_changed.emit()
+
+    def set_highlights(
+        self,
+        wall_indices: Optional[List[int]] = None,
+        labels: Optional[List[str]] = None,
+    ) -> None:
+        """Sets active highlighted wall indices and/or element labels and redraws."""
+        self.highlighted_wall_indices = set(wall_indices or [])
+        self.highlighted_labels = set(labels or [])
+        self.update()
+        self.view_changed.emit()
+
+    def clear_highlights(self) -> None:
+        """Clears all active highlights."""
+        if self.highlighted_wall_indices or self.highlighted_labels:
+            self.highlighted_wall_indices.clear()
+            self.highlighted_labels.clear()
+            self.update()
+            self.view_changed.emit()
+
+    def is_face_highlighted(self, face: PolygonFace3D) -> bool:
+        """Determines whether a given 3D polygon face is currently selected/highlighted."""
+        if not self.highlighted_wall_indices and not self.highlighted_labels:
+            return False
+
+        if face.wall_index is not None and face.wall_index in self.highlighted_wall_indices:
+            return True
+
+        if face.label:
+            if face.label in self.highlighted_labels:
+                return True
+            lbl_lower = face.label.lower()
+            for hl in self.highlighted_labels:
+                if not hl:
+                    continue
+                hl_lower = hl.lower()
+                if lbl_lower in hl_lower or hl_lower in lbl_lower:
+                    return True
+                # Keyword matches for composite panel descriptions
+                if "front" in lbl_lower and "front" in hl_lower:
+                    return True
+                if "back" in lbl_lower and "back" in hl_lower:
+                    return True
+                if "left" in lbl_lower and "left" in hl_lower:
+                    return True
+                if "right" in lbl_lower and "right" in hl_lower:
+                    return True
+                if "bottom" in lbl_lower and "bottom" in hl_lower:
+                    return True
+                if "top" in lbl_lower and "top" in hl_lower:
+                    return True
+                if "profile" in lbl_lower and "profile" in hl_lower:
+                    if "lid" in lbl_lower and "lid" in hl_lower:
+                        return True
+                    if "base" in lbl_lower and "base" in hl_lower:
+                        return True
+
+        return False
 
     # --- Mouse Event Handlers ---
 
@@ -356,6 +444,27 @@ class Schema3DCanvas(QOpenGLWidget):
 
     def _get_face_styling(self, face: PolygonFace3D, shade: float = 1.0) -> Tuple[QColor, QColor, float]:
         """Calculates shaded 100% opaque fill color, edge color, and line width for a 3D panel face."""
+        is_highlighted = self.is_face_highlighted(face)
+
+        if is_highlighted:
+            if face.is_endgrain:
+                base_fill_hex = COLORS.get("highlight_endgrain_fill", "#f59e0b")
+                base_edge_hex = COLORS.get("highlight_endgrain_edge", "#fef08a")
+                line_width = 3.2
+            else:
+                base_fill_hex = COLORS.get("highlight_fill", "#d97706")
+                base_edge_hex = COLORS.get("highlight_edge", "#fde047")
+                line_width = 3.0
+
+            raw_color = QColor(base_fill_hex)
+            lit_shade = 0.65 + shade * 0.35
+            r = max(0, min(255, int(raw_color.red() * lit_shade)))
+            g = max(0, min(255, int(raw_color.green() * lit_shade)))
+            b = max(0, min(255, int(raw_color.blue() * lit_shade)))
+            fill_color = QColor(r, g, b, 255)
+            edge_color = QColor(base_edge_hex)
+            return fill_color, edge_color, line_width
+
         base_fill_hex = COLORS.get(f"{face.color_group}_fill", COLORS["base_fill"])
         base_edge_hex = COLORS.get(f"{face.color_group}_edge", COLORS["base_edge"])
         line_width = 1.6
@@ -511,6 +620,12 @@ class Schema3DCanvas(QOpenGLWidget):
         info = f"OpenGL {proj_name} | Azimuth: {self.azimuth_deg:.0f}° | Elevation: {self.elevation_deg:.0f}° | Zoom: {self.zoom_factor:.2f}x"
         painter.drawText(12, 20, info)
 
+        if self.highlighted_labels or self.highlighted_wall_indices:
+            sel_text = ", ".join(sorted(self.highlighted_labels)) if self.highlighted_labels else f"Wall #{list(self.highlighted_wall_indices)[0] + 1}"
+            painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            painter.setPen(QColor(COLORS.get("highlight_edge", "#fde047")))
+            painter.drawText(12, 38, f"★ Highlighted: {sel_text}")
+
 
 class Schema3DWidget(QWidget):
     """Complete 3D Schema panel with interactive toolbar and hardware-accelerated OpenGL canvas."""
@@ -649,3 +764,66 @@ class Schema3DWidget(QWidget):
     @property
     def show_inside_walls(self) -> bool:
         return self.chk_walls.isChecked()
+
+    def set_highlights(
+        self,
+        wall_indices: Optional[List[int]] = None,
+        labels: Optional[List[str]] = None,
+    ) -> None:
+        """Forward highlight selection to OpenGL canvas."""
+        self.canvas.set_highlights(wall_indices=wall_indices, labels=labels)
+
+    def clear_highlights(self) -> None:
+        """Clears all element highlights on OpenGL canvas."""
+        self.canvas.clear_highlights()
+
+    def get_ui_settings(self) -> UISettingsDTO:
+        """Collects current 3D viewport, camera, explosion gap, and toggle states."""
+        return UISettingsDTO(
+            camera_azimuth_deg=self.canvas.azimuth_deg,
+            camera_elevation_deg=self.canvas.elevation_deg,
+            camera_zoom=self.canvas.zoom_factor,
+            camera_pan_x=self.canvas.pan_offset_x,
+            camera_pan_y=self.canvas.pan_offset_y,
+            is_perspective=self.canvas.is_perspective,
+            lid_exploded_gap_mm=float(self.slider_gap.value()),
+            show_dimensions=self.chk_dims.isChecked(),
+            show_inside_walls=self.chk_walls.isChecked(),
+            show_axes=self.canvas.show_axes,
+        )
+
+    def set_ui_settings(self, settings: UISettingsDTO) -> None:
+        """Restores 3D viewport transform, camera, explosion gap, and toggle states."""
+        gap_val = int(round(settings.lid_exploded_gap_mm))
+        self.slider_gap.blockSignals(True)
+        self.slider_gap.setValue(gap_val)
+        self.slider_gap.blockSignals(False)
+        self.lbl_gap.setText(f"{gap_val} mm")
+
+        self.chk_dims.blockSignals(True)
+        self.chk_dims.setChecked(settings.show_dimensions)
+        self.chk_dims.blockSignals(False)
+
+        self.chk_walls.blockSignals(True)
+        self.chk_walls.setChecked(settings.show_inside_walls)
+        self.chk_walls.blockSignals(False)
+
+        self.btn_proj_toggle.setChecked(settings.is_perspective)
+        if settings.is_perspective:
+            self.btn_proj_toggle.setText("Perspective")
+            self.btn_proj_toggle.setStyleSheet("background-color: #3b82f6; color: white; font-weight: bold;")
+        else:
+            self.btn_proj_toggle.setText("Parallel (Ortho)")
+            self.btn_proj_toggle.setStyleSheet("")
+
+        self.canvas.set_view_state(
+            azimuth_deg=settings.camera_azimuth_deg,
+            elevation_deg=settings.camera_elevation_deg,
+            zoom_factor=settings.camera_zoom,
+            pan_offset_x=settings.camera_pan_x,
+            pan_offset_y=settings.camera_pan_y,
+            is_perspective=settings.is_perspective,
+            show_dimensions=settings.show_dimensions,
+            show_inside_walls=settings.show_inside_walls,
+            show_axes=settings.show_axes,
+        )

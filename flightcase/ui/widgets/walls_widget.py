@@ -26,6 +26,7 @@ class InsideWallsWidget(QWidget):
     """Widget managing interior divider walls configuration and equispaced generation."""
 
     walls_changed = Signal()
+    wall_selection_changed = Signal(list, list)  # (selected_indices, selected_labels)
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -66,6 +67,8 @@ class InsideWallsWidget(QWidget):
         table_layout.setSpacing(8)
 
         self.table = QTableWidget(0, 5, self)
+        self.table.setMinimumHeight(180)
+        self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels([
             "Wall Label",
             "Orientation",
@@ -73,12 +76,19 @@ class InsideWallsWidget(QWidget):
             "Thickness (mm)",
             "Height (mm)",
         ])
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setMinimumSectionSize(60)
+        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table.setColumnWidth(0, 140)
         self.table.setAlternatingRowColors(True)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        self.table.itemSelectionChanged.connect(self._on_table_selection_changed)
+        self.table.currentCellChanged.connect(lambda r, c, pr, pc: self._on_table_selection_changed())
+        self.table.cellClicked.connect(lambda r, c: self._on_cell_clicked(r))
         table_layout.addWidget(self.table)
 
         # Action Buttons
@@ -121,6 +131,7 @@ class InsideWallsWidget(QWidget):
             ))
         self._refresh_table()
         self.walls_changed.emit()
+        self.emit_current_selection()
 
     def set_equispaced_from_span(self, count: int, orientation_str: str, span_mm: float, thickness_mm: float = 9.0) -> None:
         self.walls.clear()
@@ -136,6 +147,7 @@ class InsideWallsWidget(QWidget):
                 ))
         self._refresh_table()
         self.walls_changed.emit()
+        self.emit_current_selection()
 
     def _on_add_wall(self) -> None:
         idx = len(self.walls) + 1
@@ -147,6 +159,7 @@ class InsideWallsWidget(QWidget):
         ))
         self._refresh_table()
         self.walls_changed.emit()
+        self.emit_current_selection()
 
     def _on_remove_wall(self) -> None:
         selected_rows = sorted(set(idx.row() for idx in self.table.selectedIndexes()), reverse=True)
@@ -156,11 +169,13 @@ class InsideWallsWidget(QWidget):
                     self.walls.pop(r)
             self._refresh_table()
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def _on_clear_walls(self) -> None:
         self.walls.clear()
         self._refresh_table()
         self.walls_changed.emit()
+        self.emit_current_selection()
 
     def _refresh_table(self) -> None:
         self.table.blockSignals(True)
@@ -207,30 +222,50 @@ class InsideWallsWidget(QWidget):
 
         self.table.blockSignals(False)
 
+    def _on_cell_clicked(self, row: int) -> None:
+        self.table.selectRow(row)
+        self.emit_current_selection()
+
+    def _on_table_selection_changed(self) -> None:
+        self.emit_current_selection()
+
+    def emit_current_selection(self) -> None:
+        selected_rows = sorted(set(idx.row() for idx in self.table.selectedIndexes()))
+        if not selected_rows and self.table.currentRow() >= 0:
+            selected_rows = [self.table.currentRow()]
+        valid_indices = [r for r in selected_rows if 0 <= r < len(self.walls)]
+        valid_labels = [self.walls[r].label for r in valid_indices if self.walls[r].label]
+        self.wall_selection_changed.emit(valid_indices, valid_labels)
+
     def _update_wall_label(self, row: int, label: str) -> None:
         if 0 <= row < len(self.walls):
             self.walls[row].label = label
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def _update_wall_orient(self, row: int, orient: str) -> None:
         if 0 <= row < len(self.walls):
             self.walls[row].orientation = orient
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def _update_wall_pos(self, row: int, pos: float) -> None:
         if 0 <= row < len(self.walls):
             self.walls[row].position_mm = pos
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def _update_wall_thick(self, row: int, thick: float) -> None:
         if 0 <= row < len(self.walls):
             self.walls[row].thickness_mm = thick
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def _update_wall_height(self, row: int, height: float) -> None:
         if 0 <= row < len(self.walls):
             self.walls[row].height_mm = height if height > 0 else None
             self.walls_changed.emit()
+            self.emit_current_selection()
 
     def get_walls(self) -> List[InsideWallDTO]:
         return list(self.walls)
@@ -238,3 +273,17 @@ class InsideWallsWidget(QWidget):
     def set_walls(self, walls: List[InsideWallDTO]) -> None:
         self.walls = list(walls)
         self._refresh_table()
+        self.emit_current_selection()
+
+    def get_generator_settings(self) -> tuple[int, str]:
+        """Returns the quick generator count and orientation."""
+        count = self.spin_count.value()
+        orient = self.combo_gen_orient.currentData() or "width_wise"
+        return count, orient
+
+    def set_generator_settings(self, count: int, orientation: str) -> None:
+        """Sets the quick generator count and orientation."""
+        self.spin_count.setValue(max(1, min(20, count)))
+        idx = self.combo_gen_orient.findData(orientation)
+        if idx >= 0:
+            self.combo_gen_orient.setCurrentIndex(idx)

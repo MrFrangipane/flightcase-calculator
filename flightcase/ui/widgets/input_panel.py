@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QPushButton,
     QHBoxLayout,
+    QCheckBox,
 )
 from ...application import CaseInputDTO
 
@@ -130,6 +131,12 @@ class CaseInputPanel(QWidget):
         self.spin_edge_width.valueChanged.connect(self._on_value_changed)
         spec_layout.addWidget(self.spin_edge_width, 2, 1)
 
+        # Self-Cut Lid (6-wall uncut box) Checkbox
+        self.chk_self_cut_lid = QCheckBox("Cut lid yourself (6-wall uncut box)", self)
+        self.chk_self_cut_lid.setToolTip("Calculate wood cut list for a 6-sided uncut closed box to be sawn open by the builder")
+        self.chk_self_cut_lid.toggled.connect(self._on_value_changed)
+        spec_layout.addWidget(self.chk_self_cut_lid, 3, 0, 1, 2)
+
         main_layout.addWidget(spec_box)
         main_layout.addStretch()
 
@@ -168,6 +175,40 @@ class CaseInputPanel(QWidget):
 
             self.input_changed.emit()
 
+    def set_self_cut_lid(self, value: bool) -> None:
+        self.chk_self_cut_lid.setChecked(value)
+
+    def set_input_dto(self, dto: CaseInputDTO) -> None:
+        """Sets all input field values from a CaseInputDTO."""
+        self.spin_length.blockSignals(True)
+        self.spin_width.blockSignals(True)
+        self.spin_total_height.blockSignals(True)
+        self.spin_lid_height.blockSignals(True)
+        self.spin_wood_thickness.blockSignals(True)
+        self.spin_profile_offset.blockSignals(True)
+        self.spin_edge_width.blockSignals(True)
+        self.chk_self_cut_lid.blockSignals(True)
+
+        self.spin_length.setValue(dto.outer_length)
+        self.spin_width.setValue(dto.outer_width)
+        self.spin_total_height.setValue(dto.total_height)
+        self.spin_lid_height.setValue(dto.lid_height)
+        self.spin_wood_thickness.setValue(dto.wood_thickness)
+        self.spin_profile_offset.setValue(dto.lid_alu_profile_offset)
+        self.spin_edge_width.setValue(dto.edge_profile_width)
+        self.chk_self_cut_lid.setChecked(dto.self_cut_lid)
+
+        self.spin_length.blockSignals(False)
+        self.spin_width.blockSignals(False)
+        self.spin_total_height.blockSignals(False)
+        self.spin_lid_height.blockSignals(False)
+        self.spin_wood_thickness.blockSignals(False)
+        self.spin_profile_offset.blockSignals(False)
+        self.spin_edge_width.blockSignals(False)
+        self.chk_self_cut_lid.blockSignals(False)
+
+        self.input_changed.emit()
+
     def get_input_dto(self) -> CaseInputDTO:
         return CaseInputDTO(
             outer_length=self.spin_length.value(),
@@ -177,4 +218,5 @@ class CaseInputPanel(QWidget):
             wood_thickness=self.spin_wood_thickness.value(),
             lid_alu_profile_offset=self.spin_profile_offset.value(),
             edge_profile_width=self.spin_edge_width.value(),
+            self_cut_lid=self.chk_self_cut_lid.isChecked(),
         )

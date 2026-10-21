@@ -1,8 +1,8 @@
 """Aluminum profiles required length and internal compartments analysis widget."""
 
 from __future__ import annotations
-from typing import Optional
-from PySide6.QtCore import Qt
+from typing import Optional, List
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -23,6 +23,8 @@ from ...application import CalculationResultDTO, CutPieceDTO
 
 class AluProfilesWidget(QWidget):
     """Widget displaying required aluminum profile lengths, breakdown, and compartments."""
+
+    profile_selection_changed = Signal(list)  # List of selected profile names
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -61,6 +63,7 @@ class AluProfilesWidget(QWidget):
         t_layout.setSpacing(8)
 
         self.table_profiles = QTableWidget(0, 6, self)
+        self.table_profiles.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_profiles.setHorizontalHeaderLabels([
             "Profile Description",
             "Category",
@@ -69,13 +72,19 @@ class AluProfilesWidget(QWidget):
             "Total Length (m)",
             "Mounting Location / Notes",
         ])
-        self.table_profiles.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table_profiles.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table_profiles.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table_profiles.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table_profiles.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        self.table_profiles.horizontalHeader().setSectionResizeMode(5, QHeaderView.Stretch)
+        self.table_profiles.horizontalHeader().setMinimumSectionSize(60)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_profiles.horizontalHeader().setSectionResizeMode(5, QHeaderView.ResizeMode.Interactive)
+        self.table_profiles.setColumnWidth(0, 180)
+        self.table_profiles.setColumnWidth(5, 240)
         self.table_profiles.setAlternatingRowColors(True)
+        self.table_profiles.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
+        self.table_profiles.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
+        self.table_profiles.itemSelectionChanged.connect(self._on_selection_changed)
         t_layout.addWidget(self.table_profiles)
 
         btn_row = QHBoxLayout()
@@ -93,18 +102,21 @@ class AluProfilesWidget(QWidget):
         c_layout.setSpacing(8)
 
         self.table_comps = QTableWidget(0, 5, self)
+        self.table_comps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_comps.setHorizontalHeaderLabels([
             "Compartment Name",
             "Usable Length (mm)",
             "Usable Width (mm)",
-            "Base Usable Height (mm)",
+            "Usable Height (mm)",
             "Volume (Liters)",
         ])
-        self.table_comps.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.table_comps.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        self.table_comps.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        self.table_comps.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeToContents)
-        self.table_comps.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.table_comps.horizontalHeader().setMinimumSectionSize(60)
+        self.table_comps.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        self.table_comps.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_comps.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_comps.horizontalHeader().setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_comps.horizontalHeader().setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        self.table_comps.setColumnWidth(0, 180)
         self.table_comps.setAlternatingRowColors(True)
         c_layout.addWidget(self.table_comps)
 
@@ -124,6 +136,7 @@ class AluProfilesWidget(QWidget):
         )
 
         # 2. Update Profiles Table
+        self.table_profiles.blockSignals(True)
         self.table_profiles.setRowCount(len(result.alu_profiles_list))
         for row, item in enumerate(result.alu_profiles_list):
             it_name = QTableWidgetItem(item.name)
@@ -152,6 +165,8 @@ class AluProfilesWidget(QWidget):
             it_notes = QTableWidgetItem(item.notes)
             it_notes.setFlags(it_notes.flags() & ~Qt.ItemIsEditable)
             self.table_profiles.setItem(row, 5, it_notes)
+        self.table_profiles.blockSignals(False)
+        self.emit_current_selection()
 
         # 3. Update Compartments Table
         self.table_comps.setRowCount(len(result.compartments))
@@ -179,6 +194,22 @@ class AluProfilesWidget(QWidget):
             it_vol.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
             it_vol.setFlags(it_vol.flags() & ~Qt.ItemIsEditable)
             self.table_comps.setItem(row, 4, it_vol)
+
+    def _on_selection_changed(self) -> None:
+        self.emit_current_selection()
+
+    def emit_current_selection(self) -> None:
+        if not self.current_result:
+            self.profile_selection_changed.emit([])
+            return
+
+        selected_rows = sorted(set(idx.row() for idx in self.table_profiles.selectedIndexes()))
+        selected_profiles = [
+            self.current_result.alu_profiles_list[r].name
+            for r in selected_rows
+            if 0 <= r < len(self.current_result.alu_profiles_list)
+        ]
+        self.profile_selection_changed.emit(selected_profiles)
 
     def _copy_profiles_clipboard(self) -> None:
         if not self.current_result:
