@@ -5,6 +5,7 @@ from flightcase.models import CaseParameters, Divider, DividerOrientation
 from flightcase.calculator import (
     calculate_flightcase,
     generate_equispaced_dividers,
+    generate_dividers_from_compartment_spaces,
     compute_compartment_dimensions,
 )
 
@@ -121,16 +122,33 @@ def test_dividers_cut_list():
 
 def test_equispaced_divider_generator():
     params = CaseParameters(outer_length=1000.0, outer_width=600.0, wood_thickness=10.0)
-    # inner_length = 980, 1 divider should be at 490
-    divs = generate_equispaced_dividers(1, DividerOrientation.WIDTH_WISE, params)
+    # inner_length = 980, 1 divider (10mm thick) should be at 490 (with clearances 485mm on each side)
+    divs = generate_equispaced_dividers(1, DividerOrientation.WIDTH_WISE, params, thickness_mm=10.0)
     assert len(divs) == 1
     assert pytest.approx(divs[0].position_mm) == 490.0
 
-    # 2 dividers along length should be at 980/3 = 326.67 and 653.33
-    divs2 = generate_equispaced_dividers(2, DividerOrientation.WIDTH_WISE, params)
+    # 2 dividers along length (each 10mm thick): total wall thickness = 20mm -> usable clearance = 960mm -> 320mm each
+    # Divider 1 at 320 + 5 = 325mm, Divider 2 at 320 + 10 + 320 + 5 = 655mm
+    divs2 = generate_equispaced_dividers(2, DividerOrientation.WIDTH_WISE, params, thickness_mm=10.0)
     assert len(divs2) == 2
-    assert pytest.approx(divs2[0].position_mm, rel=1e-3) == 980.0 / 3.0
-    assert pytest.approx(divs2[1].position_mm, rel=1e-3) == (980.0 / 3.0) * 2.0
+    assert pytest.approx(divs2[0].position_mm) == 325.0
+    assert pytest.approx(divs2[1].position_mm) == 655.0
+
+
+def test_generate_dividers_from_compartment_spaces():
+    params = CaseParameters(outer_length=1000.0, outer_width=600.0, wood_thickness=10.0)
+    # 3 compartments with specific clearances: 200mm, 300mm, 460mm
+    # Wall 1: pos = 200 + 5 = 205mm
+    # Wall 2: pos = 200 + 10 + 300 + 5 = 515mm
+    divs = generate_dividers_from_compartment_spaces(
+        clearances_mm=[200.0, 300.0, 460.0],
+        orientation=DividerOrientation.WIDTH_WISE,
+        params=params,
+        thicknesses_mm=[10.0, 10.0],
+    )
+    assert len(divs) == 2
+    assert pytest.approx(divs[0].position_mm) == 205.0
+    assert pytest.approx(divs[1].position_mm) == 515.0
 
 
 def test_compartments_calculation():
@@ -139,13 +157,16 @@ def test_compartments_calculation():
         outer_width=500.0,
         wood_thickness=9.0,
         dividers=[
-            Divider(orientation=DividerOrientation.WIDTH_WISE, position_mm=300.0),
+            Divider(orientation=DividerOrientation.WIDTH_WISE, position_mm=300.0, thickness_mm=9.0),
         ]
     )
     comps = compute_compartment_dimensions(params)
     assert len(comps) == 2  # 1 width divider splits length into 2 compartments
-    assert pytest.approx(comps[0][1]) == 300.0
-    assert pytest.approx(comps[1][1]) == (800.0 - 18.0) - 300.0
+    # Inner length = 782mm. Wall at 300mm (half thick 4.5mm)
+    # Comp 1 usable length = 300 - 4.5 = 295.5mm
+    # Comp 2 usable length = 782 - 304.5 = 477.5mm
+    assert pytest.approx(comps[0][1]) == 295.5
+    assert pytest.approx(comps[1][1]) == 477.5
 
 
 def test_self_cut_lid_calculation():

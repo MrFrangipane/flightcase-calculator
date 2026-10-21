@@ -41,8 +41,8 @@ def test_main_window_lifecycle(qapp):
     assert window._current_result.total_lid_mating_profile_length_mm == 7200.0  # 2 * 2 * (1200 + 600)
 
     # Test adding walls
-    window.walls_widget.spin_count.setValue(2)
-    window.walls_widget._on_generate_equispaced()
+    window.walls_widget._on_add_wall()
+    window.walls_widget._on_add_wall()
     assert len(window.walls_widget.get_walls()) == 2
     assert len(window._current_result.wood_cut_list) == 8  # 6 main panels + 2 walls
 
@@ -272,8 +272,8 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     assert window.walls_widget.isVisibleTo(window)
 
     # 2. Add inside walls and verify wall selection highlighting
-    window.walls_widget.spin_count.setValue(2)
-    window.walls_widget._on_generate_equispaced()
+    window.walls_widget._on_add_wall()
+    window.walls_widget._on_add_wall()
 
     # Select the first wall in InsideWallsWidget table
     window.walls_widget.table.selectRow(0)
@@ -477,14 +477,19 @@ def test_project_ui_settings_storage_and_restoration(tmp_path, qapp):
     window1.schema_widget._on_toggle_projection_clicked()
     assert window1.schema_widget.is_perspective is True
 
-    # Configure lid distance, checkboxes, and tabs
+    # Configure lid distance, checkboxes, tabs, and inside walls orientation & auto equalize
     window1.schema_widget.slider_gap.setValue(65)
     window1.schema_widget.chk_dims.setChecked(False)
     window1.schema_widget.chk_walls.setChecked(True)
     window1.tabs.setCurrentIndex(1)
-
-    # Configure wall generator inputs
-    window1.walls_widget.set_generator_settings(3, "length_wise")
+    window1.walls_widget.set_walls([
+        InsideWallDTO(orientation="length_wise", position_mm=150.0, thickness_mm=10.0),
+        InsideWallDTO(orientation="length_wise", position_mm=300.0, thickness_mm=10.0),
+    ])
+    window1.walls_widget.set_compartment_orientation("length_wise")
+    assert window1.walls_widget.get_compartment_orientation() == "length_wise"
+    window1.walls_widget.set_auto_equalize_flags([False, True, True])
+    assert window1.walls_widget.get_auto_equalize_flags() == [False, True, True]
 
     # Save to project file
     project_path = str(tmp_path / "ui_customized_case.fcproj")
@@ -516,12 +521,135 @@ def test_project_ui_settings_storage_and_restoration(tmp_path, qapp):
     assert window2.schema_widget.chk_walls.isChecked() is True
     assert window2.schema_widget.canvas.show_inside_walls is True
 
-    # Verify active tab
+    # Verify active tab, compartment orientation, and auto equalize flags
     assert window2.tabs.currentIndex() == 1
-
-    # Verify generator settings
-    count, orient = window2.walls_widget.get_generator_settings()
-    assert count == 3
-    assert orient == "length_wise"
+    assert window2.walls_widget.get_compartment_orientation() == "length_wise"
+    assert window2.walls_widget.get_auto_equalize_flags() == [False, True, True]
+    assert window2.walls_widget._get_comp_tab_space_spinbox(0).isEnabled() is True
+    assert window2.walls_widget._get_comp_tab_space_spinbox(1).isEnabled() is False
+    assert window2.walls_widget._get_comp_tab_space_spinbox(2).isEnabled() is False
 
     window2.close()
+
+
+def test_inside_walls_compartment_spaces_ui(qapp):
+    from flightcase.ui import FlightCaseMainWindow
+    from PySide6.QtWidgets import QDoubleSpinBox, QCheckBox
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    # Set outer dimensions: L = 1000mm, W = 600mm, Wood = 10mm -> inner_length = 980mm, inner_width = 580mm
+    window.input_panel.spin_length.setValue(1000.0)
+    window.input_panel.spin_width.setValue(600.0)
+    window.input_panel.spin_wood_thickness.setValue(10.0)
+    window.recalculate()
+
+    # Verify InsideWallsWidget has received context
+    assert window.walls_widget.inner_length == 980.0
+    assert window.walls_widget.inner_width == 580.0
+    assert window.walls_widget.wood_thickness == 10.0
+
+    # 1. Test adding compartments and configuring clearances directly in InsideWallsWidget
+    window.walls_widget.set_walls([])
+    assert window.walls_widget.table_comps.rowCount() == 1  # 1 full span compartment by default
+
+    # Add 2 more compartments (total 3 compartments, 2 walls)
+    window.walls_widget._on_comp_tab_add()
+    window.walls_widget._on_comp_tab_add()
+    assert window.walls_widget.table_comps.rowCount() == 3
+
+    # Enable auto-equalize on row 2
+    chk_comp2 = window.walls_widget._get_comp_tab_auto_checkbox(2)
+    assert isinstance(chk_comp2, QCheckBox)
+    chk_comp2.setChecked(True)
+    spin_tab_comp2 = window.walls_widget._get_comp_tab_space_spinbox(2)
+    assert spin_tab_comp2.isEnabled() is False
+
+    # Edit compartment 0 available space to 300.0 mm
+    spin_comp0 = window.walls_widget._get_comp_tab_space_spinbox(0)
+    assert isinstance(spin_comp0, QDoubleSpinBox)
+    spin_comp0.setValue(300.0)
+
+    # Edit compartment 1 available space to 200.0 mm
+    spin_comp1 = window.walls_widget._get_comp_tab_space_spinbox(1)
+    spin_comp1.setValue(200.0)
+
+    # Verify auto-equalized compartment 2 space = 980 - 20 (walls) - 300 - 200 = 460 mm
+    clearances = window.walls_widget._get_comp_tab_clearances()
+    assert pytest.approx(clearances[2]) == 460.0
+
+    # Verify that walls are updated dynamically
+    updated_walls = window.walls_widget.get_walls()
+    assert len(updated_walls) == 2
+    # Wall 1 center: 300 + 5 = 305.0 mm
+    assert pytest.approx(updated_walls[0].position_mm) == 305.0
+    # Wall 2 center: 300 + 10 + 200 + 5 = 515.0 mm
+    assert pytest.approx(updated_walls[1].position_mm) == 515.0
+
+    # Test "- Remove Compartment" button
+    prev_count = window.walls_widget.table_comps.rowCount()
+    window.walls_widget._on_comp_tab_remove()
+    assert window.walls_widget.table_comps.rowCount() == prev_count - 1
+
+    window.close()
+
+
+def test_compartment_auto_equalize_comprehensive(qapp):
+    """Tests all aspects of the Auto-Equalize column and reactive space redistribution."""
+    from flightcase.ui.widgets.walls_widget import InsideWallsWidget
+    from PySide6.QtWidgets import QDoubleSpinBox, QCheckBox
+
+    widget = InsideWallsWidget()
+    widget.set_case_dimensions(inner_length=1000.0, inner_width=500.0, wood_thickness=10.0)
+
+    # Add compartments so we have 4 compartments (3 partition walls of 10mm -> 30mm total walls, 970mm usable clearance)
+    while widget.table_comps.rowCount() < 4:
+        widget._on_comp_tab_add()
+
+    assert widget.table_comps.rowCount() == 4
+
+    # Set initial clearances on unchecked rows: row 0 = 200, row 1 = 200, row 2 and 3 checked
+    widget._get_comp_tab_auto_checkbox(0).setChecked(False)
+    widget._get_comp_tab_auto_checkbox(1).setChecked(False)
+    widget._get_comp_tab_auto_checkbox(2).setChecked(True)
+    widget._get_comp_tab_auto_checkbox(3).setChecked(True)
+
+    widget._get_comp_tab_space_spinbox(0).setValue(200.0)
+    widget._get_comp_tab_space_spinbox(1).setValue(200.0)
+
+    # Rows 2 and 3 should be disabled for manual editing
+    assert widget._get_comp_tab_space_spinbox(0).isEnabled() is True
+    assert widget._get_comp_tab_space_spinbox(1).isEnabled() is True
+    assert widget._get_comp_tab_space_spinbox(2).isEnabled() is False
+    assert widget._get_comp_tab_space_spinbox(3).isEnabled() is False
+
+    # Remaining space for rows 2 and 3 = 1000 - 30 - (200 + 200) = 570mm -> 285mm each
+    clearances = widget._get_comp_tab_clearances()
+    assert pytest.approx(clearances[2]) == 285.0
+    assert pytest.approx(clearances[3]) == 285.0
+
+    # Edit unchecked row 0 to 100.0 mm -> Remaining space = 1000 - 30 - (100 + 200) = 670mm -> 335mm each
+    widget._get_comp_tab_space_spinbox(0).setValue(100.0)
+    clearances = widget._get_comp_tab_clearances()
+    assert pytest.approx(clearances[0]) == 100.0
+    assert pytest.approx(clearances[2]) == 335.0
+    assert pytest.approx(clearances[3]) == 335.0
+
+    # Edit separator wall 1 thickness from 10mm to 20mm -> total walls = 40mm -> Remaining = 1000 - 40 - 300 = 660mm -> 330mm each
+    widget._get_comp_tab_thick_spinbox(1).setValue(20.0)
+    clearances = widget._get_comp_tab_clearances()
+    assert pytest.approx(clearances[2]) == 330.0
+    assert pytest.approx(clearances[3]) == 330.0
+
+    # Toggle row 1 to auto-equalize as well (rows 1, 2, 3 now checked)
+    chk1 = widget._get_comp_tab_auto_checkbox(1)
+    chk1.setChecked(True)
+    assert widget._get_comp_tab_space_spinbox(1).isEnabled() is False
+    # Remaining space = 1000 - 40 - 100 = 860mm -> 860 / 3 = 286.7mm each
+    clearances = widget._get_comp_tab_clearances()
+    assert pytest.approx(clearances[1], 0.1) == 286.7
+    assert pytest.approx(clearances[2], 0.1) == 286.7
+    assert pytest.approx(clearances[3], 0.1) == 286.7
+
+    # Toggle row 1 back to unchecked -> should become editable again
+    chk1.setChecked(False)
+    assert widget._get_comp_tab_space_spinbox(1).isEnabled() is True

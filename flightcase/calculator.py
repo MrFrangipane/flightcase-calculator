@@ -1,6 +1,6 @@
 """Flightcase calculation engine for wood cut lists and aluminum profiles."""
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from .models import (
     CaseParameters,
     CalculationResult,
@@ -286,33 +286,66 @@ def generate_equispaced_dividers(
     params: CaseParameters,
     thickness_mm: float = 9.0
 ) -> List[Divider]:
-    """Generates evenly spaced dividers across length or width."""
+    """
+    Generates evenly spaced dividers across length or width,
+    equally distributing interior clearance while accounting for wood thickness.
+    """
     if count <= 0:
         return []
 
     dividers = []
-    if orientation == DividerOrientation.WIDTH_WISE:
-        span = params.inner_length
-        step = span / (count + 1)
-        for i in range(1, count + 1):
-            pos = step * i
-            dividers.append(Divider(
-                orientation=orientation,
-                position_mm=pos,
-                thickness_mm=thickness_mm,
-                label=f"Width Divider #{i}"
-            ))
-    else:
-        span = params.inner_width
-        step = span / (count + 1)
-        for i in range(1, count + 1):
-            pos = step * i
-            dividers.append(Divider(
-                orientation=orientation,
-                position_mm=pos,
-                thickness_mm=thickness_mm,
-                label=f"Length Divider #{i}"
-            ))
+    span = params.inner_length if orientation == DividerOrientation.WIDTH_WISE else params.inner_width
+    usable_clearance = max(0.0, span - (count * thickness_mm))
+    compartment_clearance = usable_clearance / (count + 1)
+
+    for i in range(1, count + 1):
+        pos = (i * compartment_clearance) + ((i - 1) * thickness_mm) + (thickness_mm / 2.0)
+        prefix = "Width" if orientation == DividerOrientation.WIDTH_WISE else "Length"
+        dividers.append(Divider(
+            orientation=orientation,
+            position_mm=pos,
+            thickness_mm=thickness_mm,
+            label=f"{prefix} Divider #{i}"
+        ))
+
+    return dividers
+
+
+def generate_dividers_from_compartment_spaces(
+    clearances_mm: List[float],
+    orientation: DividerOrientation,
+    params: CaseParameters,
+    thicknesses_mm: Optional[List[float]] = None,
+) -> List[Divider]:
+    """
+    Generates partition dividers from a list of desired compartment available clearances,
+    strictly accounting for divider wood thicknesses.
+    """
+    num_comps = len(clearances_mm)
+    if num_comps <= 1:
+        return []
+
+    num_divs = num_comps - 1
+    t_list = list(thicknesses_mm) if thicknesses_mm is not None else [params.wood_thickness] * num_divs
+    if len(t_list) < num_divs:
+        t_list.extend([params.wood_thickness] * (num_divs - len(t_list)))
+
+    dividers: List[Divider] = []
+    accum_pos = 0.0
+
+    for i in range(num_divs):
+        comp_c = max(0.0, clearances_mm[i])
+        t_div = max(1.0, t_list[i])
+        pos = accum_pos + comp_c + (t_div / 2.0)
+        accum_pos = pos + (t_div / 2.0)
+
+        prefix = "Width" if orientation == DividerOrientation.WIDTH_WISE else "Length"
+        dividers.append(Divider(
+            orientation=orientation,
+            position_mm=pos,
+            thickness_mm=t_div,
+            label=f"{prefix} Divider #{i + 1}"
+        ))
 
     return dividers
 
@@ -320,7 +353,7 @@ def generate_equispaced_dividers(
 def compute_compartment_dimensions(params: CaseParameters) -> List[Tuple[str, float, float, float]]:
     """
     Computes interior compartment sizes (Name, Length mm, Width mm, Height mm)
-    derived from current divider positions.
+    derived from current divider positions, strictly accounting for wood thickness.
     """
     w_divs = sorted(
         [d for d in params.dividers if d.orientation == DividerOrientation.WIDTH_WISE],
@@ -335,25 +368,46 @@ def compute_compartment_dimensions(params: CaseParameters) -> List[Tuple[str, fl
     inner_w = params.inner_width
     inner_h = params.inner_total_height
 
-    # Segments along Length
-    x_bounds = [0.0]
-    for d in w_divs:
-        # Subtract half thickness on each side or treat pos as center
-        x_bounds.append(d.position_mm)
-    x_bounds.append(inner_l)
+    # Calculate usable clearances along Length (divided by width-wise dividers)
+    x_clearances: List[float] = []
+    if not w_divs:
+        x_clearances.append(inner_l)
+    else:
+        # First
+        t0 = w_divs[0].thickness_mm if w_divs[0].thickness_mm > 0 else params.wood_thickness
+        x_clearances.append(max(0.0, w_divs[0].position_mm - (t0 / 2.0)))
+        # Intermediates
+        for i in range(1, len(w_divs)):
+            t_prev = w_divs[i-1].thickness_mm if w_divs[i-1].thickness_mm > 0 else params.wood_thickness
+            t_curr = w_divs[i].thickness_mm if w_divs[i].thickness_mm > 0 else params.wood_thickness
+            gap = max(0.0, (w_divs[i].position_mm - t_curr / 2.0) - (w_divs[i-1].position_mm + t_prev / 2.0))
+            x_clearances.append(gap)
+        # Last
+        t_last = w_divs[-1].thickness_mm if w_divs[-1].thickness_mm > 0 else params.wood_thickness
+        x_clearances.append(max(0.0, inner_l - (w_divs[-1].position_mm + t_last / 2.0)))
 
-    # Segments along Width
-    y_bounds = [0.0]
-    for d in l_divs:
-        y_bounds.append(d.position_mm)
-    y_bounds.append(inner_w)
+    # Calculate usable clearances along Width (divided by length-wise dividers)
+    y_clearances: List[float] = []
+    if not l_divs:
+        y_clearances.append(inner_w)
+    else:
+        # First
+        t0 = l_divs[0].thickness_mm if l_divs[0].thickness_mm > 0 else params.wood_thickness
+        y_clearances.append(max(0.0, l_divs[0].position_mm - (t0 / 2.0)))
+        # Intermediates
+        for j in range(1, len(l_divs)):
+            t_prev = l_divs[j-1].thickness_mm if l_divs[j-1].thickness_mm > 0 else params.wood_thickness
+            t_curr = l_divs[j].thickness_mm if l_divs[j].thickness_mm > 0 else params.wood_thickness
+            gap = max(0.0, (l_divs[j].position_mm - t_curr / 2.0) - (l_divs[j-1].position_mm + t_prev / 2.0))
+            y_clearances.append(gap)
+        # Last
+        t_last = l_divs[-1].thickness_mm if l_divs[-1].thickness_mm > 0 else params.wood_thickness
+        y_clearances.append(max(0.0, inner_w - (l_divs[-1].position_mm + t_last / 2.0)))
 
     compartments = []
     comp_idx = 1
-    for r in range(len(y_bounds) - 1):
-        c_width = y_bounds[r+1] - y_bounds[r]
-        for c in range(len(x_bounds) - 1):
-            c_length = x_bounds[c+1] - x_bounds[c]
+    for r, c_width in enumerate(y_clearances):
+        for c, c_length in enumerate(x_clearances):
             name = f"Compartment {comp_idx} (Col {c+1}, Row {r+1})"
             compartments.append((name, max(0.0, c_length), max(0.0, c_width), inner_h))
             comp_idx += 1

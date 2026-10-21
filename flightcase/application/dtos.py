@@ -52,10 +52,10 @@ class UISettingsDTO:
     show_inside_walls: bool = True
     show_axes: bool = True
 
-    # Active Tab and Selection / Generator state
+    # Active Tab & Inside Walls UI
     active_tab_index: int = 0
-    equispaced_walls_count: int = 2
-    equispaced_walls_orientation: str = "width_wise"
+    compartment_orientation: str = "width_wise"
+    auto_equalize_flags: List[bool] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -70,14 +70,21 @@ class UISettingsDTO:
             "show_inside_walls": self.show_inside_walls,
             "show_axes": self.show_axes,
             "active_tab_index": self.active_tab_index,
-            "equispaced_walls_count": self.equispaced_walls_count,
-            "equispaced_walls_orientation": self.equispaced_walls_orientation,
+            "compartment_orientation": self.compartment_orientation,
+            "auto_equalize_flags": list(self.auto_equalize_flags),
         }
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> UISettingsDTO:
         if not data or not isinstance(data, dict):
             return cls()
+
+        raw_auto_flags = data.get("auto_equalize_flags", data.get("compartment_auto_equalize", data.get("auto_equalize", [])))
+        if isinstance(raw_auto_flags, list):
+            auto_equalize_flags = [bool(f) for f in raw_auto_flags]
+        else:
+            auto_equalize_flags = []
+
         return cls(
             camera_azimuth_deg=float(data.get("camera_azimuth_deg", 45.0)),
             camera_elevation_deg=float(data.get("camera_elevation_deg", 30.0)),
@@ -90,8 +97,8 @@ class UISettingsDTO:
             show_inside_walls=bool(data.get("show_inside_walls", True)),
             show_axes=bool(data.get("show_axes", True)),
             active_tab_index=int(data.get("active_tab_index", 0)),
-            equispaced_walls_count=int(data.get("equispaced_walls_count", 2)),
-            equispaced_walls_orientation=str(data.get("equispaced_walls_orientation", "width_wise")),
+            compartment_orientation=str(data.get("compartment_orientation", data.get("equispaced_walls_orientation", "width_wise"))),
+            auto_equalize_flags=auto_equalize_flags,
         )
 
 

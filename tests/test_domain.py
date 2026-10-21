@@ -194,16 +194,50 @@ def test_equispaced_walls_and_compartments():
         wood_thickness=10.0,
     )
 
-    # inner_length = 980
+    # inner_length = 980, 2 walls (10mm thick each): total wall thickness = 20mm -> usable clearance = 960mm -> 320mm each
     case.set_equispaced_walls(count=2, orientation=WallOrientation.WIDTH_WISE)
     assert len(case.walls) == 2
-    assert pytest.approx(case.walls[0].position_mm, rel=1e-3) == 980.0 / 3.0
-    assert pytest.approx(case.walls[1].position_mm, rel=1e-3) == (980.0 / 3.0) * 2.0
+    assert pytest.approx(case.walls[0].position_mm) == 325.0
+    assert pytest.approx(case.walls[1].position_mm) == 655.0
 
     comps = case.calculate_compartments()
     assert len(comps) == 3
-    assert pytest.approx(comps[0].length_mm, rel=1e-3) == 980.0 / 3.0
+    assert pytest.approx(comps[0].length_mm) == 320.0
+    assert pytest.approx(comps[1].length_mm) == 320.0
+    assert pytest.approx(comps[2].length_mm) == 320.0
     assert pytest.approx(comps[0].width_mm) == 580.0
+
+
+def test_custom_compartment_spaces_configuration():
+    case = FlightCase(
+        dimensions=Dimensions3D(1000.0, 600.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=10.0,
+    )
+    # Usable inner_length = 980mm, inner_width = 580mm
+    # We want 3 compartments along length with clearances: 250mm, 350mm, 360mm (sum = 960mm + 2*10mm walls = 980mm)
+    case.set_walls_from_compartment_spaces(
+        clearances_mm=[250.0, 350.0, 360.0],
+        orientation=WallOrientation.WIDTH_WISE,
+        thicknesses_mm=[10.0, 10.0],
+    )
+    assert len(case.walls) == 2
+    # Wall 1: center = 250 + 5 = 255mm
+    # Wall 2: center = 250 + 10 + 350 + 5 = 615mm
+    assert pytest.approx(case.walls[0].position_mm) == 255.0
+    assert pytest.approx(case.walls[1].position_mm) == 615.0
+
+    clearances = case.get_compartment_clearances(WallOrientation.WIDTH_WISE)
+    assert len(clearances) == 3
+    assert pytest.approx(clearances[0]) == 250.0
+    assert pytest.approx(clearances[1]) == 350.0
+    assert pytest.approx(clearances[2]) == 360.0
+
+    comps = case.calculate_compartments()
+    assert len(comps) == 3
+    assert pytest.approx(comps[0].length_mm) == 250.0
+    assert pytest.approx(comps[1].length_mm) == 350.0
+    assert pytest.approx(comps[2].length_mm) == 360.0
 
 
 def test_domain_calculation_report():

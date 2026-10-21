@@ -176,8 +176,8 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
         show_inside_walls=True,
         show_axes=False,
         active_tab_index=2,
-        equispaced_walls_count=4,
-        equispaced_walls_orientation="length_wise",
+        compartment_orientation="length_wise",
+        auto_equalize_flags=[True, False, True],
     )
 
     case_dto = CaseInputDTO(
@@ -202,8 +202,8 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
     assert loaded.ui_settings.show_inside_walls is True
     assert loaded.ui_settings.show_axes is False
     assert loaded.ui_settings.active_tab_index == 2
-    assert loaded.ui_settings.equispaced_walls_count == 4
-    assert loaded.ui_settings.equispaced_walls_orientation == "length_wise"
+    assert loaded.ui_settings.compartment_orientation == "length_wise"
+    assert loaded.ui_settings.auto_equalize_flags == [True, False, True]
 
     # 2. Backward compatibility with project JSON that has no "ui_settings" key
     legacy_json = '{"version": "1.0", "outer_length": 800.0, "walls": []}'
@@ -212,3 +212,10 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
     assert legacy_loaded.ui_settings.camera_azimuth_deg == 45.0
     assert legacy_loaded.ui_settings.show_dimensions is True
     assert legacy_loaded.ui_settings.is_perspective is False
+    assert legacy_loaded.ui_settings.compartment_orientation == "width_wise"
+    assert legacy_loaded.ui_settings.auto_equalize_flags == []
+
+    # 3. Backward compatibility with legacy "equispaced_walls_orientation"
+    legacy_gen_json = '{"version": "1.0", "outer_length": 800.0, "ui_settings": {"equispaced_walls_orientation": "length_wise"}}'
+    legacy_gen_loaded = CaseInputDTO.from_json(legacy_gen_json)
+    assert legacy_gen_loaded.ui_settings.compartment_orientation == "length_wise"

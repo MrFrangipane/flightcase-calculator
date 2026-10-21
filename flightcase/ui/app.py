@@ -189,23 +189,22 @@ class FlightCaseMainWindow(QMainWindow):
         help_menu.addAction(about_action)
 
     def _get_current_ui_settings(self) -> UISettingsDTO:
-        """Gathers active UI settings including 3D camera transform, toggles, and active tab."""
+        """Gathers active UI settings including 3D camera transform, toggles, active tab, and compartment settings."""
         ui_dto = self.schema_widget.get_ui_settings()
         ui_dto.active_tab_index = self.tabs.currentIndex()
-        count, orient = self.walls_widget.get_generator_settings()
-        ui_dto.equispaced_walls_count = count
-        ui_dto.equispaced_walls_orientation = orient
+        ui_dto.compartment_orientation = self.walls_widget.get_compartment_orientation()
+        ui_dto.auto_equalize_flags = self.walls_widget.get_auto_equalize_flags()
         return ui_dto
 
     def _apply_ui_settings(self, settings: UISettingsDTO) -> None:
-        """Applies UI settings into 3D schema widget, active tab, and generator controls."""
+        """Applies UI settings into 3D schema widget, active tab, and inside walls controls."""
         self.schema_widget.set_ui_settings(settings)
         if 0 <= settings.active_tab_index < self.tabs.count():
             self.tabs.setCurrentIndex(settings.active_tab_index)
-        self.walls_widget.set_generator_settings(
-            settings.equispaced_walls_count,
-            settings.equispaced_walls_orientation,
-        )
+        if hasattr(settings, "compartment_orientation") and settings.compartment_orientation:
+            self.walls_widget.set_compartment_orientation(settings.compartment_orientation)
+        if hasattr(settings, "auto_equalize_flags") and settings.auto_equalize_flags:
+            self.walls_widget.set_auto_equalize_flags(settings.auto_equalize_flags)
 
     def _save_settings(self) -> None:
         """Saves window geometry, splitter sizes, tabs, and project state to QSettings."""
@@ -395,6 +394,11 @@ class FlightCaseMainWindow(QMainWindow):
             self._current_result = result
 
             # 2. Update UI widgets
+            self.walls_widget.set_case_dimensions(
+                inner_length=result.inner_length,
+                inner_width=result.inner_width,
+                wood_thickness=input_dto.wood_thickness,
+            )
             self.cutlist_widget.set_calculation_result(result)
             self.alu_widget.set_calculation_result(result)
             self._update_schema_geometry()

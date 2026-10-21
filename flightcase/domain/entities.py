@@ -194,14 +194,21 @@ class FlightCase:
         orientation: WallOrientation,
         thickness_mm: Optional[float] = None
     ) -> None:
-        """Configures N evenly spaced dividers along the given orientation."""
+        """
+        Configures N evenly spaced dividers along the given orientation,
+        distributing available interior clearance equally while accounting for wall thickness.
+        """
         t_wall = thickness_mm if thickness_mm is not None else self.wood_thickness
         new_walls: List[InsideWall] = []
         if count > 0:
             span = self.inner_length if orientation == WallOrientation.WIDTH_WISE else self.inner_width
-            step = span / (count + 1)
+            total_wall_thickness = count * t_wall
+            usable_clearance = max(0.0, span - total_wall_thickness)
+            compartment_clearance = usable_clearance / (count + 1)
+
             for i in range(1, count + 1):
-                pos = step * i
+                # Center of wall i: (i compartments clearance) + (i-1 full walls) + half of current wall
+                pos = (i * compartment_clearance) + ((i - 1) * t_wall) + (t_wall / 2.0)
                 label = f"{'Width' if orientation == WallOrientation.WIDTH_WISE else 'Length'} Wall #{i}"
                 new_walls.append(InsideWall(
                     orientation=orientation,
@@ -210,6 +217,104 @@ class FlightCase:
                     label=label
                 ))
         self.set_walls(new_walls)
+
+    def set_walls_from_compartment_spaces(
+        self,
+        clearances_mm: List[float],
+        orientation: WallOrientation,
+        thicknesses_mm: Optional[List[float]] = None,
+        labels: Optional[List[str]] = None,
+        heights_mm: Optional[List[Optional[float]]] = None,
+    ) -> None:
+        """
+        Creates and positions partition walls from a list of desired compartment available clearances (spaces),
+        strictly taking each partition wall's wood thickness into account.
+        
+        For N compartments (len(clearances_mm)), N-1 partition walls are created.
+        """
+        num_comps = len(clearances_mm)
+        if num_comps <= 1:
+            # 1 or 0 compartments means no partition walls in this orientation
+            # Keep walls in the other orientation
+            other_walls = [w for w in self._walls if w.orientation != orientation]
+            self.set_walls(other_walls)
+            return
+
+        num_walls = num_comps - 1
+        t_default = self.wood_thickness
+        span = self.inner_length if orientation == WallOrientation.WIDTH_WISE else self.inner_width
+
+        # Default wall thicknesses
+        t_list = list(thicknesses_mm) if thicknesses_mm is not None else [t_default] * num_walls
+        if len(t_list) < num_walls:
+            t_list.extend([t_default] * (num_walls - len(t_list)))
+
+        # Default labels
+        lbl_list = list(labels) if labels is not None else []
+        for i in range(len(lbl_list), num_walls):
+            prefix = "Width" if orientation == WallOrientation.WIDTH_WISE else "Length"
+            lbl_list.append(f"{prefix} Wall #{i + 1}")
+
+        # Default heights
+        h_list = list(heights_mm) if heights_mm is not None else [None] * num_walls
+        if len(h_list) < num_walls:
+            h_list.extend([None] * (num_walls - len(h_list)))
+
+        new_orientation_walls: List[InsideWall] = []
+        accum_pos = 0.0
+
+        for i in range(num_walls):
+            comp_clearance = max(0.0, clearances_mm[i])
+            wall_thick = max(1.0, t_list[i])
+            # Wall center position:
+            # start of compartment + compartment clearance + half wall thickness
+            wall_pos = accum_pos + comp_clearance + (wall_thick / 2.0)
+            accum_pos = wall_pos + (wall_thick / 2.0)
+
+            new_orientation_walls.append(InsideWall(
+                orientation=orientation,
+                position_mm=wall_pos,
+                thickness_mm=wall_thick,
+                height_mm=h_list[i],
+                label=lbl_list[i]
+            ))
+
+        # Preserve walls of the other orientation
+        other_walls = [w for w in self._walls if w.orientation != orientation]
+        self.set_walls(other_walls + new_orientation_walls)
+
+    def get_compartment_clearances(self, orientation: WallOrientation) -> List[float]:
+        """
+        Calculates the actual available clearance (usable space) in each compartment along the given orientation,
+        taking partition wall wood thicknesses into account.
+        """
+        walls = sorted(
+            [w for w in self._walls if w.orientation == orientation],
+            key=lambda w: w.position_mm
+        )
+        span = self.inner_length if orientation == WallOrientation.WIDTH_WISE else self.inner_width
+        if not walls:
+            return [span]
+
+        clearances: List[float] = []
+        # First compartment: 0 to left face of first wall
+        first_thick = walls[0].thickness_mm if walls[0].thickness_mm > 0 else self.wood_thickness
+        c0 = max(0.0, walls[0].position_mm - (first_thick / 2.0))
+        clearances.append(c0)
+
+        # Intermediate compartments: between right face of wall i-1 and left face of wall i
+        for i in range(1, len(walls)):
+            prev_thick = walls[i-1].thickness_mm if walls[i-1].thickness_mm > 0 else self.wood_thickness
+            curr_thick = walls[i].thickness_mm if walls[i].thickness_mm > 0 else self.wood_thickness
+            c_i = max(0.0, (walls[i].position_mm - curr_thick / 2.0) - (walls[i-1].position_mm + prev_thick / 2.0))
+            clearances.append(c_i)
+
+        # Last compartment: right face of last wall to inner span end
+        last_thick = walls[-1].thickness_mm if walls[-1].thickness_mm > 0 else self.wood_thickness
+        c_last = max(0.0, span - (walls[-1].position_mm + (last_thick / 2.0)))
+        clearances.append(c_last)
+
+        return clearances
 
     # --- Calculations ---
 
@@ -461,25 +566,17 @@ class FlightCase:
         )
 
     def calculate_compartments(self) -> List[CaseCompartment]:
-        """Calculates usable compartment dimensions from inside partition walls."""
-        w_walls = sorted(
-            [w for w in self._walls if w.orientation == WallOrientation.WIDTH_WISE],
-            key=lambda w: w.position_mm
-        )
-        l_walls = sorted(
-            [w for w in self._walls if w.orientation == WallOrientation.LENGTH_WISE],
-            key=lambda w: w.position_mm
-        )
-
-        x_coords = [0.0] + [w.position_mm for w in w_walls] + [self.inner_length]
-        y_coords = [0.0] + [w.position_mm for w in l_walls] + [self.inner_width]
+        """
+        Calculates usable compartment dimensions from inside partition walls,
+        strictly accounting for wood thickness of outer and partition walls.
+        """
+        x_clearances = self.get_compartment_clearances(WallOrientation.WIDTH_WISE)
+        y_clearances = self.get_compartment_clearances(WallOrientation.LENGTH_WISE)
 
         compartments: List[CaseCompartment] = []
         c_idx = 1
-        for i in range(len(x_coords) - 1):
-            dx = max(0.0, x_coords[i+1] - x_coords[i])
-            for j in range(len(y_coords) - 1):
-                dy = max(0.0, y_coords[j+1] - y_coords[j])
+        for i, dx in enumerate(x_clearances):
+            for j, dy in enumerate(y_clearances):
                 compartments.append(CaseCompartment(
                     name=f"Compartment {c_idx} (Sec {i+1},{j+1})",
                     length_mm=dx,
