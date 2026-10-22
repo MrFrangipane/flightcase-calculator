@@ -224,7 +224,7 @@ class GenerateWoodPanelsSvgUseCase:
             _walls=domain_walls,
         )
 
-        return WoodPanelsSvgGenerator.generate_wood_panels_svg(flight_case)
+        return WoodPanelsSvgGenerator.generate_wood_panels_svg(flight_case, title=input_dto.title)
 
 
 class SaveProjectUseCase:

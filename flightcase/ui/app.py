@@ -411,7 +411,14 @@ class FlightCaseMainWindow(QMainWindow):
         self._update_window_title()
 
     def _update_window_title(self) -> None:
-        if self._current_project_path:
+        title = self.input_panel.edit_title.text().strip() if hasattr(self, "input_panel") else ""
+        if title:
+            if self._current_project_path:
+                file_name = os.path.basename(self._current_project_path)
+                self.setWindowTitle(f"Flightcase Calculator — {title} ({file_name})")
+            else:
+                self.setWindowTitle(f"Flightcase Calculator — {title}")
+        elif self._current_project_path:
             name = os.path.basename(self._current_project_path)
             self.setWindowTitle(f"Flightcase Calculator — {name}")
         else:
@@ -463,7 +470,16 @@ class FlightCaseMainWindow(QMainWindow):
             self._save_project_as()
 
     def _save_project_as(self) -> None:
-        default_name = os.path.basename(self._current_project_path) if self._current_project_path else "my_flightcase.fcproj"
+        title = self.input_panel.edit_title.text().strip()
+        if self._current_project_path:
+            default_name = os.path.basename(self._current_project_path)
+        elif title:
+            import re
+            slug = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_").lower()
+            default_name = f"{slug}.fcproj" if slug else "my_flightcase.fcproj"
+        else:
+            default_name = "my_flightcase.fcproj"
+
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Save Flightcase Project As",
@@ -548,9 +564,10 @@ class FlightCaseMainWindow(QMainWindow):
 
             # Generate and update wood panels SVG diagram
             svg_data = GenerateWoodPanelsSvgUseCase.execute(input_dto)
-            self.svg_widget.set_svg(svg_data)
+            self.svg_widget.set_svg(svg_data, project_title=input_dto.title)
 
             self._update_schema_geometry()
+            self._update_window_title()
 
             # 3. Status Bar
             lid_m = result.total_lid_mating_profile_length_mm / 1000.0

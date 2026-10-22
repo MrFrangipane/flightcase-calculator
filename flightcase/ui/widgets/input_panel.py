@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QLabel,
+    QLineEdit,
     QDoubleSpinBox,
     QComboBox,
     QPushButton,
@@ -31,6 +32,15 @@ class CaseInputPanel(QWidget):
         main_layout = QVBoxLayout(self)
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(12)
+
+        # 0. Project Title
+        title_box = QGroupBox("Project Title", self)
+        title_layout = QVBoxLayout(title_box)
+        self.edit_title = QLineEdit(self)
+        self.edit_title.setPlaceholderText("Project Title (e.g. Stage Rack 4U)...")
+        self.edit_title.textChanged.connect(self._on_value_changed)
+        title_layout.addWidget(self.edit_title)
+        main_layout.addWidget(title_box)
 
         # 1. Preset Selector
         preset_box = QGroupBox("Preset Configurations", self)
@@ -180,6 +190,7 @@ class CaseInputPanel(QWidget):
 
     def set_input_dto(self, dto: CaseInputDTO) -> None:
         """Sets all input field values from a CaseInputDTO."""
+        self.edit_title.blockSignals(True)
         self.spin_length.blockSignals(True)
         self.spin_width.blockSignals(True)
         self.spin_total_height.blockSignals(True)
@@ -189,6 +200,7 @@ class CaseInputPanel(QWidget):
         self.spin_edge_width.blockSignals(True)
         self.chk_self_cut_lid.blockSignals(True)
 
+        self.edit_title.setText(dto.title or "")
         self.spin_length.setValue(dto.inner_length)
         self.spin_width.setValue(dto.inner_width)
         self.spin_total_height.setValue(dto.inner_total_height)
@@ -198,6 +210,7 @@ class CaseInputPanel(QWidget):
         self.spin_edge_width.setValue(dto.edge_profile_width)
         self.chk_self_cut_lid.setChecked(dto.self_cut_lid)
 
+        self.edit_title.blockSignals(False)
         self.spin_length.blockSignals(False)
         self.spin_width.blockSignals(False)
         self.spin_total_height.blockSignals(False)
@@ -211,6 +224,7 @@ class CaseInputPanel(QWidget):
 
     def get_input_dto(self) -> CaseInputDTO:
         return CaseInputDTO(
+            title=self.edit_title.text().strip(),
             inner_length=self.spin_length.value(),
             inner_width=self.spin_width.value(),
             inner_total_height=self.spin_total_height.value(),

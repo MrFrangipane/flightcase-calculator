@@ -178,6 +178,7 @@ class WoodPanelsSvgWidget(QWidget):
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
         self._svg_data: str = ""
+        self._project_title: str = ""
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -258,9 +259,15 @@ class WoodPanelsSvgWidget(QWidget):
     def _zoom_factor(self, value: float) -> None:
         self.svg_view.set_zoom(value)
 
-    def set_svg(self, svg_str: str) -> None:
+    def set_project_title(self, title: str) -> None:
+        """Sets project title used for export filenames and diagram labeling."""
+        self._project_title = str(title or "").strip()
+
+    def set_svg(self, svg_str: str, project_title: Optional[str] = None) -> None:
         """Loads and renders new SVG content in the viewport."""
         self._svg_data = svg_str
+        if project_title is not None:
+            self._project_title = str(project_title or "").strip()
         self.svg_view.set_svg_data(svg_str)
 
     def get_svg_data(self) -> str:
@@ -299,10 +306,17 @@ class WoodPanelsSvgWidget(QWidget):
             QMessageBox.warning(self, "Export SVG", "No wood panels data available to export.")
             return
 
+        if self._project_title:
+            import re
+            slug = re.sub(r"[^\w\s-]", "", self._project_title).strip().replace(" ", "_").lower()
+            default_name = f"{slug}_wood_panels_diagram.svg" if slug else "flightcase_wood_panels_diagram.svg"
+        else:
+            default_name = "flightcase_wood_panels_diagram.svg"
+
         file_path, _ = QFileDialog.getSaveFileName(
             self,
             "Export Wood Panels SVG Diagram",
-            "flightcase_wood_panels_diagram.svg",
+            default_name,
             "SVG Files (*.svg);;All Files (*)",
         )
         if not file_path:

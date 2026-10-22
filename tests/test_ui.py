@@ -2,7 +2,7 @@
 
 import pytest
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
 
 @pytest.fixture(autouse=True)
@@ -1125,4 +1125,78 @@ def test_dark_desktop_theme_applied(qapp):
     assert window.cutlist_widget.lbl_utilization.styleSheet() == ""
     assert window.walls_widget.lbl_comp_summary.styleSheet() == ""
     assert window.schema_widget.btn_proj_toggle.styleSheet() == ""
+    window.close()
+
+
+def test_project_title_and_svg_export_integration(qapp, monkeypatch, tmp_path):
+    from flightcase.ui import FlightCaseMainWindow
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # Initial state
+    assert window.input_panel.edit_title.text() == ""
+    assert "Untitled" in window.windowTitle()
+    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in window.svg_widget.get_svg_data()
+
+    # Change title
+    window.input_panel.edit_title.setText("Amp Rack Case")
+    assert "Amp Rack Case" in window.windowTitle()
+    assert "Amp Rack Case — Wood Panels Cut Diagram" in window.svg_widget.get_svg_data()
+
+    # Test SVG export default filename uses project title
+    saved_paths = []
+
+    def mock_save_file_name(parent, caption, dir_or_file, filter_str):
+        saved_paths.append(dir_or_file)
+        out_file = tmp_path / "amp_rack_case_wood_panels_diagram.svg"
+        return str(out_file), filter_str
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_save_file_name)
+    monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: None)
+
+    window.svg_widget.export_svg()
+    assert len(saved_paths) > 0
+    assert "amp_rack_case_wood_panels_diagram.svg" in saved_paths[-1]
+
+    # Save Project As suggests title as filename
+    proj_dialog_defaults = []
+
+    def mock_proj_save_file_name(parent, caption, dir_or_file, filter_str):
+        proj_dialog_defaults.append(dir_or_file)
+        return str(tmp_path / "amp_rack_case.fcproj"), filter_str
+
+    monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_proj_save_file_name)
+    window._save_project_as()
+    assert len(proj_dialog_defaults) > 0
+    assert "amp_rack_case.fcproj" in proj_dialog_defaults[-1]
+
+    window.close()
+
+
+def test_3d_schema_view_bounding_box_stability(qapp):
+    from flightcase.ui import FlightCaseMainWindow
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    mesh_init = window.schema_widget.canvas.mesh
+    assert mesh_init is not None
+    init_bb = mesh_init.bounding_box
+
+    # Change explode gap
+    window.schema_widget.set_explode_gap(100.0)
+    window.recalculate()
+    mesh_exploded = window.schema_widget.canvas.mesh
+    assert mesh_exploded.bounding_box == init_bb
+
+    # Change lid rotation angle
+    window.schema_widget.set_lid_rotation(90.0, "Left")
+    window.recalculate()
+    mesh_rotated = window.schema_widget.canvas.mesh
+    assert mesh_rotated.bounding_box == init_bb
+
+    # Change lid split gap
+    window.schema_widget.slider_gap.setValue(50)
+    window.recalculate()
+    mesh_gapped = window.schema_widget.canvas.mesh
+    assert mesh_gapped.bounding_box == init_bb
+
     window.close()

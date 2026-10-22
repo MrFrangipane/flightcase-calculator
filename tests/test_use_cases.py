@@ -255,6 +255,7 @@ def test_generate_wood_panels_svg_use_case():
     from flightcase.application import GenerateWoodPanelsSvgUseCase
 
     input_dto = CaseInputDTO(
+        title="Custom Stage Rack",
         inner_length=800.0,
         inner_width=500.0,
         inner_total_height=400.0,
@@ -269,6 +270,24 @@ def test_generate_wood_panels_svg_use_case():
     assert "</svg>" in svg_str
     assert "Base Bottom Panel" in svg_str
     assert "Lid Top Panel" in svg_str
+    assert "Custom Stage Rack — Wood Panels Cut Diagram" in svg_str
+
+
+def test_project_dto_title_serialization(tmp_path):
+    dto = CaseInputDTO(
+        title="Audio Mixer Flightcase",
+        inner_length=900.0,
+        inner_width=600.0,
+        inner_total_height=350.0,
+        inner_lid_height=120.0,
+    )
+
+    file_path = str(tmp_path / "test_project.fcproj")
+    SaveProjectUseCase.execute(dto, file_path)
+
+    loaded_dto = LoadProjectUseCase.execute(file_path)
+    assert loaded_dto.title == "Audio Mixer Flightcase"
+    assert loaded_dto.inner_length == 900.0
 
 
 def test_generate_schema_3d_with_explode_gap():

@@ -117,6 +117,7 @@ class UISettingsDTO:
 @dataclass
 class CaseInputDTO:
     """DTO representing the complete flightcase specification input (inner case dimensions)."""
+    title: str = ""
     inner_length: float = 800.0
     inner_width: float = 500.0
     inner_total_height: float = 400.0
@@ -146,7 +147,9 @@ class CaseInputDTO:
         outer_width: Optional[float] = None,
         total_height: Optional[float] = None,
         lid_height: Optional[float] = None,
+        title: str = "",
     ):
+        self.title = str(title) if title is not None else ""
         self.wood_thickness = wood_thickness
         self.lid_alu_profile_offset = lid_alu_profile_offset
         self.corner_extrusion_rebate = corner_extrusion_rebate
@@ -203,6 +206,7 @@ class CaseInputDTO:
     def to_dict(self) -> Dict[str, Any]:
         return {
             "version": "1.0",
+            "title": self.title,
             "inner_length": self.inner_length,
             "inner_width": self.inner_width,
             "inner_total_height": self.inner_total_height,
@@ -224,6 +228,7 @@ class CaseInputDTO:
         ui_settings = UISettingsDTO.from_dict(raw_ui) if isinstance(raw_ui, dict) else UISettingsDTO()
 
         t_wood = float(data.get("wood_thickness", 9.0))
+        proj_title = str(data.get("title", data.get("project_title", "")))
 
         # Check for inner dimension keys first, fallback to legacy outer dimension keys
         if "inner_length" in data:
@@ -258,6 +263,7 @@ class CaseInputDTO:
             in_lid_h = 100.0
 
         return cls(
+            title=proj_title,
             inner_length=in_l,
             inner_width=in_w,
             inner_total_height=in_h,

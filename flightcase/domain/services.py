@@ -955,29 +955,12 @@ class Schema3DGeometryBuilder:
                         dimension_type="wall_pos"
                     ))
 
-        all_points = []
-        for f in faces:
-            all_points.extend(f.vertices)
-        for s in segments:
-            all_points.append(s.p1)
-            all_points.append(s.p2)
-
-        if all_points:
-            min_x = min(min(p.x for p in all_points), 0.0)
-            min_y = min(min(p.y for p in all_points), 0.0)
-            min_z = min(min(p.z for p in all_points), 0.0)
-            max_x = max(max(p.x for p in all_points), L)
-            max_y = max(max(p.y for p in all_points), W)
-            max_z = max(max(p.z for p in all_points), H)
-        else:
-            min_x, min_y, min_z = 0.0, 0.0, 0.0
-            max_x, max_y, max_z = L, W, H + gap
-
+        # Fixed base case bounding box so 3D viewport camera does not adapt on explode, lid angle, or split gap
         return WireframeMesh3D(
             faces=faces,
             segments=segments,
             dimensions=dimensions,
-            bounding_box=(Point3D(min_x, min_y, min_z), Point3D(max_x, max_y, max_z))
+            bounding_box=(Point3D(0.0, 0.0, 0.0), Point3D(L, W, H))
         )
 
 
@@ -1069,7 +1052,8 @@ class WoodPanelsSvgGenerator:
     @staticmethod
     def generate_wood_panels_svg(
         case: FlightCase,
-        cut_list: Optional[List[CutPiece]] = None
+        cut_list: Optional[List[CutPiece]] = None,
+        title: str = ""
     ) -> str:
         """
         Renders all wood panels as a high-contrast, scalable SVG technical drawing.
@@ -1077,6 +1061,14 @@ class WoodPanelsSvgGenerator:
         dimension badges, quantity indicators, and material details.
         """
         import html
+
+        clean_title = title.strip() if title else ""
+        if clean_title:
+            main_title_text = f"{html.escape(clean_title)} — Wood Panels Cut Diagram"
+            svg_doc_title = f"{html.escape(clean_title)} — Wood Panels Cut Diagram"
+        else:
+            main_title_text = "FLIGHTCASE WOOD PANELS CUT DIAGRAM"
+            svg_doc_title = "Flightcase Wood Panels Cut Diagram"
 
         if cut_list is None:
             raw_cuts = case.calculate_wood_cut_list()
@@ -1093,6 +1085,7 @@ class WoodPanelsSvgGenerator:
             # Fallback for empty cut list
             return (
                 '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400">'
+                f'<title>{svg_doc_title}</title>'
                 '<rect width="100%" height="100%" fill="#ffffff"/>'
                 '<text x="400" y="200" text-anchor="middle" fill="#64748b" font-size="18" '
                 'font-family="system-ui, -apple-system, sans-serif">No wood panels to display.</text>'
@@ -1118,6 +1111,7 @@ class WoodPanelsSvgGenerator:
 
         lines: List[str] = [
             f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_w} {svg_h}" width="{svg_w}" height="{svg_h}">',
+            f'  <title>{svg_doc_title}</title>',
             '  <defs>',
             '    <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">',
             '      <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="0.7"/>',
@@ -1135,7 +1129,7 @@ class WoodPanelsSvgGenerator:
             '  <!-- Header Banner -->',
             f'  <g id="headerBanner" transform="translate({margin_x}, 20)">',
             f'    <rect width="{svg_w - 2 * margin_x}" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>',
-            '    <text x="24" y="30" fill="#0f172a" font-size="18" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">FLIGHTCASE WOOD PANELS CUT DIAGRAM</text>',
+            f'    <text x="24" y="30" fill="#0f172a" font-size="18" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">{main_title_text}</text>',
             f'    <text x="24" y="52" fill="#475569" font-size="13" font-family="system-ui, -apple-system, sans-serif">Outer: {case.outer_length:.0f}×{case.outer_width:.0f}×{case.total_height:.0f} mm  |  Thickness: {case.wood_thickness:.1f} mm  |  Total Panels: {total_pieces} pcs  |  Total Area: {total_area:.2f} m²</text>',
             '  </g>',
             '',

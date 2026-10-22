@@ -526,10 +526,39 @@ def test_schema_3d_explode_view_geometry_and_panel_dimensions():
     assert any("Lid Left" in l for l in labels)
     assert any("Lid Right" in l for l in labels)
 
-    # Bounding box should expand with explode distance
+    # Bounding box should stay fixed to base case dimensions (does not adapt camera view)
     min_pt, max_pt = mesh_exploded.bounding_box
-    assert min_pt.x < 0.0 or min_pt.y < 0.0 or min_pt.z < 0.0
-    assert max_pt.x > L or max_pt.y > W or max_pt.z > H
+    assert min_pt.x == pytest.approx(0.0)
+    assert min_pt.y == pytest.approx(0.0)
+    assert min_pt.z == pytest.approx(0.0)
+    assert max_pt.x == pytest.approx(L)
+    assert max_pt.y == pytest.approx(W)
+    assert max_pt.z == pytest.approx(H)
+
+
+def test_schema_3d_bounding_box_invariant_across_transforms():
+    """Verify 3D bounding box remains constant across explode gap, lid rotation, and lid split gap."""
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+    L, W, H = case.outer_length, case.outer_width, case.total_height
+
+    for explode in [0.0, 50.0, 150.0]:
+        for angle in [0.0, 45.0, 120.0]:
+            for split_gap in [0.0, 30.0, 100.0]:
+                mesh = Schema3DGeometryBuilder.build_geometry(
+                    case,
+                    lid_exploded_gap_mm=split_gap,
+                    explode_gap_mm=explode,
+                    lid_rotation_angle_deg=angle,
+                    lid_hinge_side="Back",
+                )
+                p_min, p_max = mesh.bounding_box
+                assert (p_min.x, p_min.y, p_min.z) == (0.0, 0.0, 0.0)
+                assert (p_max.x, p_max.y, p_max.z) == (pytest.approx(L), pytest.approx(W), pytest.approx(H))
 
 
 def test_schema_3d_explode_view_self_cut_lid():
@@ -602,3 +631,8 @@ def test_wood_panels_svg_generator():
     assert "518.0 mm" in svg_content  # 500 + 18 outer width
     assert "<line" in svg_content
     assert "<marker" in svg_content
+
+    # With custom project title
+    svg_with_title = WoodPanelsSvgGenerator.generate_wood_panels_svg(case, title="Laser Tour Trunk")
+    assert "Laser Tour Trunk — Wood Panels Cut Diagram" in svg_with_title
+    assert "<title>Laser Tour Trunk — Wood Panels Cut Diagram</title>" in svg_with_title
