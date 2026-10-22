@@ -991,6 +991,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     # Fit to view
     svg_widget.fit_to_view()
     assert svg_widget._zoom_factor > 0.0
+    assert svg_widget.svg_view.backgroundBrush().color().name().lower() == "#ffffff"
 
     # 2D Viewport mouse interactions (wheel & drag pan simulation)
     from PySide6.QtGui import QWheelEvent, QMouseEvent
@@ -1198,5 +1199,36 @@ def test_3d_schema_view_bounding_box_stability(qapp):
     window.recalculate()
     mesh_gapped = window.schema_widget.canvas.mesh
     assert mesh_gapped.bounding_box == init_bb
+
+    window.close()
+
+
+def test_vertical_toolbars_layout_and_resizability(qapp):
+    from flightcase.ui import FlightCaseMainWindow
+    from PySide6.QtWidgets import QHBoxLayout, QScrollArea
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Verify 3D Schema Widget layout is horizontal with toolbar on the left
+    schema_layout = window.schema_widget.layout()
+    assert isinstance(schema_layout, QHBoxLayout)
+    assert schema_layout.count() >= 2
+    left_widget = schema_layout.itemAt(0).widget()
+    assert isinstance(left_widget, QScrollArea)
+    right_widget = schema_layout.itemAt(1).widget()
+    assert right_widget == window.schema_widget.canvas
+
+    # 2. Verify 2D Wood Panels SVG Widget layout is horizontal with toolbar on the left
+    svg_layout = window.svg_widget.layout()
+    assert isinstance(svg_layout, QHBoxLayout)
+    assert svg_layout.count() >= 2
+    left_svg_widget = svg_layout.itemAt(0).widget()
+    assert isinstance(left_svg_widget, QScrollArea)
+    right_svg_widget = svg_layout.itemAt(1).widget()
+    assert right_svg_widget == window.svg_widget.svg_view
+
+    # 3. Verify window can be resized down freely without toolbar horizontal overflow
+    window.resize(800, 600)
+    assert window.width() <= 800
 
     window.close()

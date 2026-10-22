@@ -2,7 +2,9 @@
 
 A desktop CAD/CAM estimation and design tool built with Python, PySide6, and OpenGL to streamline the design, calculation, and fabrication of custom flightcases and road trunks.
 
-![Screenshot](screenshot.jpg)
+![Screenshot 3D](screenshot-3d.jpg)
+
+![Screenshot 2D](screenshot-2d.jpg)
 
 ---
 

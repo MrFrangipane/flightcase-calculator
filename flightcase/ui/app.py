@@ -55,7 +55,7 @@ class FlightCaseMainWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Flightcase Calculator — Untitled")
         self.resize(1280, 800)
-        self.setMinimumSize(960, 600)
+        self.setMinimumSize(700, 450)
 
         self._current_result: Optional[CalculationResultDTO] = None
         self._current_project_path: Optional[str] = None

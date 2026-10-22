@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
+    QScrollArea,
     QPushButton,
     QLabel,
     QGraphicsView,
@@ -61,7 +62,7 @@ class SvgPanZoomView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setBackgroundBrush(QBrush(QColor(70, 70, 70)))
+        self.setBackgroundBrush(QBrush(QColor("#ffffff")))
 
     def renderer(self) -> QSvgRenderer:
         """Returns the underlying QSvgRenderer."""
@@ -182,17 +183,25 @@ class WoodPanelsSvgWidget(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
-        # Top Action Toolbar
-        toolbar = QFrame(self)
-        t_layout = QHBoxLayout(toolbar)
-        t_layout.setContentsMargins(8, 6, 8, 6)
-        t_layout.setSpacing(10)
+        # Left Action Toolbar Scroll Area
+        toolbar_scroll = QScrollArea(self)
+        toolbar_scroll.setWidgetResizable(True)
+        toolbar_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        toolbar_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        toolbar_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        toolbar_scroll.setFixedWidth(160)
+
+        toolbar = QFrame(toolbar_scroll)
+        t_layout = QVBoxLayout(toolbar)
+        t_layout.setContentsMargins(6, 6, 6, 6)
+        t_layout.setSpacing(8)
 
         # Export & Copy Buttons
+        t_layout.addWidget(QLabel("<b>Actions:</b>"))
         btn_export = QPushButton("Export SVG...", self)
         btn_export.setObjectName("primaryButton")
         btn_export.setToolTip("Save the wood panels diagram as a scalable SVG file")
@@ -205,26 +214,29 @@ class WoodPanelsSvgWidget(QWidget):
         btn_copy.clicked.connect(self._copy_svg_to_clipboard)
         t_layout.addWidget(btn_copy)
 
-        t_layout.addSpacing(16)
+        t_layout.addSpacing(6)
 
         # 2D Zoom Controls
         t_layout.addWidget(QLabel("<b>Zoom:</b>"))
+
+        zoom_row = QHBoxLayout()
+        zoom_row.setSpacing(4)
         btn_zoom_out = QPushButton("−", self)
         btn_zoom_out.setFixedWidth(32)
         btn_zoom_out.setToolTip("Zoom Out (Wheel Down)")
         btn_zoom_out.clicked.connect(self._zoom_out)
-        t_layout.addWidget(btn_zoom_out)
+        zoom_row.addWidget(btn_zoom_out)
 
         self.lbl_zoom = QLabel("100%")
-        self.lbl_zoom.setFixedWidth(50)
         self.lbl_zoom.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        t_layout.addWidget(self.lbl_zoom)
+        zoom_row.addWidget(self.lbl_zoom)
 
         btn_zoom_in = QPushButton("+", self)
         btn_zoom_in.setFixedWidth(32)
         btn_zoom_in.setToolTip("Zoom In (Wheel Up)")
         btn_zoom_in.clicked.connect(self._zoom_in)
-        t_layout.addWidget(btn_zoom_in)
+        zoom_row.addWidget(btn_zoom_in)
+        t_layout.addLayout(zoom_row)
 
         btn_fit_view = QPushButton("Fit View", self)
         btn_fit_view.setObjectName("secondaryButton")
@@ -238,12 +250,15 @@ class WoodPanelsSvgWidget(QWidget):
         btn_reset_zoom.clicked.connect(self._reset_zoom)
         t_layout.addWidget(btn_reset_zoom)
 
-        t_layout.addSpacing(16)
-        hint_label = QLabel("Drag to Pan • Wheel to Zoom • Double-Click to Fit")
+        t_layout.addSpacing(6)
+        hint_label = QLabel("<small style='color: #9e9eb4;'>• Drag to Pan<br>• Wheel to Zoom<br>• Double-Click to Fit</small>")
+        hint_label.setWordWrap(True)
         t_layout.addWidget(hint_label)
 
         t_layout.addStretch()
-        layout.addWidget(toolbar)
+
+        toolbar_scroll.setWidget(toolbar)
+        layout.addWidget(toolbar_scroll)
 
         # Interactive 2D Graphics Viewport
         self.svg_view = SvgPanZoomView(self)

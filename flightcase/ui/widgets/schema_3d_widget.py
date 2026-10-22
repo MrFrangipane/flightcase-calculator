@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
     QHBoxLayout,
+    QGridLayout,
+    QScrollArea,
     QLabel,
     QPushButton,
     QSlider,
@@ -52,7 +54,7 @@ class Schema3DCanvas(QOpenGLWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
-        self.setMinimumSize(400, 350)
+        self.setMinimumSize(150, 150)
         self.setMouseTracking(True)
 
         # Configure OpenGL surface format for hardware antialiasing (4x MSAA)
@@ -744,17 +746,26 @@ class Schema3DWidget(QWidget):
         self._init_ui()
 
     def _init_ui(self) -> None:
-        layout = QVBoxLayout(self)
+        layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(6)
 
-        # Toolbar Frame
-        toolbar = QFrame(self)
-        t_layout = QHBoxLayout(toolbar)
-        t_layout.setContentsMargins(8, 4, 8, 4)
-        t_layout.setSpacing(10)
+        # Vertical Toolbar Scroll Area (Left)
+        toolbar_scroll = QScrollArea(self)
+        toolbar_scroll.setWidgetResizable(True)
+        toolbar_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        toolbar_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        toolbar_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        toolbar_scroll.setFixedWidth(200)
+
+        toolbar = QFrame(toolbar_scroll)
+        t_layout = QVBoxLayout(toolbar)
+        t_layout.setContentsMargins(6, 6, 6, 6)
+        t_layout.setSpacing(8)
 
         # View Preset Buttons
+        t_layout.addWidget(QLabel("<b>View Presets:</b>"))
+
         btn_iso = QPushButton("Isometric View", self)
         btn_iso.setObjectName("secondaryButton")
         btn_iso.clicked.connect(lambda: self.canvas.reset_view(45.0, 30.0))
@@ -771,13 +782,15 @@ class Schema3DWidget(QWidget):
         btn_top.setObjectName("secondaryButton")
         btn_top.clicked.connect(lambda: self.canvas.reset_view(0.0, 89.0))
 
-        t_layout.addWidget(QLabel("<b>View Presets:</b>"))
-        t_layout.addWidget(btn_iso)
-        t_layout.addWidget(btn_front)
-        t_layout.addWidget(btn_side)
-        t_layout.addWidget(btn_top)
+        presets_grid = QGridLayout()
+        presets_grid.setSpacing(4)
+        presets_grid.addWidget(btn_iso, 0, 0, 1, 2)
+        presets_grid.addWidget(btn_front, 1, 0)
+        presets_grid.addWidget(btn_side, 1, 1)
+        presets_grid.addWidget(btn_top, 2, 0, 1, 2)
+        t_layout.addLayout(presets_grid)
 
-        t_layout.addSpacing(12)
+        t_layout.addSpacing(6)
 
         # Projection Mode Toggle Button
         t_layout.addWidget(QLabel("<b>Projection:</b>"))
@@ -789,47 +802,56 @@ class Schema3DWidget(QWidget):
         self.btn_proj_toggle.clicked.connect(self._on_toggle_projection_clicked)
         t_layout.addWidget(self.btn_proj_toggle)
 
-        t_layout.addSpacing(12)
+        t_layout.addSpacing(6)
 
         # Exploded Lid Slider
-        t_layout.addWidget(QLabel("<b>Lid Split Gap:</b>"))
+        gap_header = QHBoxLayout()
+        gap_header.addWidget(QLabel("<b>Lid Split Gap:</b>"))
+        self.lbl_gap = QLabel("0 mm")
+        self.lbl_gap.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        gap_header.addWidget(self.lbl_gap)
+        t_layout.addLayout(gap_header)
+
         self.slider_gap = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_gap.setRange(0, 200)
         self.slider_gap.setValue(0)
-        self.slider_gap.setFixedWidth(90)
         self.slider_gap.setToolTip("Exploded lid view gap in mm")
-        self.lbl_gap = QLabel("0 mm")
         self.slider_gap.valueChanged.connect(self._on_gap_changed)
         t_layout.addWidget(self.slider_gap)
-        t_layout.addWidget(self.lbl_gap)
 
-        t_layout.addSpacing(10)
+        t_layout.addSpacing(6)
 
         # Explode View Slider (Explode all panels)
-        t_layout.addWidget(QLabel("<b>Explode View:</b>"))
+        explode_header = QHBoxLayout()
+        explode_header.addWidget(QLabel("<b>Explode View:</b>"))
+        self.lbl_explode = QLabel("0 mm")
+        self.lbl_explode.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        explode_header.addWidget(self.lbl_explode)
+        t_layout.addLayout(explode_header)
+
         self.slider_explode = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_explode.setRange(0, 250)
         self.slider_explode.setValue(0)
-        self.slider_explode.setFixedWidth(90)
         self.slider_explode.setToolTip("Explode all panels to display separated panels with dimensions")
-        self.lbl_explode = QLabel("0 mm")
         self.slider_explode.valueChanged.connect(self._on_explode_changed)
         t_layout.addWidget(self.slider_explode)
-        t_layout.addWidget(self.lbl_explode)
 
-        t_layout.addSpacing(10)
+        t_layout.addSpacing(6)
 
         # Lid Rotation Angle Slider & Hinge Side Selector
-        t_layout.addWidget(QLabel("<b>Lid Open Angle:</b>"))
+        angle_header = QHBoxLayout()
+        angle_header.addWidget(QLabel("<b>Lid Angle:</b>"))
+        self.lbl_angle = QLabel("0°")
+        self.lbl_angle.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        angle_header.addWidget(self.lbl_angle)
+        t_layout.addLayout(angle_header)
+
         self.slider_angle = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_angle.setRange(0, 180)
         self.slider_angle.setValue(0)
-        self.slider_angle.setFixedWidth(100)
         self.slider_angle.setToolTip("Rotate lid open along selected hinge side (0° to 180°)")
-        self.lbl_angle = QLabel("0°")
         self.slider_angle.valueChanged.connect(self._on_angle_changed)
         t_layout.addWidget(self.slider_angle)
-        t_layout.addWidget(self.lbl_angle)
 
         t_layout.addWidget(QLabel("<b>Hinge Side:</b>"))
         self.combo_hinge = QComboBox(self)
@@ -839,9 +861,10 @@ class Schema3DWidget(QWidget):
         self.combo_hinge.currentTextChanged.connect(self._on_hinge_side_changed)
         t_layout.addWidget(self.combo_hinge)
 
-        t_layout.addSpacing(12)
+        t_layout.addSpacing(6)
 
         # Checkboxes
+        t_layout.addWidget(QLabel("<b>Display:</b>"))
         self.chk_dims = QCheckBox("Dimensions", self)
         self.chk_dims.setChecked(True)
         self.chk_dims.toggled.connect(self._on_toggles_changed)
@@ -854,7 +877,8 @@ class Schema3DWidget(QWidget):
         t_layout.addWidget(self.chk_walls)
         t_layout.addStretch()
 
-        layout.addWidget(toolbar)
+        toolbar_scroll.setWidget(toolbar)
+        layout.addWidget(toolbar_scroll)
         layout.addWidget(self.canvas, 1)
 
     def _on_toggle_projection_clicked(self) -> None:
