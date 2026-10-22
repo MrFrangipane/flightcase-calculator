@@ -44,15 +44,11 @@ class AluProfilesWidget(QWidget):
         # Highlighted Lid Mating Profile Length
         kpi_layout.addWidget(QLabel("<b>★ Lid Alu Profile Required Length:</b>"), 0, 0)
         self.lbl_lid_profile_len = QLabel("0.0 mm (0.00 m)")
-        self.lbl_lid_profile_len.setStyleSheet(
-            "font-size: 16px; font-weight: bold; color: #f59e0b; padding: 4px; background-color: #2a2a38; border-radius: 4px;"
-        )
         kpi_layout.addWidget(self.lbl_lid_profile_len, 0, 1)
 
         # Edge Angle Protection Profiles Length
         kpi_layout.addWidget(QLabel("<b>Edge Protection Angle Profiles:</b>"), 1, 0)
         self.lbl_edge_profile_len = QLabel("0.0 mm (0.00 m)")
-        self.lbl_edge_profile_len.setStyleSheet("font-size: 14px; font-weight: bold; color: #06b6d4;")
         kpi_layout.addWidget(self.lbl_edge_profile_len, 1, 1)
 
         layout.addWidget(kpi_box)

@@ -45,25 +45,21 @@ class CutListTableWidget(QWidget):
         # Total Area
         kpi_layout.addWidget(QLabel("<b>Total Wood Area:</b>"), 0, 0)
         self.lbl_total_area = QLabel("0.00 m²")
-        self.lbl_total_area.setStyleSheet("font-size: 14px; font-weight: bold; color: #5e9eff;")
         kpi_layout.addWidget(self.lbl_total_area, 0, 1)
 
         # Estimated Weight
         kpi_layout.addWidget(QLabel("<b>Estimated Weight:</b>"), 0, 2)
         self.lbl_weight = QLabel("0.0 kg")
-        self.lbl_weight.setStyleSheet("font-size: 14px; font-weight: bold; color: #5e9eff;")
         kpi_layout.addWidget(self.lbl_weight, 0, 3)
 
         # Standard Sheets (2440 x 1220 mm)
         kpi_layout.addWidget(QLabel("<b>Standard Sheets (2440x1220):</b>"), 1, 0)
         self.lbl_sheets = QLabel("0.0 sheets")
-        self.lbl_sheets.setStyleSheet("font-size: 14px; font-weight: bold; color: #22c55e;")
         kpi_layout.addWidget(self.lbl_sheets, 1, 1)
 
         # Sheet Utilization
         kpi_layout.addWidget(QLabel("<b>Sheet Utilization:</b>"), 1, 2)
         self.lbl_utilization = QLabel("0.0 %")
-        self.lbl_utilization.setStyleSheet("font-size: 14px; font-weight: bold; color: #22c55e;")
         kpi_layout.addWidget(self.lbl_utilization, 1, 3)
 
         layout.addWidget(kpi_box)

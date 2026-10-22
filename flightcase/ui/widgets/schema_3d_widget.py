@@ -750,7 +750,6 @@ class Schema3DWidget(QWidget):
 
         # Toolbar Frame
         toolbar = QFrame(self)
-        toolbar.setStyleSheet("background-color: #25252e; border-radius: 6px; padding: 4px;")
         t_layout = QHBoxLayout(toolbar)
         t_layout.setContentsMargins(8, 4, 8, 4)
         t_layout.setSpacing(10)
@@ -866,10 +865,8 @@ class Schema3DWidget(QWidget):
         self.btn_proj_toggle.setChecked(is_perspective)
         if is_perspective:
             self.btn_proj_toggle.setText("Perspective")
-            self.btn_proj_toggle.setStyleSheet("background-color: #3b82f6; color: white; font-weight: bold;")
         else:
             self.btn_proj_toggle.setText("Parallel (Ortho)")
-            self.btn_proj_toggle.setStyleSheet("")
         self.projection_changed.emit(is_perspective)
 
     def _on_gap_changed(self, val: int) -> None:
@@ -1014,10 +1011,8 @@ class Schema3DWidget(QWidget):
         self.btn_proj_toggle.setChecked(settings.is_perspective)
         if settings.is_perspective:
             self.btn_proj_toggle.setText("Perspective")
-            self.btn_proj_toggle.setStyleSheet("background-color: #3b82f6; color: white; font-weight: bold;")
         else:
             self.btn_proj_toggle.setText("Parallel (Ortho)")
-            self.btn_proj_toggle.setStyleSheet("")
 
         self.canvas.set_view_state(
             azimuth_deg=settings.camera_azimuth_deg,

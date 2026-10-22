@@ -1104,3 +1104,25 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in export_main_file.read_text(encoding="utf-8")
 
     window.close()
+
+
+def test_dark_desktop_theme_applied(qapp):
+    from flightcase.ui.theme import DARK_THEME_QSS
+    from flightcase.ui import FlightCaseMainWindow
+
+    assert len(DARK_THEME_QSS) > 0
+    assert "Section: Main" in DARK_THEME_QSS
+    assert "Section: Buttons/Inputs" in DARK_THEME_QSS
+    assert "Section: Views" in DARK_THEME_QSS
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    # Ensure individual widgets don't have hardcoded inline stylesheets overriding theme
+    assert window.alu_widget.lbl_lid_profile_len.styleSheet() == ""
+    assert window.alu_widget.lbl_edge_profile_len.styleSheet() == ""
+    assert window.cutlist_widget.lbl_total_area.styleSheet() == ""
+    assert window.cutlist_widget.lbl_weight.styleSheet() == ""
+    assert window.cutlist_widget.lbl_sheets.styleSheet() == ""
+    assert window.cutlist_widget.lbl_utilization.styleSheet() == ""
+    assert window.walls_widget.lbl_comp_summary.styleSheet() == ""
+    assert window.schema_widget.btn_proj_toggle.styleSheet() == ""
+    window.close()

@@ -61,7 +61,7 @@ class SvgPanZoomView(QGraphicsView):
         self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setBackgroundBrush(QBrush(QColor("#181820")))
+        self.setBackgroundBrush(QBrush(QColor(70, 70, 70)))
 
     def renderer(self) -> QSvgRenderer:
         """Returns the underlying QSvgRenderer."""
@@ -187,7 +187,6 @@ class WoodPanelsSvgWidget(QWidget):
 
         # Top Action Toolbar
         toolbar = QFrame(self)
-        toolbar.setStyleSheet("background-color: #25252e; border-radius: 6px; padding: 4px;")
         t_layout = QHBoxLayout(toolbar)
         t_layout.setContentsMargins(8, 6, 8, 6)
         t_layout.setSpacing(10)
@@ -239,7 +238,7 @@ class WoodPanelsSvgWidget(QWidget):
         t_layout.addWidget(btn_reset_zoom)
 
         t_layout.addSpacing(16)
-        hint_label = QLabel("<span style='color: #8e8ea0; font-size: 11px;'>Drag to Pan • Wheel to Zoom • Double-Click to Fit</span>")
+        hint_label = QLabel("Drag to Pan • Wheel to Zoom • Double-Click to Fit")
         t_layout.addWidget(hint_label)
 
         t_layout.addStretch()

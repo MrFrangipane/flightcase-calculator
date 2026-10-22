@@ -106,7 +106,6 @@ class InsideWallsWidget(QWidget):
         tab_comps_layout.addLayout(btn_comp_row)
 
         self.lbl_comp_summary = QLabel(self)
-        self.lbl_comp_summary.setStyleSheet("font-size: 11px; color: #a0a0a0;")
         tab_comps_layout.addWidget(self.lbl_comp_summary)
 
         self.tabs_config.addTab(self.tab_comps, "Compartment Spaces")
