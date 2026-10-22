@@ -256,14 +256,17 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     left_tabs = splitter.widget(0)
     assert isinstance(left_tabs, QTabWidget)
     assert left_tabs == window.tabs
-    assert left_tabs.count() == 3
+    assert left_tabs.count() == 2
     assert left_tabs.tabText(0).endswith("Wood Cut List")
     assert left_tabs.tabText(1).endswith("Alu Profiles")
-    assert "SVG" in left_tabs.tabText(2)
 
-    # Center child must be Schema3DWidget directly
-    center_widget = splitter.widget(1)
-    assert center_widget == window.schema_widget
+    # Center child must be QTabWidget containing 3D schema and 2D wood panels SVG
+    center_tabs = splitter.widget(1)
+    assert isinstance(center_tabs, QTabWidget)
+    assert center_tabs == window.center_tabs
+    assert center_tabs.count() == 2
+    assert center_tabs.widget(0) == window.schema_widget
+    assert center_tabs.widget(1) == window.svg_widget
     assert window.schema_widget.isVisibleTo(window)
 
     # Right child must be permanent configuration panel (scroll area with dimensions and walls)
@@ -976,7 +979,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     svg_widget.set_svg(sample_svg)
     assert svg_widget.get_svg_data() == sample_svg
 
-    # Zoom controls
+    # 2D Zoom & Pan controls
     assert svg_widget.lbl_zoom.text() == "100%"
     svg_widget._zoom_in()
     assert svg_widget._zoom_factor > 1.0
@@ -984,6 +987,72 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     svg_widget._reset_zoom()
     assert svg_widget._zoom_factor == 1.0
     assert svg_widget.lbl_zoom.text() == "100%"
+
+    # Fit to view
+    svg_widget.fit_to_view()
+    assert svg_widget._zoom_factor > 0.0
+
+    # 2D Viewport mouse interactions (wheel & drag pan simulation)
+    from PySide6.QtGui import QWheelEvent, QMouseEvent
+    from PySide6.QtCore import QPointF, QPoint
+
+    # Wheel event
+    wheel_ev = QWheelEvent(
+        QPointF(100.0, 100.0),
+        QPointF(100.0, 100.0),
+        QPoint(0, 120),
+        QPoint(0, 120),
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+        Qt.ScrollPhase.NoScrollPhase,
+        False,
+    )
+    svg_widget.svg_view.wheelEvent(wheel_ev)
+    assert svg_widget._zoom_factor > 0.0
+
+    # Middle click pan simulation
+    press_ev = QMouseEvent(
+        QMouseEvent.Type.MouseButtonPress,
+        QPointF(50.0, 50.0),
+        QPointF(50.0, 50.0),
+        Qt.MouseButton.MiddleButton,
+        Qt.MouseButton.MiddleButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    svg_widget.svg_view.mousePressEvent(press_ev)
+    assert svg_widget.svg_view._is_middle_panning is True
+
+    move_ev = QMouseEvent(
+        QMouseEvent.Type.MouseMove,
+        QPointF(80.0, 90.0),
+        QPointF(80.0, 90.0),
+        Qt.MouseButton.MiddleButton,
+        Qt.MouseButton.MiddleButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    svg_widget.svg_view.mouseMoveEvent(move_ev)
+
+    release_ev = QMouseEvent(
+        QMouseEvent.Type.MouseButtonRelease,
+        QPointF(80.0, 90.0),
+        QPointF(80.0, 90.0),
+        Qt.MouseButton.MiddleButton,
+        Qt.MouseButton.MiddleButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    svg_widget.svg_view.mouseReleaseEvent(release_ev)
+    assert svg_widget.svg_view._is_middle_panning is False
+
+    # Double click fit simulation
+    dbl_click_ev = QMouseEvent(
+        QMouseEvent.Type.MouseButtonDblClick,
+        QPointF(100.0, 100.0),
+        QPointF(100.0, 100.0),
+        Qt.MouseButton.LeftButton,
+        Qt.MouseButton.LeftButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    svg_widget.svg_view.mouseDoubleClickEvent(dbl_click_ev)
 
     # Copy to clipboard
     monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: None)
@@ -1005,15 +1074,23 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     assert export_file.is_file()
     assert "Sample Test SVG" in export_file.read_text(encoding="utf-8")
 
-    # 2. Main Window integration
+    # 2. Main Window central tab integration
     window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
     assert window.svg_widget is not None
-    assert window.tabs.count() == 3
-    assert window.tabs.widget(2) == window.svg_widget
+    assert window.tabs.count() == 2
+    assert window.center_tabs.count() == 2
+    assert window.center_tabs.widget(0) == window.schema_widget
+    assert window.center_tabs.widget(1) == window.svg_widget
 
     # Recalculate populates SVG data
     assert "<svg" in window.svg_widget.get_svg_data()
     assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in window.svg_widget.get_svg_data()
+
+    # Menu view switching
+    window._fit_svg_view()
+    assert window.center_tabs.currentWidget() == window.svg_widget
+    window._reset_3d_view()
+    assert window.center_tabs.currentWidget() == window.schema_widget
 
     # Trigger export through cut list button and main window
     export_main_file = tmp_path / "from_mainwindow.svg"

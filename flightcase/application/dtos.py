@@ -57,6 +57,7 @@ class UISettingsDTO:
 
     # Active Tab & Inside Walls UI
     active_tab_index: int = 0
+    active_center_tab_index: int = 0
     compartment_orientation: str = "width_wise"
     auto_equalize_flags: List[bool] = field(default_factory=list)
 
@@ -76,6 +77,7 @@ class UISettingsDTO:
             "show_inside_walls": self.show_inside_walls,
             "show_axes": self.show_axes,
             "active_tab_index": self.active_tab_index,
+            "active_center_tab_index": self.active_center_tab_index,
             "compartment_orientation": self.compartment_orientation,
             "auto_equalize_flags": list(self.auto_equalize_flags),
         }
@@ -106,6 +108,7 @@ class UISettingsDTO:
             show_inside_walls=bool(data.get("show_inside_walls", True)),
             show_axes=bool(data.get("show_axes", True)),
             active_tab_index=int(data.get("active_tab_index", 0)),
+            active_center_tab_index=int(data.get("active_center_tab_index", 0)),
             compartment_orientation=str(data.get("compartment_orientation", data.get("equispaced_walls_orientation", "width_wise"))),
             auto_equalize_flags=auto_equalize_flags,
         )

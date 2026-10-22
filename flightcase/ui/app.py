@@ -82,23 +82,26 @@ class FlightCaseMainWindow(QMainWindow):
         main_layout.setContentsMargins(8, 8, 8, 8)
 
         # Main horizontal splitter with 3 sections:
-        # [ Left: Output Tables | Center: 3D Viewport | Right: Dimensions & Inside Walls Config ]
+        # [ Left: Output Tables | Center: 3D Schema & 2D Wood Panels Viewports | Right: Dimensions & Inside Walls Config ]
         self.main_splitter = QSplitter(Qt.Horizontal, self)
 
         # 1. Left Pane: Tabs containing dimensions / cutlist output tables
         self.tabs = QTabWidget(self)
         self.cutlist_widget = CutListTableWidget(self)
         self.alu_widget = AluProfilesWidget(self)
-        self.svg_widget = WoodPanelsSvgWidget(self)
 
         self.tabs.addTab(self.cutlist_widget, "Wood Cut List")
         self.tabs.addTab(self.alu_widget, "Alu Profiles")
-        self.tabs.addTab(self.svg_widget, "Wood Panels (SVG)")
         self.main_splitter.addWidget(self.tabs)
 
-        # 2. Center Pane: 3D Viewport (always visible)
+        # 2. Center Pane: Central tabs containing 3D Schema and 2D Wood Panels Diagram
+        self.center_tabs = QTabWidget(self)
         self.schema_widget = Schema3DWidget(self)
-        self.main_splitter.addWidget(self.schema_widget)
+        self.svg_widget = WoodPanelsSvgWidget(self)
+
+        self.center_tabs.addTab(self.schema_widget, "3D Schema")
+        self.center_tabs.addTab(self.svg_widget, "2D Wood Panels (SVG)")
+        self.main_splitter.addWidget(self.center_tabs)
 
         # 3. Right Pane: Permanent Configuration Panel (Dimensions & Specs + Inside Walls)
         self.input_panel = CaseInputPanel(self)
@@ -198,16 +201,32 @@ class FlightCaseMainWindow(QMainWindow):
 
         # View Menu
         view_menu = menu_bar.addMenu("&View")
+
+        view_3d_action = QAction("&3D Schema View", self)
+        view_3d_action.setShortcut("Ctrl+1")
+        view_3d_action.setStatusTip("Switch to 3D interactive schema view")
+        view_3d_action.triggered.connect(lambda: self.center_tabs.setCurrentWidget(self.schema_widget))
+        view_menu.addAction(view_3d_action)
+
         reset_view_action = QAction("&Reset 3D Schema View", self)
         reset_view_action.setShortcut("Ctrl+R")
-        reset_view_action.triggered.connect(lambda: self.schema_widget.canvas.reset_view(45.0, 30.0))
+        reset_view_action.setStatusTip("Reset 3D camera to default isometric view")
+        reset_view_action.triggered.connect(self._reset_3d_view)
         view_menu.addAction(reset_view_action)
 
-        view_svg_action = QAction("View Wood &Panels SVG Diagram", self)
-        view_svg_action.setShortcut("Ctrl+D")
+        view_menu.addSeparator()
+
+        view_svg_action = QAction("View 2D &Wood Panels Diagram (SVG)", self)
+        view_svg_action.setShortcut("Ctrl+2")
         view_svg_action.setStatusTip("Switch to 2D technical diagram of wood panels")
-        view_svg_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.svg_widget))
+        view_svg_action.triggered.connect(lambda: self.center_tabs.setCurrentWidget(self.svg_widget))
         view_menu.addAction(view_svg_action)
+
+        fit_svg_action = QAction("&Fit 2D Diagram to View", self)
+        fit_svg_action.setShortcut("Ctrl+D")
+        fit_svg_action.setStatusTip("Fit 2D wood panels diagram into viewport")
+        fit_svg_action.triggered.connect(self._fit_svg_view)
+        view_menu.addAction(fit_svg_action)
 
         # Help Menu
         help_menu = menu_bar.addMenu("&Help")
@@ -282,10 +301,24 @@ class FlightCaseMainWindow(QMainWindow):
             else:
                 act.setVisible(False)
 
+    def _reset_3d_view(self) -> None:
+        """Switches to 3D schema tab and resets camera view angles."""
+        if hasattr(self, "center_tabs"):
+            self.center_tabs.setCurrentWidget(self.schema_widget)
+        self.schema_widget.canvas.reset_view(45.0, 30.0)
+
+    def _fit_svg_view(self) -> None:
+        """Switches to 2D SVG tab and fits diagram into viewport."""
+        if hasattr(self, "center_tabs"):
+            self.center_tabs.setCurrentWidget(self.svg_widget)
+        self.svg_widget.fit_to_view()
+
     def _get_current_ui_settings(self) -> UISettingsDTO:
         """Gathers active UI settings including 3D camera transform, toggles, active tab, and compartment settings."""
         ui_dto = self.schema_widget.get_ui_settings()
         ui_dto.active_tab_index = self.tabs.currentIndex()
+        if hasattr(self, "center_tabs"):
+            ui_dto.active_center_tab_index = self.center_tabs.currentIndex()
         ui_dto.compartment_orientation = self.walls_widget.get_compartment_orientation()
         ui_dto.auto_equalize_flags = self.walls_widget.get_auto_equalize_flags()
         return ui_dto
@@ -295,6 +328,9 @@ class FlightCaseMainWindow(QMainWindow):
         self.schema_widget.set_ui_settings(settings)
         if 0 <= settings.active_tab_index < self.tabs.count():
             self.tabs.setCurrentIndex(settings.active_tab_index)
+        if hasattr(settings, "active_center_tab_index") and hasattr(self, "center_tabs"):
+            if 0 <= settings.active_center_tab_index < self.center_tabs.count():
+                self.center_tabs.setCurrentIndex(settings.active_center_tab_index)
         if hasattr(settings, "compartment_orientation") and settings.compartment_orientation:
             self.walls_widget.set_compartment_orientation(settings.compartment_orientation)
         if hasattr(settings, "auto_equalize_flags") and settings.auto_equalize_flags:
@@ -309,6 +345,8 @@ class FlightCaseMainWindow(QMainWindow):
             settings.setValue("mainSplitter", self.main_splitter.saveState())
         if hasattr(self, "tabs"):
             settings.setValue("currentTab", self.tabs.currentIndex())
+        if hasattr(self, "center_tabs"):
+            settings.setValue("currentCenterTab", self.center_tabs.currentIndex())
         if self._current_project_path:
             settings.setValue("lastProjectPath", self._current_project_path)
         try:
@@ -338,6 +376,13 @@ class FlightCaseMainWindow(QMainWindow):
         if tab_idx is not None and hasattr(self, "tabs"):
             try:
                 self.tabs.setCurrentIndex(int(tab_idx))
+            except (ValueError, TypeError):
+                pass
+
+        center_tab_idx = settings.value("currentCenterTab")
+        if center_tab_idx is not None and hasattr(self, "center_tabs"):
+            try:
+                self.center_tabs.setCurrentIndex(int(center_tab_idx))
             except (ValueError, TypeError):
                 pass
 
