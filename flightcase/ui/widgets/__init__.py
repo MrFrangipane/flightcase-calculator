@@ -5,6 +5,7 @@ from .input_panel import CaseInputPanel
 from .walls_widget import InsideWallsWidget
 from .cutlist_table import CutListTableWidget
 from .alu_profiles_widget import AluProfilesWidget
+from .svg_diagram_widget import WoodPanelsSvgWidget
 
 __all__ = [
     "Schema3DWidget",
@@ -13,4 +14,5 @@ __all__ = [
     "InsideWallsWidget",
     "CutListTableWidget",
     "AluProfilesWidget",
+    "WoodPanelsSvgWidget",
 ]

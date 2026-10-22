@@ -11,6 +11,7 @@ from .dtos import (
 from .use_cases import (
     CalculateFlightCaseUseCase,
     GenerateSchema3DUseCase,
+    GenerateWoodPanelsSvgUseCase,
     SaveProjectUseCase,
     LoadProjectUseCase,
 )
@@ -24,6 +25,7 @@ __all__ = [
     "CalculationResultDTO",
     "CalculateFlightCaseUseCase",
     "GenerateSchema3DUseCase",
+    "GenerateWoodPanelsSvgUseCase",
     "SaveProjectUseCase",
     "LoadProjectUseCase",
 ]

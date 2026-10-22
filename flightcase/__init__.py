@@ -11,6 +11,7 @@ from .domain import (
     InvalidDimensionError,
     WallOutOfBoundsError,
     InvalidLidConfigurationError,
+    WoodPanelsSvgGenerator,
 )
 from .application import (
     CaseInputDTO,
@@ -20,6 +21,7 @@ from .application import (
     CutPieceDTO,
     CalculateFlightCaseUseCase,
     GenerateSchema3DUseCase,
+    GenerateWoodPanelsSvgUseCase,
 )
 from .ui import (
     FlightCaseMainWindow,
@@ -44,6 +46,8 @@ __all__ = [
     "CutPieceDTO",
     "CalculateFlightCaseUseCase",
     "GenerateSchema3DUseCase",
+    "GenerateWoodPanelsSvgUseCase",
+    "WoodPanelsSvgGenerator",
     "FlightCaseMainWindow",
     "run_app",
 ]

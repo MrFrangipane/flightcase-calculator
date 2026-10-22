@@ -27,6 +27,7 @@ from ..application import (
     UISettingsDTO,
     CalculateFlightCaseUseCase,
     GenerateSchema3DUseCase,
+    GenerateWoodPanelsSvgUseCase,
     SaveProjectUseCase,
     LoadProjectUseCase,
     CalculationResultDTO,
@@ -38,6 +39,7 @@ from .widgets import (
     Schema3DWidget,
     CutListTableWidget,
     AluProfilesWidget,
+    WoodPanelsSvgWidget,
 )
 
 
@@ -87,9 +89,11 @@ class FlightCaseMainWindow(QMainWindow):
         self.tabs = QTabWidget(self)
         self.cutlist_widget = CutListTableWidget(self)
         self.alu_widget = AluProfilesWidget(self)
+        self.svg_widget = WoodPanelsSvgWidget(self)
 
         self.tabs.addTab(self.cutlist_widget, "Wood Cut List")
         self.tabs.addTab(self.alu_widget, "Alu Profiles")
+        self.tabs.addTab(self.svg_widget, "Wood Panels (SVG)")
         self.main_splitter.addWidget(self.tabs)
 
         # 2. Center Pane: 3D Viewport (always visible)
@@ -178,6 +182,12 @@ class FlightCaseMainWindow(QMainWindow):
         export_action.triggered.connect(self._export_full_report)
         self.file_menu.addAction(export_action)
 
+        export_svg_action = QAction("Export &Wood Panels SVG...", self)
+        export_svg_action.setShortcut("Ctrl+Shift+E")
+        export_svg_action.setStatusTip("Export all wood panels technical drawing to SVG file")
+        export_svg_action.triggered.connect(self._export_wood_panels_svg)
+        self.file_menu.addAction(export_svg_action)
+
         self.file_menu.addSeparator()
 
         exit_action = QAction("E&xit", self)
@@ -192,6 +202,12 @@ class FlightCaseMainWindow(QMainWindow):
         reset_view_action.setShortcut("Ctrl+R")
         reset_view_action.triggered.connect(lambda: self.schema_widget.canvas.reset_view(45.0, 30.0))
         view_menu.addAction(reset_view_action)
+
+        view_svg_action = QAction("View Wood &Panels SVG Diagram", self)
+        view_svg_action.setShortcut("Ctrl+D")
+        view_svg_action.setStatusTip("Switch to 2D technical diagram of wood panels")
+        view_svg_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.svg_widget))
+        view_menu.addAction(view_svg_action)
 
         # Help Menu
         help_menu = menu_bar.addMenu("&Help")
@@ -435,8 +451,10 @@ class FlightCaseMainWindow(QMainWindow):
         self.input_panel.input_changed.connect(self.recalculate)
         self.walls_widget.walls_changed.connect(self.recalculate)
         self.schema_widget.lid_exploded_changed.connect(self._update_schema_geometry)
+        self.schema_widget.explode_changed.connect(self._update_schema_geometry)
         self.schema_widget.lid_rotation_changed.connect(self._update_schema_geometry)
         self.schema_widget.toggles_changed.connect(self._update_schema_geometry)
+        self.cutlist_widget.export_svg_requested.connect(self._export_wood_panels_svg)
 
         # Highlight synchronization across dimension tables and 3D schema
         self.walls_widget.wall_selection_changed.connect(self._on_wall_selection_changed)
@@ -482,6 +500,11 @@ class FlightCaseMainWindow(QMainWindow):
             )
             self.cutlist_widget.set_calculation_result(result)
             self.alu_widget.set_calculation_result(result)
+
+            # Generate and update wood panels SVG diagram
+            svg_data = GenerateWoodPanelsSvgUseCase.execute(input_dto)
+            self.svg_widget.set_svg(svg_data)
+
             self._update_schema_geometry()
 
             # 3. Status Bar
@@ -505,6 +528,7 @@ class FlightCaseMainWindow(QMainWindow):
             mesh = GenerateSchema3DUseCase.execute(
                 input_dto=input_dto,
                 lid_exploded_gap_mm=self.schema_widget.exploded_gap_mm,
+                explode_gap_mm=self.schema_widget.explode_gap_mm,
                 lid_rotation_angle_deg=self.schema_widget.rotation_angle_deg,
                 lid_hinge_side=self.schema_widget.hinge_side,
                 show_inside_walls=self.schema_widget.show_inside_walls,
@@ -513,6 +537,9 @@ class FlightCaseMainWindow(QMainWindow):
             self.schema_widget.set_mesh(mesh)
         except FlightCaseDomainError:
             pass
+
+    def _export_wood_panels_svg(self) -> None:
+        self.svg_widget.export_svg()
 
     def _export_full_report(self) -> None:
         if not self._current_result:

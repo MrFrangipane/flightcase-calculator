@@ -9,6 +9,7 @@ from ..domain import (
     WallOrientation,
     FlightCaseDomainService,
     Schema3DGeometryBuilder,
+    WoodPanelsSvgGenerator,
     WireframeMesh3D,
 )
 from .dtos import (
@@ -135,10 +136,12 @@ class GenerateSchema3DUseCase:
     def execute(
         input_dto: CaseInputDTO,
         lid_exploded_gap_mm: float = 0.0,
+        explode_gap_mm: float = 0.0,
         lid_rotation_angle_deg: float = 0.0,
         lid_hinge_side: str = "Back",
         show_inside_walls: bool = True,
-        show_dimensions: bool = True
+        show_dimensions: bool = True,
+        show_all_panel_dimensions: bool = True,
     ) -> WireframeMesh3D:
         dimensions = Dimensions3D(
             length_mm=input_dto.inner_length,
@@ -175,11 +178,53 @@ class GenerateSchema3DUseCase:
         return Schema3DGeometryBuilder.build_geometry(
             case=flight_case,
             lid_exploded_gap_mm=lid_exploded_gap_mm,
+            explode_gap_mm=explode_gap_mm,
             lid_rotation_angle_deg=lid_rotation_angle_deg,
             lid_hinge_side=lid_hinge_side,
             show_inside_walls=show_inside_walls,
             show_dimensions=show_dimensions,
+            show_all_panel_dimensions=show_all_panel_dimensions,
         )
+
+
+class GenerateWoodPanelsSvgUseCase:
+    """Use case to generate vector SVG diagram of all wood panels with cut dimensions."""
+
+    @staticmethod
+    def execute(input_dto: CaseInputDTO) -> str:
+        dimensions = Dimensions3D(
+            length_mm=input_dto.inner_length,
+            width_mm=input_dto.inner_width,
+            height_mm=input_dto.inner_total_height,
+        )
+
+        domain_walls: List[InsideWall] = []
+        for w_dto in input_dto.walls:
+            orientation = (
+                WallOrientation.WIDTH_WISE
+                if w_dto.orientation.lower().startswith("width")
+                else WallOrientation.LENGTH_WISE
+            )
+            domain_walls.append(InsideWall(
+                orientation=orientation,
+                position_mm=w_dto.position_mm,
+                thickness_mm=w_dto.thickness_mm,
+                height_mm=w_dto.height_mm,
+                label=w_dto.label,
+            ))
+
+        flight_case = FlightCase(
+            dimensions=dimensions,
+            lid_height=input_dto.inner_lid_height,
+            wood_thickness=input_dto.wood_thickness,
+            lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
+            corner_extrusion_rebate=input_dto.corner_extrusion_rebate,
+            edge_profile_width=input_dto.edge_profile_width,
+            self_cut_lid=input_dto.self_cut_lid,
+            _walls=domain_walls,
+        )
+
+        return WoodPanelsSvgGenerator.generate_wood_panels_svg(flight_case)
 
 
 class SaveProjectUseCase:

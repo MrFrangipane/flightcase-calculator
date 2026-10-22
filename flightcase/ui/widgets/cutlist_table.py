@@ -25,6 +25,7 @@ class CutListTableWidget(QWidget):
     """Widget displaying all wood panels cutting dimensions and metrics."""
 
     piece_selection_changed = Signal(list)  # List of selected panel/piece names
+    export_svg_requested = Signal()
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
@@ -110,8 +111,13 @@ class CutListTableWidget(QWidget):
         btn_export.setObjectName("secondaryButton")
         btn_export.clicked.connect(self._export_csv)
 
+        btn_export_svg = QPushButton("Export SVG Diagram...", self)
+        btn_export_svg.setObjectName("secondaryButton")
+        btn_export_svg.clicked.connect(self.export_svg_requested.emit)
+
         btn_layout.addWidget(btn_copy)
         btn_layout.addWidget(btn_export)
+        btn_layout.addWidget(btn_export_svg)
         btn_layout.addStretch()
         t_layout.addLayout(btn_layout)
 

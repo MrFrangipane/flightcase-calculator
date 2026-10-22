@@ -703,6 +703,7 @@ class Schema3DWidget(QWidget):
     """Complete 3D Schema panel with interactive toolbar and hardware-accelerated OpenGL canvas."""
 
     lid_exploded_changed = Signal(float)
+    explode_changed = Signal(float)
     lid_rotation_changed = Signal(float, str)
     toggles_changed = Signal()
     projection_changed = Signal(bool)
@@ -767,14 +768,28 @@ class Schema3DWidget(QWidget):
         self.slider_gap = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_gap.setRange(0, 200)
         self.slider_gap.setValue(0)
-        self.slider_gap.setFixedWidth(100)
+        self.slider_gap.setFixedWidth(90)
         self.slider_gap.setToolTip("Exploded lid view gap in mm")
         self.lbl_gap = QLabel("0 mm")
         self.slider_gap.valueChanged.connect(self._on_gap_changed)
         t_layout.addWidget(self.slider_gap)
         t_layout.addWidget(self.lbl_gap)
 
-        t_layout.addSpacing(12)
+        t_layout.addSpacing(10)
+
+        # Explode View Slider (Explode all panels)
+        t_layout.addWidget(QLabel("<b>Explode View:</b>"))
+        self.slider_explode = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider_explode.setRange(0, 250)
+        self.slider_explode.setValue(0)
+        self.slider_explode.setFixedWidth(90)
+        self.slider_explode.setToolTip("Explode all panels to display separated panels with dimensions")
+        self.lbl_explode = QLabel("0 mm")
+        self.slider_explode.valueChanged.connect(self._on_explode_changed)
+        t_layout.addWidget(self.slider_explode)
+        t_layout.addWidget(self.lbl_explode)
+
+        t_layout.addSpacing(10)
 
         # Lid Rotation Angle Slider & Hinge Side Selector
         t_layout.addWidget(QLabel("<b>Lid Open Angle:</b>"))
@@ -832,6 +847,10 @@ class Schema3DWidget(QWidget):
         self.lbl_gap.setText(f"{val} mm")
         self.lid_exploded_changed.emit(float(val))
 
+    def _on_explode_changed(self, val: int) -> None:
+        self.lbl_explode.setText(f"{val} mm")
+        self.explode_changed.emit(float(val))
+
     def _on_angle_changed(self, val: int) -> None:
         self.lbl_angle.setText(f"{val}°")
         self.lid_rotation_changed.emit(float(val), self.combo_hinge.currentText())
@@ -858,6 +877,18 @@ class Schema3DWidget(QWidget):
     @property
     def exploded_gap_mm(self) -> float:
         return float(self.slider_gap.value())
+
+    @property
+    def explode_gap_mm(self) -> float:
+        return float(self.slider_explode.value())
+
+    def set_explode_gap(self, val: float) -> None:
+        """Sets exploded view distance in mm (0-250 mm)."""
+        v = max(0, min(250, int(round(val))))
+        self.slider_explode.blockSignals(True)
+        self.slider_explode.setValue(v)
+        self.slider_explode.blockSignals(False)
+        self.lbl_explode.setText(f"{v} mm")
 
     @property
     def rotation_angle_deg(self) -> float:
@@ -912,6 +943,7 @@ class Schema3DWidget(QWidget):
             camera_pan_y=self.canvas.pan_offset_y,
             is_perspective=self.canvas.is_perspective,
             lid_exploded_gap_mm=float(self.slider_gap.value()),
+            explode_gap_mm=float(self.slider_explode.value()),
             lid_rotation_angle_deg=float(self.slider_angle.value()),
             lid_hinge_side=self.combo_hinge.currentText(),
             show_dimensions=self.chk_dims.isChecked(),
@@ -926,6 +958,8 @@ class Schema3DWidget(QWidget):
         self.slider_gap.setValue(gap_val)
         self.slider_gap.blockSignals(False)
         self.lbl_gap.setText(f"{gap_val} mm")
+
+        self.set_explode_gap(settings.explode_gap_mm)
 
         angle_val = max(0, min(180, int(round(settings.lid_rotation_angle_deg))))
         self.slider_angle.blockSignals(True)

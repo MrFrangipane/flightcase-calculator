@@ -249,3 +249,42 @@ def test_generate_schema_3d_with_lid_rotation():
     )
     assert len(mesh.faces) > 0
     assert len(mesh.segments) > 0
+
+
+def test_generate_wood_panels_svg_use_case():
+    from flightcase.application import GenerateWoodPanelsSvgUseCase
+
+    input_dto = CaseInputDTO(
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+
+    svg_str = GenerateWoodPanelsSvgUseCase.execute(input_dto)
+    assert isinstance(svg_str, str)
+    assert "<svg" in svg_str
+    assert "</svg>" in svg_str
+    assert "Base Bottom Panel" in svg_str
+    assert "Lid Top Panel" in svg_str
+
+
+def test_generate_schema_3d_with_explode_gap():
+    input_dto = CaseInputDTO(
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
+        wood_thickness=9.0,
+    )
+
+    mesh = GenerateSchema3DUseCase.execute(
+        input_dto=input_dto,
+        explode_gap_mm=50.0,
+        show_dimensions=True,
+    )
+
+    panel_dims = [d for d in mesh.dimensions if d.dimension_type == "panel_dim"]
+    assert len(panel_dims) >= 10

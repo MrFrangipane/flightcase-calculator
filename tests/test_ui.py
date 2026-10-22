@@ -256,9 +256,10 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     left_tabs = splitter.widget(0)
     assert isinstance(left_tabs, QTabWidget)
     assert left_tabs == window.tabs
-    assert left_tabs.count() == 2
+    assert left_tabs.count() == 3
     assert left_tabs.tabText(0).endswith("Wood Cut List")
     assert left_tabs.tabText(1).endswith("Alu Profiles")
+    assert "SVG" in left_tabs.tabText(2)
 
     # Center child must be Schema3DWidget directly
     center_widget = splitter.widget(1)
@@ -890,5 +891,123 @@ def test_schema_3d_widget_lid_rotation_ui_and_settings(qapp):
     lid_roof_front = [f for f in window.schema_widget.canvas.mesh.faces if f.layer_order == ComponentLayer.LID_ROOF]
     y_coords_front = [v.y for f in lid_roof_front for v in f.vertices]
     assert min(y_coords_front) < 0.0
+
+    window.close()
+
+
+def test_schema_3d_widget_explode_view_ui(qapp):
+    """Validates that Schema3DWidget explode view slider controls exploded gap and generates panel dimensions."""
+    from flightcase.ui import FlightCaseMainWindow
+    from flightcase.ui.widgets import Schema3DWidget
+
+    # 1. Standalone Schema3DWidget controls
+    widget = Schema3DWidget()
+    assert widget.explode_gap_mm == 0.0
+    assert widget.lbl_explode.text() == "0 mm"
+
+    # Manipulate slider
+    widget.slider_explode.setValue(80)
+    assert widget.explode_gap_mm == 80.0
+    assert widget.lbl_explode.text() == "80 mm"
+
+    # Helper method set_explode_gap
+    widget.set_explode_gap(120.0)
+    assert widget.explode_gap_mm == 120.0
+    assert widget.lbl_explode.text() == "120 mm"
+
+    # Get & Set UI settings
+    ui_settings = widget.get_ui_settings()
+    assert ui_settings.explode_gap_mm == 120.0
+
+    ui_settings.explode_gap_mm = 50.0
+    widget.set_ui_settings(ui_settings)
+    assert widget.explode_gap_mm == 50.0
+    assert widget.lbl_explode.text() == "50 mm"
+
+    # 2. Main Window integration
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    assert window.schema_widget.explode_gap_mm == 0.0
+    mesh_unexploded = window.schema_widget.canvas.mesh
+    assert mesh_unexploded is not None
+    assert len([d for d in mesh_unexploded.dimensions if d.dimension_type == "panel_dim"]) == 0
+
+    # Moving explode slider updates 3D mesh with all panel dimensions
+    window.schema_widget.slider_explode.setValue(75)
+    assert window.schema_widget.explode_gap_mm == 75.0
+    mesh = window.schema_widget.canvas.mesh
+    assert mesh is not None
+    panel_dims = [d for d in mesh.dimensions if d.dimension_type == "panel_dim"]
+    assert len(panel_dims) >= 10
+    assert any("Bottom Panel" in d.label for d in panel_dims)
+
+    window.close()
+
+
+def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
+    """Validates WoodPanelsSvgWidget rendering, zoom, export, and main window integration."""
+    from flightcase.ui import FlightCaseMainWindow
+    from flightcase.ui.widgets import WoodPanelsSvgWidget
+    from PySide6.QtWidgets import QFileDialog, QMessageBox, QApplication
+
+    # 1. Standalone WoodPanelsSvgWidget
+    svg_widget = WoodPanelsSvgWidget()
+    sample_svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 600" width="1000" height="600">'
+        '<rect width="100%" height="100%" fill="#0f172a"/>'
+        '<text x="50" y="50" fill="#ffffff">Sample Test SVG</text>'
+        '</svg>'
+    )
+    svg_widget.set_svg(sample_svg)
+    assert svg_widget.get_svg_data() == sample_svg
+
+    # Zoom controls
+    assert svg_widget.lbl_zoom.text() == "100%"
+    svg_widget._zoom_in()
+    assert svg_widget._zoom_factor > 1.0
+    svg_widget._zoom_out()
+    svg_widget._reset_zoom()
+    assert svg_widget._zoom_factor == 1.0
+    assert svg_widget.lbl_zoom.text() == "100%"
+
+    # Copy to clipboard
+    monkeypatch.setattr(QMessageBox, "information", lambda *args, **kwargs: None)
+    monkeypatch.setattr(QMessageBox, "warning", lambda *args, **kwargs: None)
+    monkeypatch.setattr(QMessageBox, "critical", lambda *args, **kwargs: None)
+
+    svg_widget._copy_svg_to_clipboard()
+    assert "Sample Test SVG" in QApplication.clipboard().text()
+
+    # Export SVG dialog simulation
+    export_file = tmp_path / "exported_diagram.svg"
+    monkeypatch.setattr(
+        QFileDialog,
+        "getSaveFileName",
+        lambda *args, **kwargs: (str(export_file), "SVG Files (*.svg)")
+    )
+
+    svg_widget.export_svg()
+    assert export_file.is_file()
+    assert "Sample Test SVG" in export_file.read_text(encoding="utf-8")
+
+    # 2. Main Window integration
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    assert window.svg_widget is not None
+    assert window.tabs.count() == 3
+    assert window.tabs.widget(2) == window.svg_widget
+
+    # Recalculate populates SVG data
+    assert "<svg" in window.svg_widget.get_svg_data()
+    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in window.svg_widget.get_svg_data()
+
+    # Trigger export through cut list button and main window
+    export_main_file = tmp_path / "from_mainwindow.svg"
+    monkeypatch.setattr(
+        QFileDialog,
+        "getSaveFileName",
+        lambda *args, **kwargs: (str(export_main_file), "SVG Files (*.svg)")
+    )
+    window._export_wood_panels_svg()
+    assert export_main_file.is_file()
+    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in export_main_file.read_text(encoding="utf-8")
 
     window.close()

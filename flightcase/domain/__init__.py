@@ -27,6 +27,7 @@ from .services import (
     WireframeMesh3D,
     FlightCaseDomainService,
     Schema3DGeometryBuilder,
+    WoodPanelsSvgGenerator,
     ParallelProjector,
 )
 
@@ -51,5 +52,6 @@ __all__ = [
     "WireframeMesh3D",
     "FlightCaseDomainService",
     "Schema3DGeometryBuilder",
+    "WoodPanelsSvgGenerator",
     "ParallelProjector",
 ]

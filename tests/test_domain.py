@@ -479,3 +479,82 @@ def test_schema_3d_lid_rotation_all_sides():
     lid_roof_right = [f for f in mesh_right_90.faces if f.layer_order == ComponentLayer.LID_ROOF]
     x_roof_right = [v.x for f in lid_roof_right for v in f.vertices]
     assert max(x_roof_right) > L
+
+
+def test_schema_3d_explode_view_geometry_and_panel_dimensions():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+    L, W, H = case.outer_length, case.outer_width, case.total_height
+
+    # 1. Without explode view (explode_gap_mm = 0)
+    mesh_normal = Schema3DGeometryBuilder.build_geometry(case, explode_gap_mm=0.0)
+    normal_panel_dims = [d for d in mesh_normal.dimensions if d.dimension_type == "panel_dim"]
+    # Individual panel dimensions are hidden when unexploded to avoid clutter
+    assert len(normal_panel_dims) == 0
+    # Outer dimensions exist
+    dim_types = [d.dimension_type for d in mesh_normal.dimensions]
+    assert "length" in dim_types
+    assert "width" in dim_types
+    assert "height" in dim_types
+
+    # 2. With explode view (explode_gap_mm = 60.0)
+    explode_dist = 60.0
+    mesh_exploded = Schema3DGeometryBuilder.build_geometry(
+        case,
+        explode_gap_mm=explode_dist,
+        show_dimensions=True,
+        show_all_panel_dimensions=True,
+    )
+
+    # Panel dimensions must be present
+    exploded_panel_dims = [d for d in mesh_exploded.dimensions if d.dimension_type == "panel_dim"]
+    assert len(exploded_panel_dims) >= 10
+
+    labels = [d.label for d in exploded_panel_dims]
+    assert any("Bottom Panel" in l for l in labels)
+    assert any("Base Front" in l for l in labels)
+    assert any("Base Back" in l for l in labels)
+    assert any("Base Left" in l for l in labels)
+    assert any("Base Right" in l for l in labels)
+    assert any("Lid Top" in l for l in labels)
+    assert any("Lid Front" in l for l in labels)
+    assert any("Lid Back" in l for l in labels)
+    assert any("Lid Left" in l for l in labels)
+    assert any("Lid Right" in l for l in labels)
+
+    # Bounding box should expand with explode distance
+    min_pt, max_pt = mesh_exploded.bounding_box
+    assert min_pt.x < 0.0 or min_pt.y < 0.0 or min_pt.z < 0.0
+    assert max_pt.x > L or max_pt.y > W or max_pt.z > H
+
+
+def test_wood_panels_svg_generator():
+    from flightcase.domain import WoodPanelsSvgGenerator
+
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+
+    svg_content = WoodPanelsSvgGenerator.generate_wood_panels_svg(case)
+
+    assert isinstance(svg_content, str)
+    assert svg_content.startswith("<svg")
+    assert svg_content.endswith("</svg>")
+    assert "xmlns=\"http://www.w3.org/2000/svg\"" in svg_content
+    assert "fill=\"#ffffff\"" in svg_content  # Printer-friendly white background
+    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in svg_content
+    assert "Base Bottom Panel" in svg_content
+    assert "Lid Top Panel" in svg_content
+    assert "QTY: 1" in svg_content
+    assert "QTY: 2" in svg_content
+    assert "818.0 mm" in svg_content  # 800 + 18 outer length
+    assert "518.0 mm" in svg_content  # 500 + 18 outer width
+    assert "<line" in svg_content
+    assert "<marker" in svg_content
