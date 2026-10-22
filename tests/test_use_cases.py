@@ -177,6 +177,8 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
         camera_pan_y=-30.0,
         is_perspective=True,
         lid_exploded_gap_mm=75.0,
+        lid_rotation_angle_deg=110.0,
+        lid_hinge_side="Right",
         show_dimensions=False,
         show_inside_walls=True,
         show_axes=False,
@@ -203,6 +205,8 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
     assert loaded.ui_settings.camera_pan_y == -30.0
     assert loaded.ui_settings.is_perspective is True
     assert loaded.ui_settings.lid_exploded_gap_mm == 75.0
+    assert loaded.ui_settings.lid_rotation_angle_deg == 110.0
+    assert loaded.ui_settings.lid_hinge_side == "Right"
     assert loaded.ui_settings.show_dimensions is False
     assert loaded.ui_settings.show_inside_walls is True
     assert loaded.ui_settings.show_axes is False
@@ -215,6 +219,8 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
     legacy_loaded = CaseInputDTO.from_json(legacy_json)
     assert legacy_loaded.ui_settings is not None
     assert legacy_loaded.ui_settings.camera_azimuth_deg == 45.0
+    assert legacy_loaded.ui_settings.lid_rotation_angle_deg == 0.0
+    assert legacy_loaded.ui_settings.lid_hinge_side == "Back"
     assert legacy_loaded.ui_settings.show_dimensions is True
     assert legacy_loaded.ui_settings.is_perspective is False
     assert legacy_loaded.ui_settings.compartment_orientation == "width_wise"
@@ -224,3 +230,22 @@ def test_ui_settings_dto_serialization_and_backward_compatibility(tmp_path):
     legacy_gen_json = '{"version": "1.0", "outer_length": 800.0, "ui_settings": {"equispaced_walls_orientation": "length_wise"}}'
     legacy_gen_loaded = CaseInputDTO.from_json(legacy_gen_json)
     assert legacy_gen_loaded.ui_settings.compartment_orientation == "length_wise"
+
+
+def test_generate_schema_3d_with_lid_rotation():
+    input_dto = CaseInputDTO(
+        inner_length=800.0,
+        inner_width=500.0,
+        inner_total_height=400.0,
+        inner_lid_height=100.0,
+        wood_thickness=9.0,
+    )
+
+    mesh = GenerateSchema3DUseCase.execute(
+        input_dto=input_dto,
+        lid_exploded_gap_mm=0.0,
+        lid_rotation_angle_deg=90.0,
+        lid_hinge_side="Back",
+    )
+    assert len(mesh.faces) > 0
+    assert len(mesh.segments) > 0

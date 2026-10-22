@@ -418,3 +418,64 @@ def test_schema_3d_lid_alu_profile_offset_dimensions():
     mesh_no_profile = Schema3DGeometryBuilder.build_geometry(case_no_profile, lid_exploded_gap_mm=gap)
     assert not any(f.layer_order == ComponentLayer.BASE_ALU for f in mesh_no_profile.faces)
     assert not any(f.color_group == "profile" for f in mesh_no_profile.faces)
+
+
+def test_schema_3d_lid_rotation_all_sides():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=10.0,
+        lid_alu_profile_offset=0.0,
+    )
+    L, W, H = case.outer_length, case.outer_width, case.total_height
+    H_base = case.base_height
+    H_lid = case.outer_lid_height
+
+    # 1. Closed lid (0 deg)
+    mesh_closed = Schema3DGeometryBuilder.build_geometry(case, lid_rotation_angle_deg=0.0)
+    lid_roof_closed = [f for f in mesh_closed.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    z_roof_closed = [v.z for f in lid_roof_closed for v in f.vertices]
+    assert max(z_roof_closed) == pytest.approx(H)
+
+    # 2. Back hinge side (90 deg)
+    mesh_back_90 = Schema3DGeometryBuilder.build_geometry(
+        case, lid_rotation_angle_deg=90.0, lid_hinge_side="Back"
+    )
+    lid_roof_back = [f for f in mesh_back_90.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    y_roof_back = [v.y for f in lid_roof_back for v in f.vertices]
+    z_roof_back = [v.z for f in lid_roof_back for v in f.vertices]
+    # Roof swings back: Y exceeds W (520)
+    assert max(y_roof_back) > W
+    assert min(z_roof_back) == pytest.approx(H_base)
+
+    # 3. Back hinge side (180 deg - fully open flat)
+    mesh_back_180 = Schema3DGeometryBuilder.build_geometry(
+        case, lid_rotation_angle_deg=180.0, lid_hinge_side="Back"
+    )
+    lid_roof_180 = [f for f in mesh_back_180.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    z_roof_180 = [v.z for f in lid_roof_180 for v in f.vertices]
+    assert max(z_roof_180) == pytest.approx(H_base - (H_lid - case.wood_thickness))
+
+    # 4. Front hinge side (90 deg)
+    mesh_front_90 = Schema3DGeometryBuilder.build_geometry(
+        case, lid_rotation_angle_deg=90.0, lid_hinge_side="Front"
+    )
+    lid_roof_front = [f for f in mesh_front_90.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    y_roof_front = [v.y for f in lid_roof_front for v in f.vertices]
+    assert min(y_roof_front) < 0.0
+
+    # 5. Left hinge side (90 deg)
+    mesh_left_90 = Schema3DGeometryBuilder.build_geometry(
+        case, lid_rotation_angle_deg=90.0, lid_hinge_side="Left"
+    )
+    lid_roof_left = [f for f in mesh_left_90.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    x_roof_left = [v.x for f in lid_roof_left for v in f.vertices]
+    assert min(x_roof_left) < 0.0
+
+    # 6. Right hinge side (90 deg)
+    mesh_right_90 = Schema3DGeometryBuilder.build_geometry(
+        case, lid_rotation_angle_deg=90.0, lid_hinge_side="Right"
+    )
+    lid_roof_right = [f for f in mesh_right_90.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    x_roof_right = [v.x for f in lid_roof_right for v in f.vertices]
+    assert max(x_roof_right) > L

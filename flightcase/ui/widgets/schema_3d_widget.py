@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSlider,
     QCheckBox,
+    QComboBox,
     QFrame,
 )
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
@@ -702,6 +703,7 @@ class Schema3DWidget(QWidget):
     """Complete 3D Schema panel with interactive toolbar and hardware-accelerated OpenGL canvas."""
 
     lid_exploded_changed = Signal(float)
+    lid_rotation_changed = Signal(float, str)
     toggles_changed = Signal()
     projection_changed = Signal(bool)
 
@@ -765,12 +767,34 @@ class Schema3DWidget(QWidget):
         self.slider_gap = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_gap.setRange(0, 200)
         self.slider_gap.setValue(0)
-        self.slider_gap.setFixedWidth(120)
+        self.slider_gap.setFixedWidth(100)
         self.slider_gap.setToolTip("Exploded lid view gap in mm")
         self.lbl_gap = QLabel("0 mm")
         self.slider_gap.valueChanged.connect(self._on_gap_changed)
         t_layout.addWidget(self.slider_gap)
         t_layout.addWidget(self.lbl_gap)
+
+        t_layout.addSpacing(12)
+
+        # Lid Rotation Angle Slider & Hinge Side Selector
+        t_layout.addWidget(QLabel("<b>Lid Open Angle:</b>"))
+        self.slider_angle = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider_angle.setRange(0, 180)
+        self.slider_angle.setValue(0)
+        self.slider_angle.setFixedWidth(100)
+        self.slider_angle.setToolTip("Rotate lid open along selected hinge side (0° to 180°)")
+        self.lbl_angle = QLabel("0°")
+        self.slider_angle.valueChanged.connect(self._on_angle_changed)
+        t_layout.addWidget(self.slider_angle)
+        t_layout.addWidget(self.lbl_angle)
+
+        t_layout.addWidget(QLabel("<b>Hinge Side:</b>"))
+        self.combo_hinge = QComboBox(self)
+        self.combo_hinge.addItems(["Back", "Front", "Left", "Right"])
+        self.combo_hinge.setCurrentText("Back")
+        self.combo_hinge.setToolTip("Select hinge side for rotating lid open")
+        self.combo_hinge.currentTextChanged.connect(self._on_hinge_side_changed)
+        t_layout.addWidget(self.combo_hinge)
 
         t_layout.addSpacing(12)
 
@@ -808,6 +832,13 @@ class Schema3DWidget(QWidget):
         self.lbl_gap.setText(f"{val} mm")
         self.lid_exploded_changed.emit(float(val))
 
+    def _on_angle_changed(self, val: int) -> None:
+        self.lbl_angle.setText(f"{val}°")
+        self.lid_rotation_changed.emit(float(val), self.combo_hinge.currentText())
+
+    def _on_hinge_side_changed(self, side: str) -> None:
+        self.lid_rotation_changed.emit(float(self.slider_angle.value()), side)
+
     def _on_toggles_changed(self) -> None:
         self.canvas.show_dimensions = self.chk_dims.isChecked()
         self.canvas.show_inside_walls = self.chk_walls.isChecked()
@@ -827,6 +858,29 @@ class Schema3DWidget(QWidget):
     @property
     def exploded_gap_mm(self) -> float:
         return float(self.slider_gap.value())
+
+    @property
+    def rotation_angle_deg(self) -> float:
+        return float(self.slider_angle.value())
+
+    @property
+    def hinge_side(self) -> str:
+        return self.combo_hinge.currentText()
+
+    def set_lid_rotation(self, angle_deg: float, hinge_side: str = "Back") -> None:
+        """Sets lid rotation angle (0-180 deg) and hinge side."""
+        angle_val = max(0, min(180, int(round(angle_deg))))
+        self.slider_angle.blockSignals(True)
+        self.slider_angle.setValue(angle_val)
+        self.slider_angle.blockSignals(False)
+        self.lbl_angle.setText(f"{angle_val}°")
+
+        self.combo_hinge.blockSignals(True)
+        side_norm = hinge_side.capitalize()
+        idx = self.combo_hinge.findText(side_norm)
+        if idx >= 0:
+            self.combo_hinge.setCurrentIndex(idx)
+        self.combo_hinge.blockSignals(False)
 
     @property
     def show_dimensions(self) -> bool:
@@ -849,7 +903,7 @@ class Schema3DWidget(QWidget):
         self.canvas.clear_highlights()
 
     def get_ui_settings(self) -> UISettingsDTO:
-        """Collects current 3D viewport, camera, explosion gap, and toggle states."""
+        """Collects current 3D viewport, camera, explosion gap, rotation angle, and toggle states."""
         return UISettingsDTO(
             camera_azimuth_deg=self.canvas.azimuth_deg,
             camera_elevation_deg=self.canvas.elevation_deg,
@@ -858,18 +912,33 @@ class Schema3DWidget(QWidget):
             camera_pan_y=self.canvas.pan_offset_y,
             is_perspective=self.canvas.is_perspective,
             lid_exploded_gap_mm=float(self.slider_gap.value()),
+            lid_rotation_angle_deg=float(self.slider_angle.value()),
+            lid_hinge_side=self.combo_hinge.currentText(),
             show_dimensions=self.chk_dims.isChecked(),
             show_inside_walls=self.chk_walls.isChecked(),
             show_axes=self.canvas.show_axes,
         )
 
     def set_ui_settings(self, settings: UISettingsDTO) -> None:
-        """Restores 3D viewport transform, camera, explosion gap, and toggle states."""
+        """Restores 3D viewport transform, camera, explosion gap, rotation, and toggle states."""
         gap_val = int(round(settings.lid_exploded_gap_mm))
         self.slider_gap.blockSignals(True)
         self.slider_gap.setValue(gap_val)
         self.slider_gap.blockSignals(False)
         self.lbl_gap.setText(f"{gap_val} mm")
+
+        angle_val = max(0, min(180, int(round(settings.lid_rotation_angle_deg))))
+        self.slider_angle.blockSignals(True)
+        self.slider_angle.setValue(angle_val)
+        self.slider_angle.blockSignals(False)
+        self.lbl_angle.setText(f"{angle_val}°")
+
+        self.combo_hinge.blockSignals(True)
+        side_norm = (settings.lid_hinge_side or "Back").capitalize()
+        idx = self.combo_hinge.findText(side_norm)
+        if idx >= 0:
+            self.combo_hinge.setCurrentIndex(idx)
+        self.combo_hinge.blockSignals(False)
 
         self.chk_dims.blockSignals(True)
         self.chk_dims.setChecked(settings.show_dimensions)

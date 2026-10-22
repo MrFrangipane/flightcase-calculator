@@ -834,3 +834,61 @@ def test_top_and_bottom_panel_selection_does_not_highlight_lid_profile(qapp):
         assert "profile" in f.label.lower()
 
     window.close()
+
+
+def test_schema_3d_widget_lid_rotation_ui_and_settings(qapp):
+    """Validates that Schema3DWidget slider and hinge side combo manipulate lid rotation and serialize settings."""
+    from flightcase.ui import FlightCaseMainWindow
+    from flightcase.ui.widgets import Schema3DWidget
+    from flightcase.domain import FlightCase, Dimensions3D, Schema3DGeometryBuilder, ComponentLayer
+
+    # 1. Test standalone Schema3DWidget controls
+    widget = Schema3DWidget()
+    assert widget.rotation_angle_deg == 0.0
+    assert widget.hinge_side == "Back"
+
+    # Manipulate slider
+    widget.slider_angle.setValue(90)
+    assert widget.rotation_angle_deg == 90.0
+    assert widget.lbl_angle.text() == "90°"
+
+    # Manipulate hinge side combo
+    widget.combo_hinge.setCurrentText("Left")
+    assert widget.hinge_side == "Left"
+
+    # Helper method set_lid_rotation
+    widget.set_lid_rotation(120.0, "Right")
+    assert widget.rotation_angle_deg == 120.0
+    assert widget.hinge_side == "Right"
+    assert widget.lbl_angle.text() == "120°"
+
+    # Get & Set UI settings
+    ui_settings = widget.get_ui_settings()
+    assert ui_settings.lid_rotation_angle_deg == 120.0
+    assert ui_settings.lid_hinge_side == "Right"
+
+    ui_settings.lid_rotation_angle_deg = 45.0
+    ui_settings.lid_hinge_side = "Front"
+    widget.set_ui_settings(ui_settings)
+    assert widget.rotation_angle_deg == 45.0
+    assert widget.hinge_side == "Front"
+    assert widget.lbl_angle.text() == "45°"
+
+    # 2. Test in MainWindow live update
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+    assert window.schema_widget.rotation_angle_deg == 0.0
+
+    # Changing angle updates the canvas mesh
+    window.schema_widget.slider_angle.setValue(90)
+    lid_roof = [f for f in window.schema_widget.canvas.mesh.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    y_coords = [v.y for f in lid_roof for v in f.vertices]
+    # Default Back hinge rotates lid backwards: max Y exceeds outer width (518)
+    assert max(y_coords) > window._current_result.inner_width
+
+    # Changing hinge side to Front rotates lid forwards: min Y becomes negative
+    window.schema_widget.combo_hinge.setCurrentText("Front")
+    lid_roof_front = [f for f in window.schema_widget.canvas.mesh.faces if f.layer_order == ComponentLayer.LID_ROOF]
+    y_coords_front = [v.y for f in lid_roof_front for v in f.vertices]
+    assert min(y_coords_front) < 0.0
+
+    window.close()

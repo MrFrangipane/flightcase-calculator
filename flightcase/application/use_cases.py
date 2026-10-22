@@ -135,6 +135,8 @@ class GenerateSchema3DUseCase:
     def execute(
         input_dto: CaseInputDTO,
         lid_exploded_gap_mm: float = 0.0,
+        lid_rotation_angle_deg: float = 0.0,
+        lid_hinge_side: str = "Back",
         show_inside_walls: bool = True,
         show_dimensions: bool = True
     ) -> WireframeMesh3D:
@@ -173,6 +175,8 @@ class GenerateSchema3DUseCase:
         return Schema3DGeometryBuilder.build_geometry(
             case=flight_case,
             lid_exploded_gap_mm=lid_exploded_gap_mm,
+            lid_rotation_angle_deg=lid_rotation_angle_deg,
+            lid_hinge_side=lid_hinge_side,
             show_inside_walls=show_inside_walls,
             show_dimensions=show_dimensions,
         )

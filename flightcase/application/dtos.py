@@ -46,8 +46,10 @@ class UISettingsDTO:
     camera_pan_y: float = 0.0
     is_perspective: bool = False
 
-    # 3D Schema Toggles & Lid Distance
+    # 3D Schema Toggles & Lid Distance / Rotation
     lid_exploded_gap_mm: float = 0.0
+    lid_rotation_angle_deg: float = 0.0
+    lid_hinge_side: str = "Back"
     show_dimensions: bool = True
     show_inside_walls: bool = True
     show_axes: bool = True
@@ -66,6 +68,8 @@ class UISettingsDTO:
             "camera_pan_y": self.camera_pan_y,
             "is_perspective": self.is_perspective,
             "lid_exploded_gap_mm": self.lid_exploded_gap_mm,
+            "lid_rotation_angle_deg": self.lid_rotation_angle_deg,
+            "lid_hinge_side": self.lid_hinge_side,
             "show_dimensions": self.show_dimensions,
             "show_inside_walls": self.show_inside_walls,
             "show_axes": self.show_axes,
@@ -93,6 +97,8 @@ class UISettingsDTO:
             camera_pan_y=float(data.get("camera_pan_y", 0.0)),
             is_perspective=bool(data.get("is_perspective", False)),
             lid_exploded_gap_mm=float(data.get("lid_exploded_gap_mm", 0.0)),
+            lid_rotation_angle_deg=float(data.get("lid_rotation_angle_deg", 0.0)),
+            lid_hinge_side=str(data.get("lid_hinge_side", "Back")),
             show_dimensions=bool(data.get("show_dimensions", True)),
             show_inside_walls=bool(data.get("show_inside_walls", True)),
             show_axes=bool(data.get("show_axes", True)),

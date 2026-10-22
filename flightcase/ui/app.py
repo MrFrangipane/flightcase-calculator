@@ -435,6 +435,7 @@ class FlightCaseMainWindow(QMainWindow):
         self.input_panel.input_changed.connect(self.recalculate)
         self.walls_widget.walls_changed.connect(self.recalculate)
         self.schema_widget.lid_exploded_changed.connect(self._update_schema_geometry)
+        self.schema_widget.lid_rotation_changed.connect(self._update_schema_geometry)
         self.schema_widget.toggles_changed.connect(self._update_schema_geometry)
 
         # Highlight synchronization across dimension tables and 3D schema
@@ -504,6 +505,8 @@ class FlightCaseMainWindow(QMainWindow):
             mesh = GenerateSchema3DUseCase.execute(
                 input_dto=input_dto,
                 lid_exploded_gap_mm=self.schema_widget.exploded_gap_mm,
+                lid_rotation_angle_deg=self.schema_widget.rotation_angle_deg,
+                lid_hinge_side=self.schema_widget.hinge_side,
                 show_inside_walls=self.schema_widget.show_inside_walls,
                 show_dimensions=self.schema_widget.show_dimensions,
             )

@@ -89,6 +89,8 @@ class Schema3DGeometryBuilder:
     def build_geometry(
         case: FlightCase,
         lid_exploded_gap_mm: float = 0.0,
+        lid_rotation_angle_deg: float = 0.0,
+        lid_hinge_side: str = "Back",
         show_inside_walls: bool = True,
         show_dimensions: bool = True
     ) -> WireframeMesh3D:
@@ -110,6 +112,69 @@ class Schema3DGeometryBuilder:
         z_lid_bot = H_base + gap
         z_lid_top = H_base + gap + H_lid
 
+        theta = math.radians(lid_rotation_angle_deg)
+        side_norm = (lid_hinge_side or "Back").strip().capitalize()
+        z_hinge = z_lid_bot
+
+        def transform_lid_point(p: Point3D) -> Point3D:
+            if theta == 0.0:
+                return p
+            cos_a = math.cos(theta)
+            sin_a = math.sin(theta)
+
+            if side_norm == "Front":
+                # Hinge at Y = 0, Z = z_hinge
+                dy = p.y
+                dz = p.z - z_hinge
+                dy_rot = dy * cos_a - dz * sin_a
+                dz_rot = dy * sin_a + dz * cos_a
+                return Point3D(p.x, dy_rot, z_hinge + dz_rot)
+            elif side_norm == "Left":
+                # Hinge at X = 0, Z = z_hinge
+                dx = p.x
+                dz = p.z - z_hinge
+                dx_rot = dx * cos_a - dz * sin_a
+                dz_rot = dx * sin_a + dz * cos_a
+                return Point3D(dx_rot, p.y, z_hinge + dz_rot)
+            elif side_norm == "Right":
+                # Hinge at X = L, Z = z_hinge
+                dx = p.x - L
+                dz = p.z - z_hinge
+                dx_rot = dx * cos_a + dz * sin_a
+                dz_rot = -dx * sin_a + dz * cos_a
+                return Point3D(L + dx_rot, p.y, z_hinge + dz_rot)
+            else:  # "Back" (default)
+                # Hinge at Y = W, Z = z_hinge
+                dy = p.y - W
+                dz = p.z - z_hinge
+                dy_rot = dy * cos_a + dz * sin_a
+                dz_rot = -dy * sin_a + dz * cos_a
+                return Point3D(p.x, W + dy_rot, z_hinge + dz_rot)
+
+        def transform_lid_normal(n: Tuple[float, float, float]) -> Tuple[float, float, float]:
+            if theta == 0.0:
+                return n
+            cos_a = math.cos(theta)
+            sin_a = math.sin(theta)
+            nx, ny, nz = n
+
+            if side_norm == "Front":
+                ny_rot = ny * cos_a - nz * sin_a
+                nz_rot = ny * sin_a + nz * cos_a
+                return (nx, ny_rot, nz_rot)
+            elif side_norm == "Left":
+                nx_rot = nx * cos_a - nz * sin_a
+                nz_rot = nx * sin_a + nz * cos_a
+                return (nx_rot, ny, nz_rot)
+            elif side_norm == "Right":
+                nx_rot = nx * cos_a + nz * sin_a
+                nz_rot = -nx * sin_a + nz * cos_a
+                return (nx_rot, ny, nz_rot)
+            else:  # "Back"
+                ny_rot = ny * cos_a + nz * sin_a
+                nz_rot = -ny * sin_a + nz * cos_a
+                return (nx, ny_rot, nz_rot)
+
         # Helper to add a solid volumetric cuboid box with 6 outward-facing polygonal faces and wireframe segments
         def add_solid_box(
             p_min: Point3D,
@@ -119,6 +184,7 @@ class Schema3DGeometryBuilder:
             highlight_top_endgrain: bool = False,
             layer_order: int = ComponentLayer.BASE_FLOOR,
             wall_index: Optional[int] = None,
+            is_lid: bool = False,
         ) -> None:
             x0, y0, z0 = p_min.x, p_min.y, p_min.z
             x1, y1, z1 = p_max.x, p_max.y, p_max.z
@@ -127,10 +193,17 @@ class Schema3DGeometryBuilder:
             if x1 <= x0 or y1 <= y0 or z1 <= z0:
                 return
 
+            def pt(x: float, y: float, z: float) -> Point3D:
+                p = Point3D(x, y, z)
+                return transform_lid_point(p) if (is_lid and theta != 0.0) else p
+
+            def norm(nx: float, ny: float, nz: float) -> Tuple[float, float, float]:
+                return transform_lid_normal((nx, ny, nz)) if (is_lid and theta != 0.0) else (nx, ny, nz)
+
             # 1. Bottom (-Z)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x0, y0, z0), Point3D(x0, y1, z0), Point3D(x1, y1, z0), Point3D(x1, y0, z0)),
-                normal=(0.0, 0.0, -1.0),
+                vertices=(pt(x0, y0, z0), pt(x0, y1, z0), pt(x1, y1, z0), pt(x1, y0, z0)),
+                normal=norm(0.0, 0.0, -1.0),
                 color_group=color_group,
                 label=label,
                 is_endgrain=False,
@@ -140,8 +213,8 @@ class Schema3DGeometryBuilder:
 
             # 2. Top (+Z)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x0, y0, z1), Point3D(x1, y0, z1), Point3D(x1, y1, z1), Point3D(x0, y1, z1)),
-                normal=(0.0, 0.0, 1.0),
+                vertices=(pt(x0, y0, z1), pt(x1, y0, z1), pt(x1, y1, z1), pt(x0, y1, z1)),
+                normal=norm(0.0, 0.0, 1.0),
                 color_group="endgrain" if highlight_top_endgrain else color_group,
                 label=label,
                 is_endgrain=highlight_top_endgrain,
@@ -151,8 +224,8 @@ class Schema3DGeometryBuilder:
 
             # 3. Front (-Y)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x0, y0, z0), Point3D(x1, y0, z0), Point3D(x1, y0, z1), Point3D(x0, y0, z1)),
-                normal=(0.0, -1.0, 0.0),
+                vertices=(pt(x0, y0, z0), pt(x1, y0, z0), pt(x1, y0, z1), pt(x0, y0, z1)),
+                normal=norm(0.0, -1.0, 0.0),
                 color_group=color_group,
                 label=label,
                 is_endgrain=False,
@@ -162,8 +235,8 @@ class Schema3DGeometryBuilder:
 
             # 4. Back (+Y)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x1, y1, z0), Point3D(x0, y1, z0), Point3D(x0, y1, z1), Point3D(x1, y1, z1)),
-                normal=(0.0, 1.0, 0.0),
+                vertices=(pt(x1, y1, z0), pt(x0, y1, z0), pt(x0, y1, z1), pt(x1, y1, z1)),
+                normal=norm(0.0, 1.0, 0.0),
                 color_group=color_group,
                 label=label,
                 is_endgrain=False,
@@ -173,8 +246,8 @@ class Schema3DGeometryBuilder:
 
             # 5. Left (-X)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x0, y1, z0), Point3D(x0, y0, z0), Point3D(x0, y0, z1), Point3D(x0, y1, z1)),
-                normal=(-1.0, 0.0, 0.0),
+                vertices=(pt(x0, y1, z0), pt(x0, y0, z0), pt(x0, y0, z1), pt(x0, y1, z1)),
+                normal=norm(-1.0, 0.0, 0.0),
                 color_group=color_group,
                 label=label,
                 is_endgrain=False,
@@ -184,8 +257,8 @@ class Schema3DGeometryBuilder:
 
             # 6. Right (+X)
             faces.append(PolygonFace3D(
-                vertices=(Point3D(x1, y0, z0), Point3D(x1, y1, z0), Point3D(x1, y1, z1), Point3D(x1, y0, z1)),
-                normal=(1.0, 0.0, 0.0),
+                vertices=(pt(x1, y0, z0), pt(x1, y1, z0), pt(x1, y1, z1), pt(x1, y0, z1)),
+                normal=norm(1.0, 0.0, 0.0),
                 color_group=color_group,
                 label=label,
                 is_endgrain=False,
@@ -195,20 +268,20 @@ class Schema3DGeometryBuilder:
 
             # Wireframe bounding segments (for wireframe modes / fallback)
             # Bottom
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x1, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x0, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y0, z0), pt(x1, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y0, z0), pt(x1, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y1, z0), pt(x0, y1, z0), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y1, z0), pt(x0, y0, z0), "solid", color_group, label=label, wall_index=wall_index))
             # Top
-            segments.append(Segment3D(Point3D(x0, y0, z1), Point3D(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y0, z1), Point3D(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y1, z1), Point3D(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x0, y1, z1), Point3D(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y0, z1), pt(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y0, z1), pt(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y1, z1), pt(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y1, z1), pt(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
             # Verticals
-            segments.append(Segment3D(Point3D(x0, y0, z0), Point3D(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y0, z0), Point3D(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x1, y1, z0), Point3D(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
-            segments.append(Segment3D(Point3D(x0, y1, z0), Point3D(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y0, z0), pt(x0, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y0, z0), pt(x1, y0, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x1, y1, z0), pt(x1, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
+            segments.append(Segment3D(pt(x0, y1, z0), pt(x0, y1, z1), "solid", color_group, label=label, wall_index=wall_index))
 
         # Aluminum profile offset: height induced by profile on each half (base & lid)
         profile_h = max(0.0, case.lid_alu_profile_offset / 2.0)
@@ -271,6 +344,7 @@ class Schema3DGeometryBuilder:
             color_group="lid",
             label="Lid Top Panel",
             layer_order=ComponentLayer.LID_ROOF,
+            is_lid=True,
         )
 
         # Lid Long Sides (Front & Back Panels):
@@ -281,6 +355,7 @@ class Schema3DGeometryBuilder:
             color_group="lid",
             label="Lid Front Panel",
             layer_order=ComponentLayer.LID_WALLS,
+            is_lid=True,
         )
         # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
@@ -289,6 +364,7 @@ class Schema3DGeometryBuilder:
             color_group="lid",
             label="Lid Back Panel",
             layer_order=ComponentLayer.LID_WALLS,
+            is_lid=True,
         )
 
         # Lid Short Sides (Left & Right Panels):
@@ -299,6 +375,7 @@ class Schema3DGeometryBuilder:
             color_group="lid",
             label="Lid Left Panel",
             layer_order=ComponentLayer.LID_WALLS,
+            is_lid=True,
         )
         # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
         add_solid_box(
@@ -307,6 +384,7 @@ class Schema3DGeometryBuilder:
             color_group="lid",
             label="Lid Right Panel",
             layer_order=ComponentLayer.LID_WALLS,
+            is_lid=True,
         )
 
         # --- 3. Aluminum Location Profile Mating Extrusions ---
@@ -348,6 +426,7 @@ class Schema3DGeometryBuilder:
                 color_group="profile",
                 label="Lid Bottom Profile (Front)",
                 layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
             )
             add_solid_box(
                 Point3D(0, W - t_wood, z_lid_bot),
@@ -355,6 +434,7 @@ class Schema3DGeometryBuilder:
                 color_group="profile",
                 label="Lid Bottom Profile (Back)",
                 layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
             )
             add_solid_box(
                 Point3D(0, t_wood, z_lid_bot),
@@ -362,6 +442,7 @@ class Schema3DGeometryBuilder:
                 color_group="profile",
                 label="Lid Bottom Profile (Left)",
                 layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
             )
             add_solid_box(
                 Point3D(L - t_wood, t_wood, z_lid_bot),
@@ -369,6 +450,7 @@ class Schema3DGeometryBuilder:
                 color_group="profile",
                 label="Lid Bottom Profile (Right)",
                 layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
             )
 
         # --- 4. Inside Partition Walls (Volumetric Panels with Thickness) ---
@@ -457,8 +539,8 @@ class Schema3DGeometryBuilder:
             ))
 
             dimensions.append(DimensionCallout3D(
-                start=Point3D(0, W, z_lid_bot),
-                end=Point3D(0, W, z_lid_top),
+                start=transform_lid_point(Point3D(0, W, z_lid_bot)),
+                end=transform_lid_point(Point3D(0, W, z_lid_top)),
                 label=f"Lid = {H_lid:.0f} mm",
                 value_mm=H_lid,
                 offset_vector=(-60, 0, 0),
@@ -478,11 +560,29 @@ class Schema3DGeometryBuilder:
                         dimension_type="wall_pos"
                     ))
 
+        all_points = []
+        for f in faces:
+            all_points.extend(f.vertices)
+        for s in segments:
+            all_points.append(s.p1)
+            all_points.append(s.p2)
+
+        if all_points:
+            min_x = min(min(p.x for p in all_points), 0.0)
+            min_y = min(min(p.y for p in all_points), 0.0)
+            min_z = min(min(p.z for p in all_points), 0.0)
+            max_x = max(max(p.x for p in all_points), L)
+            max_y = max(max(p.y for p in all_points), W)
+            max_z = max(max(p.z for p in all_points), H)
+        else:
+            min_x, min_y, min_z = 0.0, 0.0, 0.0
+            max_x, max_y, max_z = L, W, H + gap
+
         return WireframeMesh3D(
             faces=faces,
             segments=segments,
             dimensions=dimensions,
-            bounding_box=(Point3D(0, 0, 0), Point3D(L, W, H + gap))
+            bounding_box=(Point3D(min_x, min_y, min_z), Point3D(max_x, max_y, max_z))
         )
 
 
