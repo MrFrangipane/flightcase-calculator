@@ -745,3 +745,92 @@ def test_open_recent_menu_section(qapp, tmp_path):
 
     window.close()
     settings.remove("recentProjects")
+
+
+def test_top_and_bottom_panel_selection_does_not_highlight_lid_profile(qapp):
+    """
+    Validates that selecting top or bottom wood panels (both in standard and self-cut lid mode)
+    highlights only the corresponding wood panels and does NOT highlight lid/base aluminum profiles.
+    """
+    from flightcase.ui import FlightCaseMainWindow
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Standard mode: Select "Base Bottom Panel"
+    window.tabs.setCurrentIndex(0)
+    bottom_row = -1
+    top_row = -1
+    for r, item in enumerate(window._current_result.wood_cut_list):
+        if item.name == "Base Bottom Panel":
+            bottom_row = r
+        elif item.name == "Lid Top Panel":
+            top_row = r
+
+    assert bottom_row >= 0
+    assert top_row >= 0
+
+    # Select Base Bottom Panel
+    window.cutlist_widget.table.selectRow(bottom_row)
+    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_faces) > 0
+    # Must only highlight wood base bottom panel faces
+    for f in highlighted_faces:
+        assert f.color_group in ("base", "endgrain")
+        assert "profile" not in f.label.lower()
+        assert f.color_group != "profile"
+        assert "lid" not in f.label.lower()
+
+    # Select Lid Top Panel
+    window.cutlist_widget.table.selectRow(top_row)
+    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_faces) > 0
+    # Must only highlight wood lid top panel faces
+    for f in highlighted_faces:
+        assert f.color_group in ("lid", "endgrain")
+        assert "profile" not in f.label.lower()
+        assert f.color_group != "profile"
+        assert "base" not in f.label.lower()
+
+    # 2. Self-cut lid mode: Select "Bottom Panel" and "Top Panel"
+    window.input_panel.set_self_cut_lid(True)
+    sc_bottom_row = -1
+    sc_top_row = -1
+    for r, item in enumerate(window._current_result.wood_cut_list):
+        if item.name == "Bottom Panel":
+            sc_bottom_row = r
+        elif item.name == "Top Panel":
+            sc_top_row = r
+
+    assert sc_bottom_row >= 0
+    assert sc_top_row >= 0
+
+    # Select Bottom Panel in self-cut mode
+    window.cutlist_widget.table.selectRow(sc_bottom_row)
+    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_faces) > 0
+    for f in highlighted_faces:
+        assert f.color_group in ("base", "endgrain")
+        assert "profile" not in f.label.lower()
+        assert f.color_group != "profile"
+        assert "lid" not in f.label.lower()
+
+    # Select Top Panel in self-cut mode
+    window.cutlist_widget.table.selectRow(sc_top_row)
+    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_faces) > 0
+    for f in highlighted_faces:
+        assert f.color_group in ("lid", "endgrain")
+        assert "profile" not in f.label.lower()
+        assert f.color_group != "profile"
+        assert "base" not in f.label.lower()
+
+    # 3. Alu Profiles selection: selecting a profile should highlight only profiles, NOT wood panels
+    window.tabs.setCurrentIndex(1)
+    window.alu_widget.table_profiles.selectRow(0)  # Lid Hybrid Profile - Base Male (Long / Front-Back)
+    highlighted_alu = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_alu) > 0
+    for f in highlighted_alu:
+        assert f.color_group == "profile"
+        assert "profile" in f.label.lower()
+
+    window.close()

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 import math
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from PySide6.QtCore import Qt, QPoint, QPointF, QRectF, Signal
 from PySide6.QtGui import (
     QPainter,
@@ -163,34 +163,95 @@ class Schema3DCanvas(QOpenGLWidget):
         if face.wall_index is not None and face.wall_index in self.highlighted_wall_indices:
             return True
 
-        if face.label:
-            if face.label in self.highlighted_labels:
+        if not face.label and face.wall_index is None:
+            return False
+
+        lbl = face.label or ""
+        lbl_lower = lbl.lower()
+
+        for hl in self.highlighted_labels:
+            if not hl:
+                continue
+            if face.label and face.label == hl:
                 return True
-            lbl_lower = face.label.lower()
-            for hl in self.highlighted_labels:
-                if not hl:
+
+            hl_lower = hl.lower()
+
+            # 1. Profile selections (from Aluminum Profiles tab)
+            is_hl_profile = any(k in hl_lower for k in ("profile", "angle", "mating", "extrusion", "hybrid"))
+            is_face_profile = face.color_group == "profile" or "profile" in lbl_lower
+
+            if is_hl_profile:
+                if not is_face_profile:
                     continue
-                hl_lower = hl.lower()
-                if lbl_lower in hl_lower or hl_lower in lbl_lower:
+                # Highlight matching profile segments
+                if "base" in hl_lower or "male" in hl_lower:
+                    if "base" in lbl_lower:
+                        if ("long" in hl_lower or "front" in hl_lower) and any(s in lbl_lower for s in ("front", "back")):
+                            return True
+                        if ("short" in hl_lower or "left" in hl_lower) and any(s in lbl_lower for s in ("left", "right")):
+                            return True
+                        if not any(k in hl_lower for k in ("long", "short", "front", "back", "left", "right")):
+                            return True
+                elif "lid" in hl_lower or "female" in hl_lower:
+                    if "lid" in lbl_lower:
+                        if ("long" in hl_lower or "front" in hl_lower) and any(s in lbl_lower for s in ("front", "back")):
+                            return True
+                        if ("short" in hl_lower or "left" in hl_lower) and any(s in lbl_lower for s in ("left", "right")):
+                            return True
+                        if not any(k in hl_lower for k in ("long", "short", "front", "back", "left", "right")):
+                            return True
+                else:
                     return True
-                # Keyword matches for composite panel descriptions
-                if "front" in lbl_lower and "front" in hl_lower:
+                continue
+
+            # If face is a profile but selection is NOT a profile, do not highlight profile
+            if is_face_profile:
+                continue
+
+            # 2. Inside wall selections (from cut list or wall positions)
+            if face.color_group == "wall" or face.wall_index is not None:
+                if lbl_lower and (lbl_lower in hl_lower or hl_lower in lbl_lower):
                     return True
-                if "back" in lbl_lower and "back" in hl_lower:
-                    return True
-                if "left" in lbl_lower and "left" in hl_lower:
-                    return True
-                if "right" in lbl_lower and "right" in hl_lower:
-                    return True
-                if "bottom" in lbl_lower and "bottom" in hl_lower:
-                    return True
-                if "top" in lbl_lower and "top" in hl_lower:
-                    return True
-                if "profile" in lbl_lower and "profile" in hl_lower:
-                    if "lid" in lbl_lower and "lid" in hl_lower:
+                continue
+
+            # 3. Wood panel selections (from Cut List table)
+            if face.color_group in ("base", "lid", "endgrain"):
+                # Bottom panel: floor of base box
+                if "bottom" in hl_lower and "panel" in hl_lower:
+                    if "bottom" in lbl_lower and "panel" in lbl_lower:
                         return True
-                    if "base" in lbl_lower and "base" in hl_lower:
+                    continue
+
+                # Top panel: roof of lid box
+                if "top" in hl_lower and "panel" in hl_lower:
+                    if "top" in lbl_lower and "panel" in lbl_lower:
                         return True
+                    continue
+
+                # Long Sides (Front & Back)
+                if "long side" in hl_lower or ("front" in hl_lower and "back" in hl_lower):
+                    if "base" in hl_lower and "base" not in lbl_lower:
+                        continue
+                    if "lid" in hl_lower and "lid" not in lbl_lower:
+                        continue
+                    if any(s in lbl_lower for s in ("front", "back")):
+                        return True
+                    continue
+
+                # Short Sides (Left & Right)
+                if "short side" in hl_lower or ("left" in hl_lower and "right" in hl_lower):
+                    if "base" in hl_lower and "base" not in lbl_lower:
+                        continue
+                    if "lid" in hl_lower and "lid" not in lbl_lower:
+                        continue
+                    if any(s in lbl_lower for s in ("left", "right")):
+                        return True
+                    continue
+
+                # Direct substring match as fallback for custom panel labels
+                if lbl_lower and (lbl_lower in hl_lower or hl_lower in lbl_lower):
+                    return True
 
         return False
 
