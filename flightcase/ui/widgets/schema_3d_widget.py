@@ -389,6 +389,7 @@ class Schema3DCanvas(QOpenGLWidget):
         if self.mesh.faces:
             self._draw_gl_solid_faces()
             self._draw_gl_face_outlines()
+            self._draw_gl_dashed_segments()
         else:
             self._draw_gl_fallback_segments()
 
@@ -495,6 +496,34 @@ class Schema3DCanvas(QOpenGLWidget):
             for v in face.vertices:
                 GL.glVertex3f(v.x, v.y, v.z)
             GL.glEnd()
+
+    def _draw_gl_dashed_segments(self) -> None:
+        """Renders dashed markings (e.g. lid cut lines on uncut panels) with depth testing."""
+        if not self.mesh or not self.mesh.segments:
+            return
+
+        dashed_segs = [s for s in self.mesh.segments if s.style == "dashed"]
+        if not dashed_segs:
+            return
+
+        GL.glEnable(GL.GL_LINE_STIPPLE)
+        GL.glLineStipple(3, 0xAAAA)
+        GL.glLineWidth(2.5)
+
+        for seg in dashed_segs:
+            if seg.color_group == "wall" and not self.show_inside_walls:
+                continue
+
+            color_hex = COLORS.get("cut_line", COLORS.get("profile_edge", "#f59e0b"))
+            edge_color = QColor(color_hex)
+            GL.glColor4f(edge_color.redF(), edge_color.greenF(), edge_color.blueF(), 1.0)
+
+            GL.glBegin(GL.GL_LINES)
+            GL.glVertex3f(seg.p1.x, seg.p1.y, seg.p1.z)
+            GL.glVertex3f(seg.p2.x, seg.p2.y, seg.p2.z)
+            GL.glEnd()
+
+        GL.glDisable(GL.GL_LINE_STIPPLE)
 
     def _draw_gl_fallback_segments(self) -> None:
         """Fallback line renderer if no solid faces exist."""

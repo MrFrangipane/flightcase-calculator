@@ -32,10 +32,10 @@ def test_standard_case_dimensions():
     assert params.total_height == 418.0
     assert params.lid_height == 109.0
     assert params.base_height == 309.0
-    assert params.total_wood_height == 408.0  # 418 - 10
-    assert params.lid_wood_height == 104.0    # 109 - 5
-    assert params.base_wood_height == 304.0   # 309 - 5
-    assert params.lid_wood_height + params.base_wood_height == 408.0
+    assert params.total_wood_height == 390.0  # 400 - 10
+    assert params.lid_wood_height == 95.0    # 100 - 5
+    assert params.base_wood_height == 295.0   # 300 - 5
+    assert params.lid_wood_height + params.base_wood_height == 390.0
 
     res = calculate_flightcase(params)
     assert len(res.wood_cut_list) == 6  # 2 top/bottom + 2 long base + 2 short base + 2 long lid + 2 short lid = 6 items (each with qty)
@@ -49,25 +49,25 @@ def test_standard_case_dimensions():
     # Base Long Sides
     base_long = next(p for p in res.wood_cut_list if p.name == "Base Long Sides (Front & Back)")
     assert base_long.length_mm == 818.0
-    assert base_long.width_mm == 304.0
+    assert base_long.width_mm == 295.0
     assert base_long.quantity == 2
 
     # Base Short Sides (inset between front & back)
     base_short = next(p for p in res.wood_cut_list if p.name == "Base Short Sides (Left & Right)")
     assert base_short.length_mm == 500.0  # inner_width
-    assert base_short.width_mm == 304.0
+    assert base_short.width_mm == 295.0
     assert base_short.quantity == 2
 
     # Lid Long Sides
     lid_long = next(p for p in res.wood_cut_list if p.name == "Lid Long Sides (Front & Back)")
     assert lid_long.length_mm == 818.0
-    assert lid_long.width_mm == 104.0
+    assert lid_long.width_mm == 95.0
     assert lid_long.quantity == 2
 
     # Lid Short Sides
     lid_short = next(p for p in res.wood_cut_list if p.name == "Lid Short Sides (Left & Right)")
     assert lid_short.length_mm == 500.0
-    assert lid_short.width_mm == 104.0
+    assert lid_short.width_mm == 95.0
     assert lid_short.quantity == 2
 
 
@@ -203,10 +203,10 @@ def test_self_cut_lid_calculation():
 
     long_sides = next(p for p in res.wood_cut_list if p.name == "Long Sides (Front & Back)")
     assert long_sides.length_mm == 818.0
-    assert long_sides.width_mm == 408.0  # 418 - 10
+    assert long_sides.width_mm == 390.0  # 400 - 10
     assert long_sides.quantity == 2
 
     short_sides = next(p for p in res.wood_cut_list if p.name == "Short Sides (Left & Right)")
     assert short_sides.length_mm == 500.0  # inner width
-    assert short_sides.width_mm == 408.0  # 418 - 10
+    assert short_sides.width_mm == 390.0  # 400 - 10
     assert short_sides.quantity == 2

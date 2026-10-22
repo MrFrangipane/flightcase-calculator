@@ -940,6 +940,22 @@ def test_schema_3d_widget_explode_view_ui(qapp):
     assert len(panel_dims) >= 10
     assert any("Bottom Panel" in d.label for d in panel_dims)
 
+    # Toggling self-cut lid ensures side panels are not split, marked with dashed cut line, and single height dimension
+    window.input_panel.chk_self_cut_lid.setChecked(True)
+    mesh_self_cut = window.schema_widget.canvas.mesh
+    assert mesh_self_cut is not None
+    # 6 solid panels (36 faces) instead of split panels
+    assert len(mesh_self_cut.faces) == 36
+    # Dashed cut segments present
+    dashed_segs = [s for s in mesh_self_cut.segments if s.style == "dashed"]
+    assert len(dashed_segs) == 16
+    # Single height dimension per side wall (390 mm for default case)
+    self_cut_panel_dims = [d for d in mesh_self_cut.dimensions if d.dimension_type == "panel_dim"]
+    self_cut_labels = [d.label for d in self_cut_panel_dims]
+    assert any("390 mm" in l for l in self_cut_labels)
+    assert not any("295 mm" in l for l in self_cut_labels)
+    assert not any("95 mm" in l for l in self_cut_labels)
+
     window.close()
 
 

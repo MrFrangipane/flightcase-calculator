@@ -209,5 +209,6 @@ COLORS = {
     "inner_edge": "#64748b",      # Muted slate
     "dim_line": "#e2e8f0",        # Crisp white/silver
     "dim_text": "#fbbf24",        # Warm yellow
+    "cut_line": "#f59e0b",        # Dashed cut line marking
     "grid_line": "#262633",
 }

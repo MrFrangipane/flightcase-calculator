@@ -48,9 +48,9 @@ def test_flightcase_invariants_and_properties():
     assert case.total_height == 418.0
     assert case.outer_lid_height == 109.0
     assert case.base_height == 309.0
-    assert case.total_wood_height == 408.0
-    assert case.lid_wood_height == 104.0
-    assert case.base_wood_height == 304.0
+    assert case.total_wood_height == 390.0
+    assert case.lid_wood_height == 95.0
+    assert case.base_wood_height == 295.0
 
 
 def test_flightcase_invalid_lid_height():
@@ -92,12 +92,12 @@ def test_wood_panels_cut_list_calculation():
 
     base_long = next(p for p in cuts if "Base Long Sides" in p.name)
     assert base_long.length_mm == 818.0
-    assert base_long.width_mm == 304.0
+    assert base_long.width_mm == 295.0
     assert base_long.quantity == 2
 
     base_short = next(p for p in cuts if "Base Short Sides" in p.name)
     assert base_short.length_mm == 500.0
-    assert base_short.width_mm == 304.0
+    assert base_short.width_mm == 295.0
     assert base_short.quantity == 2
 
 
@@ -346,12 +346,12 @@ def test_self_cut_lid_domain_and_geometry():
 
     long_s = next(c for c in cuts if c.name == "Long Sides (Front & Back)")
     assert long_s.length_mm == 818.0
-    assert long_s.width_mm == 408.0
+    assert long_s.width_mm == 390.0
     assert long_s.quantity == 2
 
     short_s = next(c for c in cuts if c.name == "Short Sides (Left & Right)")
     assert short_s.length_mm == 500.0
-    assert short_s.width_mm == 408.0
+    assert short_s.width_mm == 390.0
     assert short_s.quantity == 2
 
     # 2. 3D Schema Geometry is kept with the lid, base, and aluminum mating profiles
@@ -530,6 +530,50 @@ def test_schema_3d_explode_view_geometry_and_panel_dimensions():
     min_pt, max_pt = mesh_exploded.bounding_box
     assert min_pt.x < 0.0 or min_pt.y < 0.0 or min_pt.z < 0.0
     assert max_pt.x > L or max_pt.y > W or max_pt.z > H
+
+
+def test_schema_3d_explode_view_self_cut_lid():
+    case = FlightCase(
+        dimensions=Dimensions3D(800.0, 500.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+        self_cut_lid=True,
+    )
+    mesh = Schema3DGeometryBuilder.build_geometry(
+        case,
+        explode_gap_mm=50.0,
+        show_dimensions=True,
+        show_all_panel_dimensions=True,
+    )
+
+    # 1. Verify 6 uncut panels (36 solid faces total: 1 bottom, 1 top, 4 side walls)
+    # Side panels are NOT split into separate base and lid panels
+    assert len(mesh.faces) == 36
+    labels = {f.label for f in mesh.faces}
+    assert "Bottom Panel" in labels
+    assert "Top Panel" in labels
+    assert "Long Sides (Front & Back)" in labels
+    assert "Short Sides (Left & Right)" in labels
+    assert not any("Lid Front" in l for l in labels)
+    assert not any("Base Front" in l for l in labels)
+
+    # 2. Verify dashed cut line segments marking where lid is to be cut
+    dashed_segs = [s for s in mesh.segments if s.style == "dashed"]
+    assert len(dashed_segs) == 16  # 4 segments per side wall * 4 walls
+    # Cut height is at z_cut = t_wood + base_wood_height = 9.0 + 295.0 = 304.0 mm
+    z_cut_expected = case.wood_thickness + case.base_wood_height
+    for s in dashed_segs:
+        assert s.p1.z == pytest.approx(z_cut_expected)
+        assert s.p2.z == pytest.approx(z_cut_expected)
+        assert s.label == "Lid Cut Line"
+
+    # 3. Verify single height dimension for side panels (total wood height = 390 mm)
+    exploded_panel_dims = [d for d in mesh.dimensions if d.dimension_type == "panel_dim"]
+    dim_labels = [d.label for d in exploded_panel_dims]
+    assert any("390 mm" in l for l in dim_labels)
+    assert not any("295 mm" in l for l in dim_labels)
+    assert not any("95 mm" in l for l in dim_labels)
 
 
 def test_wood_panels_svg_generator():

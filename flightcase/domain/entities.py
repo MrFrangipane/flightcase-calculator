@@ -155,19 +155,19 @@ class FlightCase:
     @property
     def total_wood_height(self) -> float:
         """Total combined height of wood panels, subtracting aluminum profile offset."""
-        return max(0.0, self.total_height - self.lid_alu_profile_offset)
+        return max(0.0, self.inner_total_height - self.lid_alu_profile_offset)
 
     @property
     def lid_wood_height(self) -> float:
         """Wood panel height for lid box sides."""
         half_offset = self.lid_alu_profile_offset / 2.0
-        return max(0.0, self.outer_lid_height - half_offset)
+        return max(0.0, self.inner_lid_height - half_offset)
 
     @property
     def base_wood_height(self) -> float:
         """Wood panel height for base box sides."""
         half_offset = self.lid_alu_profile_offset / 2.0
-        return max(0.0, self.base_height - half_offset)
+        return max(0.0, self.inner_base_height - half_offset)
 
     @property
     def walls(self) -> List[InsideWall]:

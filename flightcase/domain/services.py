@@ -290,61 +290,132 @@ class Schema3DGeometryBuilder:
 
         # Aluminum profile offset: height induced by profile on each half (base & lid)
         profile_h = max(0.0, case.lid_alu_profile_offset / 2.0)
+        is_exploded_self_cut = (case.self_cut_lid and ex > 0)
+        h_total_wood = case.total_wood_height
+        z_side_top = z_base_bot + t_wood + h_total_wood
+        z_cut = z_base_bot + t_wood + case.base_wood_height
 
-        # --- 1. Base Box Volumetric Panels with Panel Thickness ---
+        # --- 1. Base Box / Uncut Solid Panels with Panel Thickness ---
         # Base Bottom Floor Panel: spans [0, L] x [0, W] x [0, t_wood]
         add_solid_box(
             Point3D(0, 0, z_base_bot),
             Point3D(L, W, z_base_bot + t_wood),
             color_group="base",
-            label="Base Bottom Panel",
+            label="Bottom Panel" if case.self_cut_lid else "Base Bottom Panel",
             layer_order=ComponentLayer.BASE_FLOOR,
             offset=(0.0, 0.0, -ex),
         )
 
-        # Base Long Sides (Front & Back Panels):
-        # Front panel: [0, L] x [0, t_wood] x [t_wood, z_base_top - profile_h]
-        add_solid_box(
-            Point3D(0, 0, z_base_bot + t_wood),
-            Point3D(L, t_wood, z_base_top - profile_h),
-            color_group="base",
-            label="Base Front Panel",
-            highlight_top_endgrain=(profile_h == 0.0),
-            layer_order=ComponentLayer.OUTER_BASE_WALLS,
-            offset=(0.0, -ex, 0.0),
-        )
-        # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top - profile_h]
-        add_solid_box(
-            Point3D(0, W - t_wood, z_base_bot + t_wood),
-            Point3D(L, W, z_base_top - profile_h),
-            color_group="base",
-            label="Base Back Panel",
-            highlight_top_endgrain=(profile_h == 0.0),
-            layer_order=ComponentLayer.OUTER_BASE_WALLS,
-            offset=(0.0, ex, 0.0),
-        )
+        if is_exploded_self_cut:
+            # Full-height uncut side panels (not split for lid) with dashed cut lines
+            # Front Long Side
+            add_solid_box(
+                Point3D(0, 0, z_base_bot + t_wood),
+                Point3D(L, t_wood, z_side_top),
+                color_group="base",
+                label="Long Sides (Front & Back)",
+                highlight_top_endgrain=True,
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(0.0, -ex, 0.0),
+            )
+            # Dashed lid cut lines around front panel at z_cut
+            segments.append(Segment3D(Point3D(0, -ex, z_cut), Point3D(L, -ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(0, t_wood - ex, z_cut), Point3D(L, t_wood - ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(0, -ex, z_cut), Point3D(0, t_wood - ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(L, -ex, z_cut), Point3D(L, t_wood - ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
 
-        # Base Short Sides (Left & Right Panels, inset between front and back):
-        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
-        add_solid_box(
-            Point3D(0, t_wood, z_base_bot + t_wood),
-            Point3D(t_wood, W - t_wood, z_base_top - profile_h),
-            color_group="base",
-            label="Base Left Panel",
-            highlight_top_endgrain=(profile_h == 0.0),
-            layer_order=ComponentLayer.OUTER_BASE_WALLS,
-            offset=(-ex, 0.0, 0.0),
-        )
-        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
-        add_solid_box(
-            Point3D(L - t_wood, t_wood, z_base_bot + t_wood),
-            Point3D(L, W - t_wood, z_base_top - profile_h),
-            color_group="base",
-            label="Base Right Panel",
-            highlight_top_endgrain=(profile_h == 0.0),
-            layer_order=ComponentLayer.OUTER_BASE_WALLS,
-            offset=(ex, 0.0, 0.0),
-        )
+            # Back Long Side
+            add_solid_box(
+                Point3D(0, W - t_wood, z_base_bot + t_wood),
+                Point3D(L, W, z_side_top),
+                color_group="base",
+                label="Long Sides (Front & Back)",
+                highlight_top_endgrain=True,
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(0.0, ex, 0.0),
+            )
+            # Dashed lid cut lines around back panel at z_cut
+            segments.append(Segment3D(Point3D(0, W + ex, z_cut), Point3D(L, W + ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(0, W - t_wood + ex, z_cut), Point3D(L, W - t_wood + ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(0, W - t_wood + ex, z_cut), Point3D(0, W + ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(L, W - t_wood + ex, z_cut), Point3D(L, W + ex, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+
+            # Left Short Side
+            add_solid_box(
+                Point3D(0, t_wood, z_base_bot + t_wood),
+                Point3D(t_wood, W - t_wood, z_side_top),
+                color_group="base",
+                label="Short Sides (Left & Right)",
+                highlight_top_endgrain=True,
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(-ex, 0.0, 0.0),
+            )
+            # Dashed lid cut lines around left panel at z_cut
+            segments.append(Segment3D(Point3D(-ex, t_wood, z_cut), Point3D(-ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(t_wood - ex, t_wood, z_cut), Point3D(t_wood - ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(-ex, t_wood, z_cut), Point3D(t_wood - ex, t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(-ex, W - t_wood, z_cut), Point3D(t_wood - ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+
+            # Right Short Side
+            add_solid_box(
+                Point3D(L - t_wood, t_wood, z_base_bot + t_wood),
+                Point3D(L, W - t_wood, z_side_top),
+                color_group="base",
+                label="Short Sides (Left & Right)",
+                highlight_top_endgrain=True,
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(ex, 0.0, 0.0),
+            )
+            # Dashed lid cut lines around right panel at z_cut
+            segments.append(Segment3D(Point3D(L + ex, t_wood, z_cut), Point3D(L + ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(L - t_wood + ex, t_wood, z_cut), Point3D(L - t_wood + ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(L - t_wood + ex, t_wood, z_cut), Point3D(L + ex, t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+            segments.append(Segment3D(Point3D(L - t_wood + ex, W - t_wood, z_cut), Point3D(L + ex, W - t_wood, z_cut), style="dashed", color_group="profile", label="Lid Cut Line"))
+
+        else:
+            # Base Long Sides (Front & Back Panels):
+            # Front panel: [0, L] x [0, t_wood] x [t_wood, z_base_top - profile_h]
+            add_solid_box(
+                Point3D(0, 0, z_base_bot + t_wood),
+                Point3D(L, t_wood, z_base_top - profile_h),
+                color_group="base",
+                label="Base Front Panel",
+                highlight_top_endgrain=(profile_h == 0.0),
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(0.0, -ex, 0.0),
+            )
+            # Back panel: [0, L] x [W - t_wood, W] x [t_wood, z_base_top - profile_h]
+            add_solid_box(
+                Point3D(0, W - t_wood, z_base_bot + t_wood),
+                Point3D(L, W, z_base_top - profile_h),
+                color_group="base",
+                label="Base Back Panel",
+                highlight_top_endgrain=(profile_h == 0.0),
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(0.0, ex, 0.0),
+            )
+
+            # Base Short Sides (Left & Right Panels, inset between front and back):
+            # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
+            add_solid_box(
+                Point3D(0, t_wood, z_base_bot + t_wood),
+                Point3D(t_wood, W - t_wood, z_base_top - profile_h),
+                color_group="base",
+                label="Base Left Panel",
+                highlight_top_endgrain=(profile_h == 0.0),
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(-ex, 0.0, 0.0),
+            )
+            # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [t_wood, z_base_top - profile_h]
+            add_solid_box(
+                Point3D(L - t_wood, t_wood, z_base_bot + t_wood),
+                Point3D(L, W - t_wood, z_base_top - profile_h),
+                color_group="base",
+                label="Base Right Panel",
+                highlight_top_endgrain=(profile_h == 0.0),
+                layer_order=ComponentLayer.OUTER_BASE_WALLS,
+                offset=(ex, 0.0, 0.0),
+            )
 
         # --- 2. Lid Box Volumetric Panels with Panel Thickness ---
         # Lid Top Roof Panel: spans [0, L] x [0, W] x [z_lid_top - t_wood, z_lid_top]
@@ -352,58 +423,59 @@ class Schema3DGeometryBuilder:
             Point3D(0, 0, z_lid_top - t_wood),
             Point3D(L, W, z_lid_top),
             color_group="lid",
-            label="Lid Top Panel",
+            label="Top Panel" if case.self_cut_lid else "Lid Top Panel",
             layer_order=ComponentLayer.LID_ROOF,
             is_lid=True,
             offset=(0.0, 0.0, ex),
         )
 
-        # Lid Long Sides (Front & Back Panels):
-        # Front panel: [0, L] x [0, t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
-        add_solid_box(
-            Point3D(0, 0, z_lid_bot + profile_h),
-            Point3D(L, t_wood, z_lid_top - t_wood),
-            color_group="lid",
-            label="Lid Front Panel",
-            layer_order=ComponentLayer.LID_WALLS,
-            is_lid=True,
-            offset=(0.0, -ex, 0.0),
-        )
-        # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot + profile_h, z_lid_top - t_wood]
-        add_solid_box(
-            Point3D(0, W - t_wood, z_lid_bot + profile_h),
-            Point3D(L, W, z_lid_top - t_wood),
-            color_group="lid",
-            label="Lid Back Panel",
-            layer_order=ComponentLayer.LID_WALLS,
-            is_lid=True,
-            offset=(0.0, ex, 0.0),
-        )
+        if not is_exploded_self_cut:
+            # Lid Long Sides (Front & Back Panels):
+            # Front panel: [0, L] x [0, t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
+            add_solid_box(
+                Point3D(0, 0, z_lid_bot + profile_h),
+                Point3D(L, t_wood, z_lid_top - t_wood),
+                color_group="lid",
+                label="Lid Front Panel",
+                layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
+                offset=(0.0, -ex, 0.0),
+            )
+            # Back panel: [0, L] x [W - t_wood, W] x [z_lid_bot + profile_h, z_lid_top - t_wood]
+            add_solid_box(
+                Point3D(0, W - t_wood, z_lid_bot + profile_h),
+                Point3D(L, W, z_lid_top - t_wood),
+                color_group="lid",
+                label="Lid Back Panel",
+                layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
+                offset=(0.0, ex, 0.0),
+            )
 
-        # Lid Short Sides (Left & Right Panels):
-        # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
-        add_solid_box(
-            Point3D(0, t_wood, z_lid_bot + profile_h),
-            Point3D(t_wood, W - t_wood, z_lid_top - t_wood),
-            color_group="lid",
-            label="Lid Left Panel",
-            layer_order=ComponentLayer.LID_WALLS,
-            is_lid=True,
-            offset=(-ex, 0.0, 0.0),
-        )
-        # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
-        add_solid_box(
-            Point3D(L - t_wood, t_wood, z_lid_bot + profile_h),
-            Point3D(L, W - t_wood, z_lid_top - t_wood),
-            color_group="lid",
-            label="Lid Right Panel",
-            layer_order=ComponentLayer.LID_WALLS,
-            is_lid=True,
-            offset=(ex, 0.0, 0.0),
-        )
+            # Lid Short Sides (Left & Right Panels):
+            # Left panel: [0, t_wood] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
+            add_solid_box(
+                Point3D(0, t_wood, z_lid_bot + profile_h),
+                Point3D(t_wood, W - t_wood, z_lid_top - t_wood),
+                color_group="lid",
+                label="Lid Left Panel",
+                layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
+                offset=(-ex, 0.0, 0.0),
+            )
+            # Right panel: [L - t_wood, L] x [t_wood, W - t_wood] x [z_lid_bot + profile_h, z_lid_top - t_wood]
+            add_solid_box(
+                Point3D(L - t_wood, t_wood, z_lid_bot + profile_h),
+                Point3D(L, W - t_wood, z_lid_top - t_wood),
+                color_group="lid",
+                label="Lid Right Panel",
+                layer_order=ComponentLayer.LID_WALLS,
+                is_lid=True,
+                offset=(ex, 0.0, 0.0),
+            )
 
         # --- 3. Aluminum Location Profile Mating Extrusions ---
-        if profile_h > 0.0:
+        if profile_h > 0.0 and not is_exploded_self_cut:
             # Rim along Base top edge
             add_solid_box(
                 Point3D(0, 0, z_base_top - profile_h),
@@ -578,185 +650,297 @@ class Schema3DGeometryBuilder:
 
             # Individual Panel Dimensions (only when exploding)
             if ex > 0 and show_all_panel_dimensions:
-                # 1. Base Bottom Panel
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(0, 0, z_base_bot - ex),
-                    end=Point3D(L, 0, z_base_bot - ex),
-                    label=f"Bottom Panel: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, -40, 0),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(L, 0, z_base_bot - ex),
-                    end=Point3D(L, W, z_base_bot - ex),
-                    label=f"{cut_w:.0f} mm",
-                    value_mm=cut_w,
-                    offset_vector=(40, 0, 0),
-                    dimension_type="panel_dim"
-                ))
+                if is_exploded_self_cut:
+                    # --- Exploded Self-Cut Lid Panels (Uncut 6-Wall Box) ---
+                    # 1. Bottom Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, 0, z_base_bot - ex),
+                        end=Point3D(L, 0, z_base_bot - ex),
+                        label=f"Bottom Panel: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -40, 0),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L, 0, z_base_bot - ex),
+                        end=Point3D(L, W, z_base_bot - ex),
+                        label=f"{cut_w:.0f} mm",
+                        value_mm=cut_w,
+                        offset_vector=(40, 0, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 2. Base Front Panel
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(0, -ex, z_base_top - profile_h),
-                    end=Point3D(L, -ex, z_base_top - profile_h),
-                    label=f"Base Front: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, -30, 20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(0, -ex, t_wood),
-                    end=Point3D(0, -ex, z_base_top - profile_h),
-                    label=f"{h_base_wood:.0f} mm",
-                    value_mm=h_base_wood,
-                    offset_vector=(-30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 2. Long Side (Front)
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, -ex, z_side_top),
+                        end=Point3D(L, -ex, z_side_top),
+                        label=f"Long Side (Front): {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, -ex, t_wood),
+                        end=Point3D(0, -ex, z_side_top),
+                        label=f"{h_total_wood:.0f} mm",
+                        value_mm=h_total_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 3. Base Back Panel
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(0, W + ex, z_base_top - profile_h),
-                    end=Point3D(L, W + ex, z_base_top - profile_h),
-                    label=f"Base Back: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, 30, 20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(L, W + ex, t_wood),
-                    end=Point3D(L, W + ex, z_base_top - profile_h),
-                    label=f"{h_base_wood:.0f} mm",
-                    value_mm=h_base_wood,
-                    offset_vector=(30, 30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 3. Long Side (Back)
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, W + ex, z_side_top),
+                        end=Point3D(L, W + ex, z_side_top),
+                        label=f"Long Side (Back): {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, 30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L, W + ex, t_wood),
+                        end=Point3D(L, W + ex, z_side_top),
+                        label=f"{h_total_wood:.0f} mm",
+                        value_mm=h_total_wood,
+                        offset_vector=(30, 30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 4. Base Left Panel
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(-ex, t_wood, t_wood),
-                    end=Point3D(-ex, W - t_wood, t_wood),
-                    label=f"Base Left: {cut_inset_w:.0f} mm",
-                    value_mm=cut_inset_w,
-                    offset_vector=(-30, 0, -20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(-ex, t_wood, t_wood),
-                    end=Point3D(-ex, t_wood, z_base_top - profile_h),
-                    label=f"{h_base_wood:.0f} mm",
-                    value_mm=h_base_wood,
-                    offset_vector=(-30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 4. Short Side (Left)
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(-ex, t_wood, t_wood),
+                        end=Point3D(-ex, W - t_wood, t_wood),
+                        label=f"Short Side (Left): {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(-30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(-ex, t_wood, t_wood),
+                        end=Point3D(-ex, t_wood, z_side_top),
+                        label=f"{h_total_wood:.0f} mm",
+                        value_mm=h_total_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 5. Base Right Panel
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(L + ex, t_wood, t_wood),
-                    end=Point3D(L + ex, W - t_wood, t_wood),
-                    label=f"Base Right: {cut_inset_w:.0f} mm",
-                    value_mm=cut_inset_w,
-                    offset_vector=(30, 0, -20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=Point3D(L + ex, t_wood, t_wood),
-                    end=Point3D(L + ex, t_wood, z_base_top - profile_h),
-                    label=f"{h_base_wood:.0f} mm",
-                    value_mm=h_base_wood,
-                    offset_vector=(30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 5. Short Side (Right)
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L + ex, t_wood, t_wood),
+                        end=Point3D(L + ex, W - t_wood, t_wood),
+                        label=f"Short Side (Right): {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L + ex, t_wood, t_wood),
+                        end=Point3D(L + ex, t_wood, z_side_top),
+                        label=f"{h_total_wood:.0f} mm",
+                        value_mm=h_total_wood,
+                        offset_vector=(30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 6. Lid Top Panel
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(0, 0, z_lid_top + ex)),
-                    end=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
-                    label=f"Lid Top: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, -35, 20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
-                    end=transform_lid_point(Point3D(L, W, z_lid_top + ex)),
-                    label=f"{cut_w:.0f} mm",
-                    value_mm=cut_w,
-                    offset_vector=(35, 0, 20),
-                    dimension_type="panel_dim"
-                ))
+                    # 6. Top Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(0, 0, z_lid_top + ex)),
+                        end=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
+                        label=f"Top Panel: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -35, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
+                        end=transform_lid_point(Point3D(L, W, z_lid_top + ex)),
+                        label=f"{cut_w:.0f} mm",
+                        value_mm=cut_w,
+                        offset_vector=(35, 0, 20),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 7. Lid Front Panel
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(0, -ex, z_lid_top - t_wood)),
-                    end=transform_lid_point(Point3D(L, -ex, z_lid_top - t_wood)),
-                    label=f"Lid Front: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, -30, 20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(0, -ex, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(0, -ex, z_lid_top - t_wood)),
-                    label=f"{h_lid_wood:.0f} mm",
-                    value_mm=h_lid_wood,
-                    offset_vector=(-30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                else:
+                    # --- Standard Separate Base & Lid Panels ---
+                    # 1. Base Bottom Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, 0, z_base_bot - ex),
+                        end=Point3D(L, 0, z_base_bot - ex),
+                        label=f"Bottom Panel: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -40, 0),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L, 0, z_base_bot - ex),
+                        end=Point3D(L, W, z_base_bot - ex),
+                        label=f"{cut_w:.0f} mm",
+                        value_mm=cut_w,
+                        offset_vector=(40, 0, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 8. Lid Back Panel
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(0, W + ex, z_lid_top - t_wood)),
-                    end=transform_lid_point(Point3D(L, W + ex, z_lid_top - t_wood)),
-                    label=f"Lid Back: {cut_l:.0f} mm",
-                    value_mm=cut_l,
-                    offset_vector=(0, 30, 20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(L, W + ex, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(L, W + ex, z_lid_top - t_wood)),
-                    label=f"{h_lid_wood:.0f} mm",
-                    value_mm=h_lid_wood,
-                    offset_vector=(30, 30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 2. Base Front Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, -ex, z_base_top - profile_h),
+                        end=Point3D(L, -ex, z_base_top - profile_h),
+                        label=f"Base Front: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, -ex, t_wood),
+                        end=Point3D(0, -ex, z_base_top - profile_h),
+                        label=f"{h_base_wood:.0f} mm",
+                        value_mm=h_base_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 9. Lid Left Panel
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(-ex, t_wood, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(-ex, W - t_wood, z_lid_bot + profile_h)),
-                    label=f"Lid Left: {cut_inset_w:.0f} mm",
-                    value_mm=cut_inset_w,
-                    offset_vector=(-30, 0, -20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(-ex, t_wood, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(-ex, t_wood, z_lid_top - t_wood)),
-                    label=f"{h_lid_wood:.0f} mm",
-                    value_mm=h_lid_wood,
-                    offset_vector=(-30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 3. Base Back Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(0, W + ex, z_base_top - profile_h),
+                        end=Point3D(L, W + ex, z_base_top - profile_h),
+                        label=f"Base Back: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, 30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L, W + ex, t_wood),
+                        end=Point3D(L, W + ex, z_base_top - profile_h),
+                        label=f"{h_base_wood:.0f} mm",
+                        value_mm=h_base_wood,
+                        offset_vector=(30, 30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
-                # 10. Lid Right Panel
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(L + ex, t_wood, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(L + ex, W - t_wood, z_lid_bot + profile_h)),
-                    label=f"Lid Right: {cut_inset_w:.0f} mm",
-                    value_mm=cut_inset_w,
-                    offset_vector=(30, 0, -20),
-                    dimension_type="panel_dim"
-                ))
-                dimensions.append(DimensionCallout3D(
-                    start=transform_lid_point(Point3D(L + ex, t_wood, z_lid_bot + profile_h)),
-                    end=transform_lid_point(Point3D(L + ex, t_wood, z_lid_top - t_wood)),
-                    label=f"{h_lid_wood:.0f} mm",
-                    value_mm=h_lid_wood,
-                    offset_vector=(30, -30, 0),
-                    dimension_type="panel_dim"
-                ))
+                    # 4. Base Left Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(-ex, t_wood, t_wood),
+                        end=Point3D(-ex, W - t_wood, t_wood),
+                        label=f"Base Left: {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(-30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(-ex, t_wood, t_wood),
+                        end=Point3D(-ex, t_wood, z_base_top - profile_h),
+                        label=f"{h_base_wood:.0f} mm",
+                        value_mm=h_base_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 5. Base Right Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L + ex, t_wood, t_wood),
+                        end=Point3D(L + ex, W - t_wood, t_wood),
+                        label=f"Base Right: {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=Point3D(L + ex, t_wood, t_wood),
+                        end=Point3D(L + ex, t_wood, z_base_top - profile_h),
+                        label=f"{h_base_wood:.0f} mm",
+                        value_mm=h_base_wood,
+                        offset_vector=(30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 6. Lid Top Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(0, 0, z_lid_top + ex)),
+                        end=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
+                        label=f"Lid Top: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -35, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(L, 0, z_lid_top + ex)),
+                        end=transform_lid_point(Point3D(L, W, z_lid_top + ex)),
+                        label=f"{cut_w:.0f} mm",
+                        value_mm=cut_w,
+                        offset_vector=(35, 0, 20),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 7. Lid Front Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(0, -ex, z_lid_top - t_wood)),
+                        end=transform_lid_point(Point3D(L, -ex, z_lid_top - t_wood)),
+                        label=f"Lid Front: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, -30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(0, -ex, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(0, -ex, z_lid_top - t_wood)),
+                        label=f"{h_lid_wood:.0f} mm",
+                        value_mm=h_lid_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 8. Lid Back Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(0, W + ex, z_lid_top - t_wood)),
+                        end=transform_lid_point(Point3D(L, W + ex, z_lid_top - t_wood)),
+                        label=f"Lid Back: {cut_l:.0f} mm",
+                        value_mm=cut_l,
+                        offset_vector=(0, 30, 20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(L, W + ex, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(L, W + ex, z_lid_top - t_wood)),
+                        label=f"{h_lid_wood:.0f} mm",
+                        value_mm=h_lid_wood,
+                        offset_vector=(30, 30, 0),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 9. Lid Left Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(-ex, t_wood, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(-ex, W - t_wood, z_lid_bot + profile_h)),
+                        label=f"Lid Left: {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(-30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(-ex, t_wood, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(-ex, t_wood, z_lid_top - t_wood)),
+                        label=f"{h_lid_wood:.0f} mm",
+                        value_mm=h_lid_wood,
+                        offset_vector=(-30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
+
+                    # 10. Lid Right Panel
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(L + ex, t_wood, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(L + ex, W - t_wood, z_lid_bot + profile_h)),
+                        label=f"Lid Right: {cut_inset_w:.0f} mm",
+                        value_mm=cut_inset_w,
+                        offset_vector=(30, 0, -20),
+                        dimension_type="panel_dim"
+                    ))
+                    dimensions.append(DimensionCallout3D(
+                        start=transform_lid_point(Point3D(L + ex, t_wood, z_lid_bot + profile_h)),
+                        end=transform_lid_point(Point3D(L + ex, t_wood, z_lid_top - t_wood)),
+                        label=f"{h_lid_wood:.0f} mm",
+                        value_mm=h_lid_wood,
+                        offset_vector=(30, -30, 0),
+                        dimension_type="panel_dim"
+                    ))
 
             # Divider Wall Positions
             for i, wall in enumerate(case.walls, start=1):
