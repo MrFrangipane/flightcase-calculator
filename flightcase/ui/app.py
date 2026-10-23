@@ -78,8 +78,8 @@ class FlightCaseMainWindow(QMainWindow):
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(8, 8, 8, 8)
 
-        # Main horizontal splitter with 3 sections:
-        # [ Left: Output Tables | Center: 3D Schema & 2D Wood Panels Viewports | Right: Dimensions & Inside Walls Config ]
+        # Main horizontal layout:
+        # [ Left/Center: Splitter with Output Tables & 3D/2D Schema | Right: Fixed Configuration Panel ]
         self.main_splitter = QSplitter(Qt.Horizontal, self)
 
         # 1. Left Pane: Tabs containing dimensions / cutlist output tables
@@ -100,11 +100,15 @@ class FlightCaseMainWindow(QMainWindow):
         self.center_tabs.addTab(self.svg_widget, "2D Wood Panels (SVG)")
         self.main_splitter.addWidget(self.center_tabs)
 
+        # Set splitter proportions (40% left output tables, 60% center 3D schema)
+        self.main_splitter.setStretchFactor(0, 40)
+        self.main_splitter.setStretchFactor(1, 60)
+
         # 3. Right Pane: Permanent Configuration Panel (Dimensions & Specs + Inside Walls)
         self.input_panel = CaseInputPanel(self)
         self.walls_widget = InsideWallsWidget(self)
 
-        self.config_container = QWidget()
+        self.config_container = QWidget(self)
         config_layout = QVBoxLayout(self.config_container)
         config_layout.setContentsMargins(0, 0, 0, 0)
         config_layout.setSpacing(12)
@@ -112,14 +116,8 @@ class FlightCaseMainWindow(QMainWindow):
         config_layout.addWidget(self.walls_widget)
         config_layout.addStretch(1)
 
-        self.main_splitter.addWidget(self.config_container)
-
-        # Set splitter proportions (32% left output tables, 44% center 3D schema, 24% right config panel)
-        self.main_splitter.setStretchFactor(0, 32)
-        self.main_splitter.setStretchFactor(1, 44)
-        self.main_splitter.setStretchFactor(2, 24)
-
-        main_layout.addWidget(self.main_splitter)
+        main_layout.addWidget(self.main_splitter, stretch=1)
+        main_layout.addWidget(self.config_container, stretch=0)
 
         # Status Bar
         self.status_bar = QStatusBar(self)
@@ -217,12 +215,6 @@ class FlightCaseMainWindow(QMainWindow):
         fit_svg_action.setStatusTip("Fit 2D wood panels diagram into viewport")
         fit_svg_action.triggered.connect(self._fit_svg_view)
         view_menu.addAction(fit_svg_action)
-
-        # Help Menu
-        help_menu = menu_bar.addMenu("&Help")
-        about_action = QAction("&About Flightcase Calculator", self)
-        about_action.triggered.connect(self._show_about)
-        help_menu.addAction(about_action)
 
     def _get_recent_files(self) -> List[str]:
         """Returns the list of up to 5 recently opened/saved project file paths."""
@@ -622,22 +614,6 @@ class FlightCaseMainWindow(QMainWindow):
                 QMessageBox.information(self, "Export Successful", f"Full report exported to:\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Export Error", f"Failed to save CSV file:\n{str(e)}")
-
-    def _show_about(self) -> None:
-        QMessageBox.about(
-            self,
-            "About Flightcase Calculator",
-            "<h3>Flightcase Calculator</h3>"
-            "<p>A Python / PySide6 application built following <b>Domain-Driven Design (DDD)</b> principles.</p>"
-            "<p><b>Features:</b></p>"
-            "<ul>"
-            "<li>No-perspective parallel 3D wireframe schema with exact dimensions</li>"
-            "<li>Wood panels cutting dimensions and BOM cut list</li>"
-            "<li>Lid aluminum profile required lengths & edge protection angles</li>"
-            "<li>Inside partition walls manager (equispaced and custom)</li>"
-            "<li>Material efficiency & standard sheet estimates</li>"
-            "</ul>"
-        )
 
 
 def run_app() -> int:

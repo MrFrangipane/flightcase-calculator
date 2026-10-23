@@ -58,6 +58,8 @@ class AluProfilesWidget(QWidget):
         t_layout.setSpacing(8)
 
         self.table_profiles = QTableWidget(0, 6, self)
+        self.table_profiles.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table_profiles.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_profiles.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_profiles.setHorizontalHeaderLabels([
             "Profile Description",
@@ -97,6 +99,8 @@ class AluProfilesWidget(QWidget):
         c_layout.setSpacing(8)
 
         self.table_comps = QTableWidget(0, 5, self)
+        self.table_comps.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table_comps.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_comps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_comps.setHorizontalHeaderLabels([
             "Compartment Name",

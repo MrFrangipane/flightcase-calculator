@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QHeaderView,
     QCheckBox,
     QGroupBox,
+    QAbstractItemView,
 )
 from ...application import InsideWallDTO
 
@@ -74,6 +75,8 @@ class InsideWallsWidget(QWidget):
         # Compartments Table (3 columns: Compartment, Auto-Equalize, Available Space)
         self.table_comps = QTableWidget(0, 3, self)
         self.table_comps.setMinimumHeight(220)
+        self.table_comps.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table_comps.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_comps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_comps.setHorizontalHeaderLabels([
             "Compartment",
@@ -106,6 +109,9 @@ class InsideWallsWidget(QWidget):
         btn_comp_row.addWidget(btn_comp_add)
         btn_comp_row.addWidget(btn_comp_remove)
         group_layout.addLayout(btn_comp_row)
+
+        self.lbl_comp_summary = QLabel(self)
+        group_layout.addWidget(self.lbl_comp_summary)
 
         main_layout.addWidget(group_box)
 

@@ -35,8 +35,10 @@ def test_main_window_lifecycle(qapp):
     assert len(window._current_result.wood_cut_list) == 6
     assert window._current_result.total_lid_mating_profile_length_mm == 5344.0
 
-    # Test preset change
-    window.input_panel.combo_presets.setCurrentIndex(1)  # Large Production Case (1200x600x600)
+    # Test dimension change
+    window.input_panel.spin_length.setValue(1200.0)
+    window.input_panel.spin_width.setValue(600.0)
+    window.input_panel.spin_total_height.setValue(600.0)
     assert window.input_panel.spin_length.value() == 1200.0
     assert window._current_result.total_lid_mating_profile_length_mm == 7344.0  # 2 * 2 * (1218 + 618)
 
@@ -246,11 +248,11 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
 
     window = FlightCaseMainWindow()
 
-    # 1. Verify 3-pane layout in splitter: Left output tabs | Center 3D view | Right config panel
+    # 1. Verify layout: Splitter with Left output tabs & Center 3D view | Right fixed config panel
     central = window.centralWidget()
     splitter = central.findChild(QSplitter)
     assert splitter is not None
-    assert splitter.count() == 3
+    assert splitter.count() == 2
 
     # Left child must be QTabWidget with output cut lists & profiles tables
     left_tabs = splitter.widget(0)
@@ -269,9 +271,8 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     assert center_tabs.widget(1) == window.svg_widget
     assert window.schema_widget.isVisibleTo(window)
 
-    # Right child must be permanent configuration panel (scroll area with dimensions and walls)
-    right_widget = splitter.widget(2)
-    assert isinstance(right_widget, QScrollArea)
+    # Right panel must be permanent configuration panel (with dimensions and walls) directly in central layout
+    assert window.config_container.parent() == central
     assert window.input_panel.isVisibleTo(window)
     assert window.walls_widget.isVisibleTo(window)
 
@@ -1286,5 +1287,51 @@ def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
     divider_cuts_18 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
     for dc in divider_cuts_18:
         assert dc.thickness_mm == 18.0
+
+    window.close()
+
+
+def test_tables_scroll_per_pixel(qapp):
+    """Verifies that all table widgets in the UI are configured to scroll per pixel."""
+    from flightcase.ui import FlightCaseMainWindow
+    from PySide6.QtWidgets import QAbstractItemView
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    tables = [
+        window.cutlist_widget.table,
+        window.alu_widget.table_profiles,
+        window.alu_widget.table_comps,
+        window.walls_widget.table_comps,
+    ]
+
+    for table in tables:
+        assert table.verticalScrollMode() == QAbstractItemView.ScrollMode.ScrollPerPixel
+        assert table.horizontalScrollMode() == QAbstractItemView.ScrollMode.ScrollPerPixel
+
+    window.close()
+
+
+def test_about_menu_and_dialog_removed(qapp):
+    """Verifies that the Help menu and About dialog action/method are removed."""
+    from flightcase.ui import FlightCaseMainWindow
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Verify menu bar has no Help menu or About actions
+    menu_bar = window.menuBar()
+    menu_titles = [action.text().replace("&", "") for action in menu_bar.actions()]
+    assert "Help" not in menu_titles
+    assert "About" not in menu_titles
+
+    # 2. Verify all actions in the window menu bar
+    for menu_action in menu_bar.actions():
+        menu = menu_action.menu()
+        if menu:
+            action_texts = [act.text().lower() for act in menu.actions()]
+            assert not any("about" in t for t in action_texts)
+
+    # 3. Verify _show_about method is removed
+    assert not hasattr(window, "_show_about")
 
     window.close()

@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
     QMessageBox,
+    QAbstractItemView,
 )
 from ...application import CalculationResultDTO, CutPieceDTO
 
@@ -74,6 +75,8 @@ class CutListTableWidget(QWidget):
         t_layout.setSpacing(8)
 
         self.table = QTableWidget(0, 8, self)
+        self.table.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
+        self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels([
             "Panel Description",
