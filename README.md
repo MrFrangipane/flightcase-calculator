@@ -10,26 +10,40 @@ A desktop CAD/CAM estimation and design tool built with Python, PySide6, and Ope
 
 ## Features
 
-- **Precise Material Calculations**: Automatically computes exact cut dimensions, surface areas, and quantities for wood panels (sides, lid, base, top) and aluminum profiles (corner extrusions, lid mating profiles).
+- **Precise Material Calculations & Cost/Weight Estimation**:
+  - Automatically computes exact cut dimensions, surface areas, and quantities for wood panels (sides, lid, base, top) and aluminum profiles (corner extrusions, lid mating profiles).
+  - Calculates total wood area ($m^2$), estimated wood weight ($kg$), total estimated material cost ($€$), and standard $2440 \times 1220\text{ mm}$ sheet count.
+- **Wood Material Library & Custom Presets**:
+  - Built-in material presets from JSON resources (Birch plywood 4–18mm, Hexa textured birch, lightweight Poplar, and Astroboard / Con-Pearl panels).
+  - Automatically loads and synchronizes thickness, density ($\text{kg/m}^3$), and unit price ($€/\text{m}^2$).
+  - Full support for custom material specifications.
 - **Interactive 3D OpenGL Visualizer**:
-  - Full 3D orbit, pan, and zoom navigation.
+  - Full 3D orbit, pan, and zoom navigation with hardware-accelerated anti-aliased wireframe and solid rendering.
   - Exploded view slider with automatic panel dimension callouts.
-  - Interactive lid opening simulation with variable hinge sides (Back, Front, Left, Right) and 0°–180° rotation.
-  - Dynamic inner partition wall visualization and selection highlighting.
+  - Interactive lid opening simulation with selectable hinge sides (Back, Front, Left, Right) and 0°–180° rotation.
+  - Dynamic inner partition wall rendering and bidirectional selection highlighting with cut list tables.
   - Support for both standard split-lid construction and self-cut lid (6-wall uncut box) workflows with cut markings.
 - **2D Wood Panels Technical Drawings (SVG)**:
   - Generates printer-friendly, high-contrast vector cut sheets.
   - Interactive 2D viewport with smooth pan and zoom.
   - One-click SVG export formatted for physical print or laser/CNC cut prep.
-- **Custom Internal Partitions**: Configure inside dividing walls along X and Y axes with real-time recalculation.
-- **Project Management**: Save and load custom `.fcproj` project files, presets, and customized project titles.
-- **Dark Desktop UI**: Integrated theme optimized for workshop environments.
+- **Dynamic Compartment & Partition Wall Management**:
+  - Configure inside dividing walls along X and Y axes with real-time recalculation.
+  - One-click auto-equalize distribution or custom width allocation per compartment.
+  - Partition wall thickness automatically synchronized with the active wood material specification.
+- **Bill of Materials (BOM) & Cut Lists**:
+  - Detailed wood cut list and aluminum profile tables with smooth pixel-level scrolling.
+  - Full BOM export to CSV for workshop cut lists and supplier orders.
+- **Project Management & Ergonomic UI**:
+  - Save and load `.fcproj` project files with automatic window state and project snapshot restoration.
+  - Quick access to recently opened project files.
+  - Workshop-optimized dark theme with a streamlined, fixed configuration panel layout.
 
 ---
 
 ## Requirements
 
-- Python >= 3.10 (tested on Python 3.14)
+- Python >= 3.14
 - Supported operating systems: Windows, macOS, Linux
 
 ### Core Dependencies
@@ -79,6 +93,8 @@ pip install -e .
 Run the complete test suite:
 
 ```bash
+uv run pytest
+# or with active virtual environment:
 pytest
 ```
 
