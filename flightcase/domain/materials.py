@@ -81,13 +81,25 @@ def load_wood_materials(file_path: Optional[Path] = None) -> List[WoodMaterial]:
 
     # Built-in fallback presets if file cannot be read
     return [
-        WoodMaterial(name="Birch plywood 9mm", thickness_mm=9.0, density_kg_m3=700.0, price_per_m2=18.50, id="birch_plywood_9mm"),
-        WoodMaterial(name="Birch plywood 6.5mm", thickness_mm=6.5, density_kg_m3=700.0, price_per_m2=14.20, id="birch_plywood_6_5mm"),
-        WoodMaterial(name="Birch plywood 12mm", thickness_mm=12.0, density_kg_m3=700.0, price_per_m2=24.00, id="birch_plywood_12mm"),
-        WoodMaterial(name="Birch plywood 15mm", thickness_mm=15.0, density_kg_m3=700.0, price_per_m2=29.50, id="birch_plywood_15mm"),
-        WoodMaterial(name="Birch plywood 18mm", thickness_mm=18.0, density_kg_m3=700.0, price_per_m2=35.00, id="birch_plywood_18mm"),
-        WoodMaterial(name="Birch plywood 4mm", thickness_mm=4.0, density_kg_m3=700.0, price_per_m2=10.50, id="birch_plywood_4mm"),
+        WoodMaterial(name="Generic 7mm", thickness_mm=7.0, density_kg_m3=0.0, price_per_m2=0.0, id="generic_7mm"),
+        WoodMaterial(name="Generic 9mm", thickness_mm=9.0, density_kg_m3=0.0, price_per_m2=0.0, id="generic_9mm"),
+        WoodMaterial(name="Generic 10mm", thickness_mm=10.0, density_kg_m3=0.0, price_per_m2=0.0, id="generic_10mm"),
+        WoodMaterial(name="Bolivar plywood 3mm", thickness_mm=3.0, density_kg_m3=500.0, price_per_m2=16.56, id="bolivar_cp_3mm"),
+        WoodMaterial(name="Bolivar plywood 5mm", thickness_mm=5.0, density_kg_m3=500.0, price_per_m2=19.89, id="bolivar_cp_5mm"),
+        WoodMaterial(name="Bolivar plywood 10mm", thickness_mm=10.0, density_kg_m3=500.0, price_per_m2=32.90, id="bolivar_cp_10mm"),
+        WoodMaterial(name="Bolivar plywood 12mm", thickness_mm=12.0, density_kg_m3=500.0, price_per_m2=39.91, id="bolivar_cp_12mm"),
+        WoodMaterial(name="Bolivar plywood 15mm", thickness_mm=15.0, density_kg_m3=500.0, price_per_m2=44.89, id="bolivar_cp_15mm"),
+        WoodMaterial(name="Bolivar plywood 18mm", thickness_mm=18.0, density_kg_m3=500.0, price_per_m2=59.89, id="bolivar_cp_18mm"),
+        WoodMaterial(name="Vexi.fr plywood pvc 7mm", thickness_mm=7.0, density_kg_m3=500.0, price_per_m2=39.84, id="vexi_cp_pvc_7mm"),
     ]
+
+
+def save_wood_materials(materials: List[WoodMaterial], file_path: Optional[Path] = None) -> None:
+    """Saves wood material specifications to the JSON resource file."""
+    path = file_path if file_path is not None else _DEFAULT_WOOD_TYPES_FILE
+    data = [mat.to_dict() for mat in materials]
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
 
 def find_wood_material(

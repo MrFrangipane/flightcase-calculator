@@ -33,18 +33,21 @@ def test_main_window_lifecycle(qapp):
     # Initial recalculation ran
     assert window._current_result is not None
     assert len(window._current_result.wood_cut_list) == 6
-    assert window._current_result.total_lid_mating_profile_length_mm == 5344.0
+    t_wood = window.input_panel.spin_wood_thickness.value()
+    expected_lid_profile = 2 * 2 * ((800.0 + 2 * t_wood) + (500.0 + 2 * t_wood))
+    assert window._current_result.total_lid_mating_profile_length_mm == expected_lid_profile
 
     # Test dimension change
     window.input_panel.spin_length.setValue(1200.0)
     window.input_panel.spin_width.setValue(600.0)
     window.input_panel.spin_total_height.setValue(600.0)
     assert window.input_panel.spin_length.value() == 1200.0
-    assert window._current_result.total_lid_mating_profile_length_mm == 7344.0  # 2 * 2 * (1218 + 618)
+    expected_new_profile = 2 * 2 * ((1200.0 + 2 * t_wood) + (600.0 + 2 * t_wood))
+    assert window._current_result.total_lid_mating_profile_length_mm == expected_new_profile
 
     # Test adding walls
-    window.walls_widget._on_add_wall()
-    window.walls_widget._on_add_wall()
+    window.walls_widget._on_comp_tab_add()
+    window.walls_widget._on_comp_tab_add()
     assert len(window.walls_widget.get_walls()) == 2
     assert len(window._current_result.wood_cut_list) == 8  # 6 main panels + 2 walls
 
@@ -258,9 +261,10 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     left_tabs = splitter.widget(0)
     assert isinstance(left_tabs, QTabWidget)
     assert left_tabs == window.tabs
-    assert left_tabs.count() == 2
+    assert left_tabs.count() == 3
     assert left_tabs.tabText(0).endswith("Wood Cut List")
     assert left_tabs.tabText(1).endswith("Alu Profiles")
+    assert left_tabs.tabText(2).endswith("Wood Types")
 
     # Center child must be QTabWidget containing 3D schema and 2D wood panels SVG
     center_tabs = splitter.widget(1)
@@ -1079,7 +1083,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     # 2. Main Window central tab integration
     window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
     assert window.svg_widget is not None
-    assert window.tabs.count() == 2
+    assert window.tabs.count() == 3
     assert window.center_tabs.count() == 2
     assert window.center_tabs.widget(0) == window.schema_widget
     assert window.center_tabs.widget(1) == window.svg_widget
@@ -1253,8 +1257,8 @@ def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
     headers = [table.horizontalHeaderItem(c).text() for c in range(3)]
     assert headers == ["Compartment", "Auto-Equalize", "Available Space (mm)"]
 
-    # 3. Select wood material "Birch plywood 12mm"
-    idx_12 = window.input_panel.combo_wood_material.findText("Birch plywood 12mm")
+    # 3. Select wood material "Bolivar plywood 12mm"
+    idx_12 = window.input_panel.combo_wood_material.findText("Bolivar plywood 12mm")
     assert idx_12 >= 0
     window.input_panel.combo_wood_material.setCurrentIndex(idx_12)
     assert window.input_panel.spin_wood_thickness.value() == 12.0
@@ -1274,8 +1278,8 @@ def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
     for dc in divider_cuts:
         assert dc.thickness_mm == 12.0
 
-    # Switch to "Birch plywood 18mm"
-    idx_18 = window.input_panel.combo_wood_material.findText("Birch plywood 18mm")
+    # Switch to "Bolivar plywood 18mm"
+    idx_18 = window.input_panel.combo_wood_material.findText("Bolivar plywood 18mm")
     assert idx_18 >= 0
     window.input_panel.combo_wood_material.setCurrentIndex(idx_18)
     window.recalculate()
@@ -1303,11 +1307,48 @@ def test_tables_scroll_per_pixel(qapp):
         window.alu_widget.table_profiles,
         window.alu_widget.table_comps,
         window.walls_widget.table_comps,
+        window.wood_types_widget.table,
     ]
 
     for table in tables:
         assert table.verticalScrollMode() == QAbstractItemView.ScrollMode.ScrollPerPixel
         assert table.horizontalScrollMode() == QAbstractItemView.ScrollMode.ScrollPerPixel
+
+    window.close()
+
+
+def test_main_window_wood_types_tab(qapp):
+    """Verifies that the Wood Types tab is present, editable, and synchronizes with input panel."""
+    from flightcase.ui import FlightCaseMainWindow
+    from flightcase.ui.widgets import WoodTypesWidget
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Verify tab presence
+    assert hasattr(window, "wood_types_widget")
+    assert isinstance(window.wood_types_widget, WoodTypesWidget)
+    assert window.tabs.indexOf(window.wood_types_widget) >= 0
+    assert window.tabs.tabText(window.tabs.indexOf(window.wood_types_widget)) == "Wood Types"
+
+    # 2. Add a new wood type in the tab
+    initial_rows = window.wood_types_widget.table.rowCount()
+    window.wood_types_widget._on_add_material()
+    assert window.wood_types_widget.table.rowCount() == initial_rows + 1
+
+    # Verify input_panel combo includes the new material
+    last_row = initial_rows
+    new_mat_name = window.wood_types_widget.table.item(last_row, 1).text()
+    idx = window.input_panel.combo_wood_material.findText(new_mat_name)
+    assert idx >= 0
+
+    # Select the new material in input panel and check thickness
+    window.input_panel.combo_wood_material.setCurrentIndex(idx)
+    assert window.input_panel.spin_wood_thickness.value() == 9.0
+
+    # 3. Edit thickness in wood_types_widget and check that input_panel updates live
+    thick_item = window.wood_types_widget.table.item(last_row, 2)
+    thick_item.setText("13.5")
+    assert window.input_panel.spin_wood_thickness.value() == 13.5
 
     window.close()
 

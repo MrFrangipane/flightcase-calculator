@@ -22,49 +22,56 @@
   },
   {
     "id": "bolivar_cp_3mm",
-    "name": "Bolivar plywood 3mm",
+    "name": "Bolivar CP 3mm",
     "thickness_mm": 3.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 16.56
   },
   {
     "id": "bolivar_cp_5mm",
-    "name": "Bolivar plywood 5mm",
+    "name": "Bolivar CP 5mm",
     "thickness_mm": 5.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 19.89
   },
   {
     "id": "bolivar_cp_10mm",
-    "name": "Bolivar plywood 10mm",
+    "name": "Bolivar CP 10mm",
     "thickness_mm": 10.0,
     "density_kg_m3": 500.0,
-    "price_per_m2": 32.90
+    "price_per_m2": 32.9
   },
   {
     "id": "bolivar_cp_12mm",
-    "name": "Bolivar plywood 12mm",
+    "name": "Bolivar CP 12mm",
     "thickness_mm": 12.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 39.91
   },
   {
     "id": "bolivar_cp_15mm",
-    "name": "Bolivar plywood 15mm",
+    "name": "Bolivar CP 15mm",
     "thickness_mm": 15.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 44.89
   },
   {
     "id": "bolivar_cp_18mm",
-    "name": "Bolivar plywood 18mm",
+    "name": "Bolivar CP 18mm",
     "thickness_mm": 18.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 59.89
   },
   {
+    "id": "leroy_cp_mar_9mm",
+    "name": "Leroy CP mar 9mm",
+    "thickness_mm": 9.0,
+    "density_kg_m3": 500.0,
+    "price_per_m2": 39.02
+  },
+  {
     "id": "vexi_cp_pvc_7mm",
-    "name": "Vexi.fr plywood pvc 7mm",
+    "name": "Vexi.fr CP PVC 7mm",
     "thickness_mm": 7.0,
     "density_kg_m3": 500.0,
     "price_per_m2": 39.84

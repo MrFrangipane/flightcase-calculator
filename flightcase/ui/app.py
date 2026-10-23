@@ -40,6 +40,7 @@ from .widgets import (
     CutListTableWidget,
     AluProfilesWidget,
     WoodPanelsSvgWidget,
+    WoodTypesWidget,
 )
 
 
@@ -86,9 +87,11 @@ class FlightCaseMainWindow(QMainWindow):
         self.tabs = QTabWidget(self)
         self.cutlist_widget = CutListTableWidget(self)
         self.alu_widget = AluProfilesWidget(self)
+        self.wood_types_widget = WoodTypesWidget(self)
 
         self.tabs.addTab(self.cutlist_widget, "Wood Cut List")
         self.tabs.addTab(self.alu_widget, "Alu Profiles")
+        self.tabs.addTab(self.wood_types_widget, "Wood Types")
         self.main_splitter.addWidget(self.tabs)
 
         # 2. Center Pane: Central tabs containing 3D Schema and 2D Wood Panels Diagram
@@ -201,6 +204,13 @@ class FlightCaseMainWindow(QMainWindow):
         reset_view_action.setStatusTip("Reset 3D camera to default isometric view")
         reset_view_action.triggered.connect(self._reset_3d_view)
         view_menu.addAction(reset_view_action)
+
+        view_menu.addSeparator()
+
+        view_wood_types_action = QAction("Edit &Wood Types", self)
+        view_wood_types_action.setStatusTip("Switch to Wood Types management and editing tab")
+        view_wood_types_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.wood_types_widget))
+        view_menu.addAction(view_wood_types_action)
 
         view_menu.addSeparator()
 
@@ -498,12 +508,18 @@ class FlightCaseMainWindow(QMainWindow):
         self.schema_widget.lid_rotation_changed.connect(self._update_schema_geometry)
         self.schema_widget.toggles_changed.connect(self._update_schema_geometry)
         self.cutlist_widget.export_svg_requested.connect(self._export_wood_panels_svg)
+        self.wood_types_widget.materials_changed.connect(self._on_wood_materials_changed)
 
         # Highlight synchronization across dimension tables and 3D schema
         self.walls_widget.wall_selection_changed.connect(self._on_wall_selection_changed)
         self.cutlist_widget.piece_selection_changed.connect(self._on_piece_selection_changed)
         self.alu_widget.profile_selection_changed.connect(self._on_profile_selection_changed)
         self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _on_wood_materials_changed(self, materials: List[WoodMaterial]) -> None:
+        """Handles wood materials update from the Wood Types tab."""
+        self.input_panel.set_wood_materials(materials)
+        self.recalculate()
 
     def _on_wall_selection_changed(self, indices: List[int], labels: List[str]) -> None:
         self.schema_widget.set_highlights(wall_indices=indices, labels=labels)

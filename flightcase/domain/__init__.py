@@ -25,6 +25,7 @@ from .entities import (
 from .materials import (
     WoodMaterial,
     load_wood_materials,
+    save_wood_materials,
     find_wood_material,
 )
 from .services import (
@@ -55,6 +56,7 @@ __all__ = [
     "CaseCompartment",
     "WoodMaterial",
     "load_wood_materials",
+    "save_wood_materials",
     "find_wood_material",
     "FlightCaseCalculationReport",
     "WireframeMesh3D",

@@ -119,7 +119,7 @@ class CaseInputPanel(QWidget):
         # Wood Density
         spec_layout.addWidget(QLabel("Density:"), 2, 0)
         self.spin_wood_density = QDoubleSpinBox(self)
-        self.spin_wood_density.setRange(10.0, 5000.0)
+        self.spin_wood_density.setRange(0.0, 5000.0)
         self.spin_wood_density.setValue(700.0)
         self.spin_wood_density.setSuffix(" kg/m³")
         self.spin_wood_density.setDecimals(1)
@@ -208,6 +208,84 @@ class CaseInputPanel(QWidget):
 
     def set_self_cut_lid(self, value: bool) -> None:
         self.chk_self_cut_lid.setChecked(value)
+
+    def set_wood_materials(self, materials: List[WoodMaterial]) -> None:
+        """Updates the list of available wood materials and refreshes the combo box."""
+        current_data = self.combo_wood_material.currentData()
+        current_text = self.combo_wood_material.currentText()
+        self._wood_materials = list(materials)
+
+        self.combo_wood_material.blockSignals(True)
+        self.combo_wood_material.clear()
+        for mat in self._wood_materials:
+            self.combo_wood_material.addItem(mat.name, mat.id)
+        self.combo_wood_material.addItem("Custom", "custom")
+
+        # Try to restore selection by ID, then name
+        matched_idx = -1
+        if current_data == "custom" or current_text == "Custom":
+            matched_idx = self.combo_wood_material.count() - 1
+        elif current_data:
+            for i, mat in enumerate(self._wood_materials):
+                if mat.id == current_data:
+                    matched_idx = i
+                    break
+        if matched_idx < 0 and current_text:
+            for i, mat in enumerate(self._wood_materials):
+                if mat.name.lower() == current_text.lower():
+                    matched_idx = i
+                    break
+
+        if matched_idx >= 0 and matched_idx < len(self._wood_materials):
+            self.combo_wood_material.setCurrentIndex(matched_idx)
+            mat = self._wood_materials[matched_idx]
+            self.spin_wood_thickness.blockSignals(True)
+            self.spin_wood_density.blockSignals(True)
+            self.spin_wood_price.blockSignals(True)
+
+            self.spin_wood_thickness.setValue(mat.thickness_mm)
+            self.spin_wood_density.setValue(mat.density_kg_m3)
+            self.spin_wood_price.setValue(mat.price_per_m2)
+
+            self.spin_wood_thickness.blockSignals(False)
+            self.spin_wood_density.blockSignals(False)
+            self.spin_wood_price.blockSignals(False)
+
+            self.spin_wood_thickness.setReadOnly(True)
+            self.spin_wood_density.setReadOnly(True)
+            self.spin_wood_price.setReadOnly(True)
+        elif matched_idx == len(self._wood_materials):  # Custom
+            self.combo_wood_material.setCurrentIndex(matched_idx)
+            self.spin_wood_thickness.setReadOnly(False)
+            self.spin_wood_density.setReadOnly(False)
+            self.spin_wood_price.setReadOnly(False)
+        else:
+            if self._wood_materials:
+                self.combo_wood_material.setCurrentIndex(0)
+                mat = self._wood_materials[0]
+                self.spin_wood_thickness.blockSignals(True)
+                self.spin_wood_density.blockSignals(True)
+                self.spin_wood_price.blockSignals(True)
+
+                self.spin_wood_thickness.setValue(mat.thickness_mm)
+                self.spin_wood_density.setValue(mat.density_kg_m3)
+                self.spin_wood_price.setValue(mat.price_per_m2)
+
+                self.spin_wood_thickness.blockSignals(False)
+                self.spin_wood_density.blockSignals(False)
+                self.spin_wood_price.blockSignals(False)
+
+                self.spin_wood_thickness.setReadOnly(True)
+                self.spin_wood_density.setReadOnly(True)
+                self.spin_wood_price.setReadOnly(True)
+            else:
+                self.combo_wood_material.setCurrentIndex(self.combo_wood_material.count() - 1)
+                self.spin_wood_thickness.setReadOnly(False)
+                self.spin_wood_density.setReadOnly(False)
+                self.spin_wood_price.setReadOnly(False)
+
+        self.combo_wood_material.blockSignals(False)
+        self.input_changed.emit()
 
     def set_input_dto(self, dto: CaseInputDTO) -> None:
         """Sets all input field values from a CaseInputDTO."""
