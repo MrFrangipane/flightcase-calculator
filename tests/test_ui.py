@@ -638,21 +638,21 @@ def test_compartment_auto_equalize_comprehensive(qapp):
     assert pytest.approx(clearances[2]) == 335.0
     assert pytest.approx(clearances[3]) == 335.0
 
-    # Edit separator wall 1 thickness from 10mm to 20mm -> total walls = 40mm -> Remaining = 1000 - 40 - 300 = 660mm -> 330mm each
-    widget._get_comp_tab_thick_spinbox(1).setValue(20.0)
+    # Change material specification wood thickness from 10mm to 15mm -> total walls (3 * 15mm = 45mm)
+    widget.set_case_dimensions(inner_length=1000.0, inner_width=500.0, wood_thickness=15.0)
     clearances = widget._get_comp_tab_clearances()
-    assert pytest.approx(clearances[2]) == 330.0
-    assert pytest.approx(clearances[3]) == 330.0
+    assert pytest.approx(clearances[2], 0.1) == 331.2
+    assert pytest.approx(clearances[3], 0.1) == 331.2
 
     # Toggle row 1 to auto-equalize as well (rows 1, 2, 3 now checked)
     chk1 = widget._get_comp_tab_auto_checkbox(1)
     chk1.setChecked(True)
     assert widget._get_comp_tab_space_spinbox(1).isEnabled() is False
-    # Remaining space = 1000 - 40 - 100 = 860mm -> 860 / 3 = 286.7mm each
+    # Remaining space = 1000 - 45 - 97.5 = 857.5mm -> 857.5 / 3 = 285.8mm each
     clearances = widget._get_comp_tab_clearances()
-    assert pytest.approx(clearances[1], 0.1) == 286.7
-    assert pytest.approx(clearances[2], 0.1) == 286.7
-    assert pytest.approx(clearances[3], 0.1) == 286.7
+    assert pytest.approx(clearances[1], 0.1) == 285.8
+    assert pytest.approx(clearances[2], 0.1) == 285.8
+    assert pytest.approx(clearances[3], 0.1) == 285.8
 
     # Toggle row 1 back to unchecked -> should become editable again
     chk1.setChecked(False)
@@ -1230,5 +1230,61 @@ def test_vertical_toolbars_layout_and_resizability(qapp):
     # 3. Verify window can be resized down freely without toolbar horizontal overflow
     window.resize(800, 600)
     assert window.width() <= 800
+
+    window.close()
+
+
+def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
+    """Verifies that InsideWallsWidget has no 'wall positions' tab and uses material specification wood type."""
+    from flightcase.ui import FlightCaseMainWindow
+    from PySide6.QtWidgets import QTabWidget
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # 1. Verify InsideWallsWidget does not contain a QTabWidget / "Wall Positions" tab
+    assert not hasattr(window.walls_widget, "tabs_config")
+    child_tabs = window.walls_widget.findChildren(QTabWidget)
+    assert len(child_tabs) == 0
+
+    # 2. Verify Compartments table has exactly 3 columns (Compartment, Auto-Equalize, Available Space)
+    table = window.walls_widget.table_comps
+    assert table.columnCount() == 3
+    headers = [table.horizontalHeaderItem(c).text() for c in range(3)]
+    assert headers == ["Compartment", "Auto-Equalize", "Available Space (mm)"]
+
+    # 3. Select wood material "Birch plywood 12mm"
+    idx_12 = window.input_panel.combo_wood_material.findText("Birch plywood 12mm")
+    assert idx_12 >= 0
+    window.input_panel.combo_wood_material.setCurrentIndex(idx_12)
+    assert window.input_panel.spin_wood_thickness.value() == 12.0
+
+    # Add compartments (2 walls)
+    window.walls_widget._on_comp_tab_add()
+    window.walls_widget._on_comp_tab_add()
+    walls = window.walls_widget.get_walls()
+    assert len(walls) == 2
+    for w in walls:
+        assert w.thickness_mm == 12.0
+
+    # Verify cut list contains divider panels with 12.0 mm thickness
+    window.recalculate()
+    divider_cuts = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
+    assert len(divider_cuts) == 2
+    for dc in divider_cuts:
+        assert dc.thickness_mm == 12.0
+
+    # Switch to "Birch plywood 18mm"
+    idx_18 = window.input_panel.combo_wood_material.findText("Birch plywood 18mm")
+    assert idx_18 >= 0
+    window.input_panel.combo_wood_material.setCurrentIndex(idx_18)
+    window.recalculate()
+
+    walls_18 = window.walls_widget.get_walls()
+    for w in walls_18:
+        assert w.thickness_mm == 18.0
+
+    divider_cuts_18 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
+    for dc in divider_cuts_18:
+        assert dc.thickness_mm == 18.0
 
     window.close()

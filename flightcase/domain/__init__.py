@@ -22,6 +22,11 @@ from .entities import (
     FlightCase,
     CaseCompartment,
 )
+from .materials import (
+    WoodMaterial,
+    load_wood_materials,
+    find_wood_material,
+)
 from .services import (
     FlightCaseCalculationReport,
     WireframeMesh3D,
@@ -48,6 +53,9 @@ __all__ = [
     "ComponentLayer",
     "FlightCase",
     "CaseCompartment",
+    "WoodMaterial",
+    "load_wood_materials",
+    "find_wood_material",
     "FlightCaseCalculationReport",
     "WireframeMesh3D",
     "FlightCaseDomainService",

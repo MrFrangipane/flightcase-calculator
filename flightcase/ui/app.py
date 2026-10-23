@@ -54,9 +54,6 @@ class FlightCaseMainWindow(QMainWindow):
     ):
         super().__init__(parent)
         self.setWindowTitle("Flightcase Calculator — Untitled")
-        self.resize(1280, 800)
-        self.setMinimumSize(700, 450)
-
         self._current_result: Optional[CalculationResultDTO] = None
         self._current_project_path: Optional[str] = None
 
@@ -107,12 +104,6 @@ class FlightCaseMainWindow(QMainWindow):
         self.input_panel = CaseInputPanel(self)
         self.walls_widget = InsideWallsWidget(self)
 
-        self.config_scroll = QScrollArea(self)
-        self.config_scroll.setWidgetResizable(True)
-        self.config_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.config_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.config_scroll.setFrameShape(QFrame.Shape.NoFrame)
-
         self.config_container = QWidget()
         config_layout = QVBoxLayout(self.config_container)
         config_layout.setContentsMargins(0, 0, 0, 0)
@@ -121,8 +112,7 @@ class FlightCaseMainWindow(QMainWindow):
         config_layout.addWidget(self.walls_widget)
         config_layout.addStretch(1)
 
-        self.config_scroll.setWidget(self.config_container)
-        self.main_splitter.addWidget(self.config_scroll)
+        self.main_splitter.addWidget(self.config_container)
 
         # Set splitter proportions (32% left output tables, 44% center 3D schema, 24% right config panel)
         self.main_splitter.setStretchFactor(0, 32)

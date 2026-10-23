@@ -57,6 +57,9 @@ class CalculateFlightCaseUseCase:
             edge_profile_width=input_dto.edge_profile_width,
             self_cut_lid=input_dto.self_cut_lid,
             _walls=domain_walls,
+            wood_material=input_dto.wood_material,
+            wood_density=input_dto.wood_density,
+            wood_price=input_dto.wood_price,
         )
 
         # 2. Execute Domain Service
@@ -111,6 +114,7 @@ class CalculateFlightCaseUseCase:
         return CalculationResultDTO(
             total_wood_area_m2=report.total_wood_area_m2,
             total_wood_weight_kg=report.total_wood_weight_kg,
+            total_wood_cost=report.total_wood_cost,
             standard_sheets_required=report.standard_sheets_required,
             sheet_utilization_pct=report.sheet_utilization_pct,
             total_lid_mating_profile_length_mm=report.total_lid_mating_profile_length_mm,
@@ -173,6 +177,9 @@ class GenerateSchema3DUseCase:
             edge_profile_width=input_dto.edge_profile_width,
             self_cut_lid=input_dto.self_cut_lid,
             _walls=domain_walls,
+            wood_material=input_dto.wood_material,
+            wood_density=input_dto.wood_density,
+            wood_price=input_dto.wood_price,
         )
 
         return Schema3DGeometryBuilder.build_geometry(
@@ -222,6 +229,9 @@ class GenerateWoodPanelsSvgUseCase:
             edge_profile_width=input_dto.edge_profile_width,
             self_cut_lid=input_dto.self_cut_lid,
             _walls=domain_walls,
+            wood_material=input_dto.wood_material,
+            wood_density=input_dto.wood_density,
+            wood_price=input_dto.wood_price,
         )
 
         return WoodPanelsSvgGenerator.generate_wood_panels_svg(flight_case, title=input_dto.title)

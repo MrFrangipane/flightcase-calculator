@@ -1,7 +1,7 @@
-"""Input panel widget for case dimensions, wood thickness, and lid aluminum profile offset."""
+"""Input panel widget for case dimensions, wood materials, thickness, density, price, and lid aluminum profile offset."""
 
 from __future__ import annotations
-from typing import Optional
+from typing import Optional, List
 from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import (
     QWidget,
@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QCheckBox,
 )
+from ...domain import load_wood_materials, WoodMaterial
 from ...application import CaseInputDTO
 
 
@@ -26,6 +27,7 @@ class CaseInputPanel(QWidget):
 
     def __init__(self, parent: Optional[QWidget] = None):
         super().__init__(parent)
+        self._wood_materials: List[WoodMaterial] = load_wood_materials()
         self._init_ui()
 
     def _init_ui(self) -> None:
@@ -41,21 +43,6 @@ class CaseInputPanel(QWidget):
         self.edit_title.textChanged.connect(self._on_value_changed)
         title_layout.addWidget(self.edit_title)
         main_layout.addWidget(title_box)
-
-        # 1. Preset Selector
-        preset_box = QGroupBox("Preset Configurations", self)
-        preset_layout = QHBoxLayout(preset_box)
-        self.combo_presets = QComboBox(self)
-        self.combo_presets.addItems([
-            "Standard Road Trunk (800 x 500 x 400 mm, Lid 100mm)",
-            "Large Production Case (1200 x 600 x 600 mm, Lid 150mm)",
-            "Compact Tool / Mic Case (600 x 400 x 300 mm, Lid 80mm)",
-            "Cable Trunk (1000 x 500 x 500 mm, Lid 120mm)",
-            "Custom Dimensions",
-        ])
-        self.combo_presets.currentIndexChanged.connect(self._on_preset_selected)
-        preset_layout.addWidget(self.combo_presets)
-        main_layout.addWidget(preset_box)
 
         # 2. Case Inner Dimensions Box
         dim_box = QGroupBox("Inner Case Dimensions", self)
@@ -104,48 +91,88 @@ class CaseInputPanel(QWidget):
 
         main_layout.addWidget(dim_box)
 
-        # 3. Wood & Profile Specifications Box
+        # 3. Wood Material & Profile Specifications Box
         spec_box = QGroupBox("Material & Extrusion Specifications", self)
         spec_layout = QGridLayout(spec_box)
         spec_layout.setSpacing(8)
 
-        # Wood Panel Thickness
-        spec_layout.addWidget(QLabel("Wood Panels Thickness:"), 0, 0)
+        # Wood Material Selection Combo
+        spec_layout.addWidget(QLabel("Wood material:"), 0, 0)
+        self.combo_wood_material = QComboBox(self)
+        for mat in self._wood_materials:
+            self.combo_wood_material.addItem(mat.name, mat.id)
+        self.combo_wood_material.addItem("Custom", "custom")
+        self.combo_wood_material.currentIndexChanged.connect(self._on_material_selected)
+        spec_layout.addWidget(self.combo_wood_material, 0, 1)
+
+        # Wood Thickness
+        spec_layout.addWidget(QLabel("Thickness:"), 1, 0)
         self.spin_wood_thickness = QDoubleSpinBox(self)
-        self.spin_wood_thickness.setRange(4.0, 30.0)
+        self.spin_wood_thickness.setRange(1.0, 50.0)
         self.spin_wood_thickness.setValue(9.0)
         self.spin_wood_thickness.setSuffix(" mm")
         self.spin_wood_thickness.setDecimals(1)
+        self.spin_wood_thickness.setReadOnly(True)
         self.spin_wood_thickness.valueChanged.connect(self._on_value_changed)
-        spec_layout.addWidget(self.spin_wood_thickness, 0, 1)
+        spec_layout.addWidget(self.spin_wood_thickness, 1, 1)
+
+        # Wood Density
+        spec_layout.addWidget(QLabel("Density:"), 2, 0)
+        self.spin_wood_density = QDoubleSpinBox(self)
+        self.spin_wood_density.setRange(10.0, 5000.0)
+        self.spin_wood_density.setValue(700.0)
+        self.spin_wood_density.setSuffix(" kg/m³")
+        self.spin_wood_density.setDecimals(1)
+        self.spin_wood_density.setReadOnly(True)
+        self.spin_wood_density.valueChanged.connect(self._on_value_changed)
+        spec_layout.addWidget(self.spin_wood_density, 2, 1)
+
+        # Wood Price
+        spec_layout.addWidget(QLabel("Price:"), 3, 0)
+        self.spin_wood_price = QDoubleSpinBox(self)
+        self.spin_wood_price.setRange(0.0, 5000.0)
+        self.spin_wood_price.setValue(18.50)
+        self.spin_wood_price.setPrefix("€")
+        self.spin_wood_price.setSuffix(" / m²")
+        self.spin_wood_price.setDecimals(2)
+        self.spin_wood_price.setReadOnly(True)
+        self.spin_wood_price.valueChanged.connect(self._on_value_changed)
+        spec_layout.addWidget(self.spin_wood_price, 3, 1)
+
+        # Initialize defaults from default material if available
+        if self._wood_materials:
+            default_mat = self._wood_materials[0]
+            self.spin_wood_thickness.setValue(default_mat.thickness_mm)
+            self.spin_wood_density.setValue(default_mat.density_kg_m3)
+            self.spin_wood_price.setValue(default_mat.price_per_m2)
 
         # Lid Aluminum Profile Added Dimension (to be subtracted from height)
         lbl_profile_offset = QLabel("Lid Profile Added Dim (-H):")
         lbl_profile_offset.setToolTip("Aluminum hybrid location profile added dimension subtracted from wood panel height")
-        spec_layout.addWidget(lbl_profile_offset, 1, 0)
+        spec_layout.addWidget(lbl_profile_offset, 4, 0)
         self.spin_profile_offset = QDoubleSpinBox(self)
         self.spin_profile_offset.setRange(0.0, 100.0)
         self.spin_profile_offset.setValue(10.0)
         self.spin_profile_offset.setSuffix(" mm")
         self.spin_profile_offset.setDecimals(1)
         self.spin_profile_offset.valueChanged.connect(self._on_value_changed)
-        spec_layout.addWidget(self.spin_profile_offset, 1, 1)
+        spec_layout.addWidget(self.spin_profile_offset, 4, 1)
 
         # Edge Profile Width (e.g. 30x30mm)
-        spec_layout.addWidget(QLabel("Edge Angle Width:"), 2, 0)
+        spec_layout.addWidget(QLabel("Edge Angle Width:"), 5, 0)
         self.spin_edge_width = QDoubleSpinBox(self)
         self.spin_edge_width.setRange(10.0, 100.0)
         self.spin_edge_width.setValue(30.0)
         self.spin_edge_width.setSuffix(" mm")
         self.spin_edge_width.setDecimals(1)
         self.spin_edge_width.valueChanged.connect(self._on_value_changed)
-        spec_layout.addWidget(self.spin_edge_width, 2, 1)
+        spec_layout.addWidget(self.spin_edge_width, 5, 1)
 
         # Self-Cut Lid (6-wall uncut box) Checkbox
         self.chk_self_cut_lid = QCheckBox("Cut lid yourself (6-wall uncut box)", self)
         self.chk_self_cut_lid.setToolTip("Calculate wood cut list for a 6-sided uncut closed box to be sawn open by the builder")
         self.chk_self_cut_lid.toggled.connect(self._on_value_changed)
-        spec_layout.addWidget(self.chk_self_cut_lid, 3, 0, 1, 2)
+        spec_layout.addWidget(self.chk_self_cut_lid, 6, 0, 1, 2)
 
         main_layout.addWidget(spec_box)
         main_layout.addStretch()
@@ -153,37 +180,31 @@ class CaseInputPanel(QWidget):
     def _on_value_changed(self) -> None:
         self.input_changed.emit()
 
-    def _on_preset_selected(self, index: int) -> None:
-        presets = [
-            (800.0, 500.0, 400.0, 100.0, 9.0, 10.0),
-            (1200.0, 600.0, 600.0, 150.0, 9.0, 12.0),
-            (600.0, 400.0, 300.0, 80.0, 6.5, 10.0),
-            (1000.0, 500.0, 500.0, 120.0, 9.0, 10.0),
-        ]
-        if 0 <= index < len(presets):
-            l, w, h, lid_h, t_wood, p_off = presets[index]
-            self.spin_length.blockSignals(True)
-            self.spin_width.blockSignals(True)
-            self.spin_total_height.blockSignals(True)
-            self.spin_lid_height.blockSignals(True)
+    def _on_material_selected(self, index: int) -> None:
+        selected_text = self.combo_wood_material.currentText()
+        if selected_text == "Custom" or index < 0 or index >= len(self._wood_materials):
+            self.spin_wood_thickness.setReadOnly(False)
+            self.spin_wood_density.setReadOnly(False)
+            self.spin_wood_price.setReadOnly(False)
+        else:
+            mat = self._wood_materials[index]
             self.spin_wood_thickness.blockSignals(True)
-            self.spin_profile_offset.blockSignals(True)
+            self.spin_wood_density.blockSignals(True)
+            self.spin_wood_price.blockSignals(True)
 
-            self.spin_length.setValue(l)
-            self.spin_width.setValue(w)
-            self.spin_total_height.setValue(h)
-            self.spin_lid_height.setValue(lid_h)
-            self.spin_wood_thickness.setValue(t_wood)
-            self.spin_profile_offset.setValue(p_off)
+            self.spin_wood_thickness.setValue(mat.thickness_mm)
+            self.spin_wood_density.setValue(mat.density_kg_m3)
+            self.spin_wood_price.setValue(mat.price_per_m2)
 
-            self.spin_length.blockSignals(False)
-            self.spin_width.blockSignals(False)
-            self.spin_total_height.blockSignals(False)
-            self.spin_lid_height.blockSignals(False)
             self.spin_wood_thickness.blockSignals(False)
-            self.spin_profile_offset.blockSignals(False)
+            self.spin_wood_density.blockSignals(False)
+            self.spin_wood_price.blockSignals(False)
 
-            self.input_changed.emit()
+            self.spin_wood_thickness.setReadOnly(True)
+            self.spin_wood_density.setReadOnly(True)
+            self.spin_wood_price.setReadOnly(True)
+
+        self._on_value_changed()
 
     def set_self_cut_lid(self, value: bool) -> None:
         self.chk_self_cut_lid.setChecked(value)
@@ -195,7 +216,10 @@ class CaseInputPanel(QWidget):
         self.spin_width.blockSignals(True)
         self.spin_total_height.blockSignals(True)
         self.spin_lid_height.blockSignals(True)
+        self.combo_wood_material.blockSignals(True)
         self.spin_wood_thickness.blockSignals(True)
+        self.spin_wood_density.blockSignals(True)
+        self.spin_wood_price.blockSignals(True)
         self.spin_profile_offset.blockSignals(True)
         self.spin_edge_width.blockSignals(True)
         self.chk_self_cut_lid.blockSignals(True)
@@ -205,7 +229,43 @@ class CaseInputPanel(QWidget):
         self.spin_width.setValue(dto.inner_width)
         self.spin_total_height.setValue(dto.inner_total_height)
         self.spin_lid_height.setValue(dto.inner_lid_height)
-        self.spin_wood_thickness.setValue(dto.wood_thickness)
+
+        # Match material name or properties
+        target_name = (dto.wood_material or "").strip()
+        matched_idx = -1
+        for i, m in enumerate(self._wood_materials):
+            if m.name.lower() == target_name.lower():
+                matched_idx = i
+                break
+
+        if matched_idx < 0 and target_name and target_name.lower() != "custom":
+            for i, m in enumerate(self._wood_materials):
+                if (
+                    abs(m.thickness_mm - dto.wood_thickness) < 1e-3
+                    and abs(m.density_kg_m3 - dto.wood_density) < 1e-2
+                    and abs(m.price_per_m2 - dto.wood_price) < 1e-2
+                ):
+                    matched_idx = i
+                    break
+
+        if matched_idx >= 0:
+            self.combo_wood_material.setCurrentIndex(matched_idx)
+            mat = self._wood_materials[matched_idx]
+            self.spin_wood_thickness.setValue(mat.thickness_mm)
+            self.spin_wood_density.setValue(mat.density_kg_m3)
+            self.spin_wood_price.setValue(mat.price_per_m2)
+            self.spin_wood_thickness.setReadOnly(True)
+            self.spin_wood_density.setReadOnly(True)
+            self.spin_wood_price.setReadOnly(True)
+        else:
+            self.combo_wood_material.setCurrentText("Custom")
+            self.spin_wood_thickness.setValue(dto.wood_thickness)
+            self.spin_wood_density.setValue(dto.wood_density)
+            self.spin_wood_price.setValue(dto.wood_price)
+            self.spin_wood_thickness.setReadOnly(False)
+            self.spin_wood_density.setReadOnly(False)
+            self.spin_wood_price.setReadOnly(False)
+
         self.spin_profile_offset.setValue(dto.lid_alu_profile_offset)
         self.spin_edge_width.setValue(dto.edge_profile_width)
         self.chk_self_cut_lid.setChecked(dto.self_cut_lid)
@@ -215,7 +275,10 @@ class CaseInputPanel(QWidget):
         self.spin_width.blockSignals(False)
         self.spin_total_height.blockSignals(False)
         self.spin_lid_height.blockSignals(False)
+        self.combo_wood_material.blockSignals(False)
         self.spin_wood_thickness.blockSignals(False)
+        self.spin_wood_density.blockSignals(False)
+        self.spin_wood_price.blockSignals(False)
         self.spin_profile_offset.blockSignals(False)
         self.spin_edge_width.blockSignals(False)
         self.chk_self_cut_lid.blockSignals(False)
@@ -230,6 +293,9 @@ class CaseInputPanel(QWidget):
             inner_total_height=self.spin_total_height.value(),
             inner_lid_height=self.spin_lid_height.value(),
             wood_thickness=self.spin_wood_thickness.value(),
+            wood_material=self.combo_wood_material.currentText(),
+            wood_density=self.spin_wood_density.value(),
+            wood_price=self.spin_wood_price.value(),
             lid_alu_profile_offset=self.spin_profile_offset.value(),
             edge_profile_width=self.spin_edge_width.value(),
             self_cut_lid=self.chk_self_cut_lid.isChecked(),

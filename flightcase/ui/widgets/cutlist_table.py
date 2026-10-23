@@ -38,9 +38,8 @@ class CutListTableWidget(QWidget):
         layout.setSpacing(12)
 
         # 1. KPI Summary Cards Frame
-        kpi_box = QGroupBox("Wood Material & Efficiency Summary", self)
+        kpi_box = QGroupBox("Material Summary", self)
         kpi_layout = QGridLayout(kpi_box)
-        kpi_layout.setSpacing(12)
 
         # Total Area
         kpi_layout.addWidget(QLabel("<b>Total Wood Area:</b>"), 0, 0)
@@ -48,19 +47,24 @@ class CutListTableWidget(QWidget):
         kpi_layout.addWidget(self.lbl_total_area, 0, 1)
 
         # Estimated Weight
-        kpi_layout.addWidget(QLabel("<b>Estimated Weight:</b>"), 0, 2)
+        kpi_layout.addWidget(QLabel("<b>Estimated Weight:</b>"), 1, 0)
         self.lbl_weight = QLabel("0.0 kg")
-        kpi_layout.addWidget(self.lbl_weight, 0, 3)
+        kpi_layout.addWidget(self.lbl_weight, 1, 1)
 
         # Standard Sheets (2440 x 1220 mm)
-        kpi_layout.addWidget(QLabel("<b>Standard Sheets (2440x1220):</b>"), 1, 0)
+        kpi_layout.addWidget(QLabel("<b>Standard Sheets (2440x1220):</b>"), 2, 0)
         self.lbl_sheets = QLabel("0.0 sheets")
-        kpi_layout.addWidget(self.lbl_sheets, 1, 1)
+        kpi_layout.addWidget(self.lbl_sheets, 2, 1)
 
         # Sheet Utilization
-        kpi_layout.addWidget(QLabel("<b>Sheet Utilization:</b>"), 1, 2)
+        kpi_layout.addWidget(QLabel("<b>Sheet Utilization:</b>"), 3, 0)
         self.lbl_utilization = QLabel("0.0 %")
-        kpi_layout.addWidget(self.lbl_utilization, 1, 3)
+        kpi_layout.addWidget(self.lbl_utilization, 3, 1)
+
+        # Estimated Wood Cost
+        kpi_layout.addWidget(QLabel("<b>Estimated Wood Cost:</b>"), 4, 0)
+        self.lbl_cost = QLabel("€0.00")
+        kpi_layout.addWidget(self.lbl_cost, 4, 1)
 
         layout.addWidget(kpi_box)
 
@@ -127,6 +131,7 @@ class CutListTableWidget(QWidget):
         self.lbl_weight.setText(f"{result.total_wood_weight_kg:.1f} kg")
         self.lbl_sheets.setText(f"{result.standard_sheets_required:.2f} sheets")
         self.lbl_utilization.setText(f"{result.sheet_utilization_pct:.1f} %")
+        self.lbl_cost.setText(f"€{result.total_wood_cost:.2f}")
 
         # Update Table
         self.table.blockSignals(True)

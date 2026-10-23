@@ -250,10 +250,13 @@ def calculate_flightcase(params: CaseParameters) -> CalculationResult:
     # Summary metrics
     total_wood_area = sum(p.area_m2 for p in wood_cuts)
     
-    # Birch plywood standard density ~700 kg/m3
+    # Volumetric weight calculation based on wood density
     # Volume in m3 = Area (m2) * thickness (m)
     total_wood_volume = sum((p.area_m2 * (p.thickness_mm / 1000.0)) for p in wood_cuts)
-    wood_weight = total_wood_volume * 700.0
+    density = getattr(params, "wood_density", 700.0)
+    wood_price = getattr(params, "wood_price", 18.50)
+    wood_weight = total_wood_volume * density
+    wood_cost = total_wood_area * wood_price
 
     # Standard plywood sheet 2440 x 1220 mm = 2.9768 m2
     sheet_area = (2440.0 * 1220.0) / 1_000_000.0
@@ -273,6 +276,7 @@ def calculate_flightcase(params: CaseParameters) -> CalculationResult:
         alu_profiles_list=alu_cuts,
         total_wood_area_m2=total_wood_area,
         total_wood_weight_kg=wood_weight,
+        total_wood_cost=wood_cost,
         standard_sheets_required=sheets_req,
         sheet_utilization_pct=(sheets_req / max(1, int(sheets_req + 0.999))) * 100.0 if sheets_req > 0 else 100.0,
         total_lid_mating_profile_length_mm=total_lid_mating_len,

@@ -1,0 +1,86 @@
+[
+  {
+    "id": "birch_plywood_9mm",
+    "name": "Birch plywood 9mm",
+    "thickness_mm": 9.0,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 18.50
+  },
+  {
+    "id": "birch_plywood_6_5mm",
+    "name": "Birch plywood 6.5mm",
+    "thickness_mm": 6.5,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 14.20
+  },
+  {
+    "id": "birch_plywood_12mm",
+    "name": "Birch plywood 12mm",
+    "thickness_mm": 12.0,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 24.00
+  },
+  {
+    "id": "birch_plywood_15mm",
+    "name": "Birch plywood 15mm",
+    "thickness_mm": 15.0,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 29.50
+  },
+  {
+    "id": "birch_plywood_18mm",
+    "name": "Birch plywood 18mm",
+    "thickness_mm": 18.0,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 35.00
+  },
+  {
+    "id": "birch_plywood_4mm",
+    "name": "Birch plywood 4mm",
+    "thickness_mm": 4.0,
+    "density_kg_m3": 700.0,
+    "price_per_m2": 10.50
+  },
+  {
+    "id": "black_hexa_birch_9mm",
+    "name": "Black Hexa Birch plywood 9mm",
+    "thickness_mm": 9.0,
+    "density_kg_m3": 720.0,
+    "price_per_m2": 26.50
+  },
+  {
+    "id": "black_hexa_birch_6_5mm",
+    "name": "Black Hexa Birch plywood 6.5mm",
+    "thickness_mm": 6.5,
+    "density_kg_m3": 720.0,
+    "price_per_m2": 21.00
+  },
+  {
+    "id": "poplar_plywood_9mm",
+    "name": "Poplar plywood 9mm",
+    "thickness_mm": 9.0,
+    "density_kg_m3": 450.0,
+    "price_per_m2": 16.00
+  },
+  {
+    "id": "poplar_plywood_12mm",
+    "name": "Poplar plywood 12mm",
+    "thickness_mm": 12.0,
+    "density_kg_m3": 450.0,
+    "price_per_m2": 20.00
+  },
+  {
+    "id": "astroboard_10mm",
+    "name": "Astroboard / Con-Pearl 10mm",
+    "thickness_mm": 10.0,
+    "density_kg_m3": 200.0,
+    "price_per_m2": 28.00
+  },
+  {
+    "id": "astroboard_4_5mm",
+    "name": "Astroboard / Con-Pearl 4.5mm",
+    "thickness_mm": 4.5,
+    "density_kg_m3": 200.0,
+    "price_per_m2": 19.00
+  }
+]

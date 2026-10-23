@@ -57,8 +57,11 @@ class CaseParameters:
     inner_total_height: float = 400.0
     inner_lid_height: float = 100.0
 
-    # Wood panel specifications (mm)
+    # Wood panel specifications (mm, density, price)
     wood_thickness: float = 9.0
+    wood_material: str = "Birch plywood 9mm"
+    wood_density: float = 700.0
+    wood_price: float = 18.50
 
     # Aluminum profile added dimension (mm) - subtracted from height
     lid_alu_profile_offset: float = 10.0
@@ -92,8 +95,14 @@ class CaseParameters:
         outer_width: Optional[float] = None,
         total_height: Optional[float] = None,
         lid_height: Optional[float] = None,
+        wood_material: str = "Birch plywood 9mm",
+        wood_density: float = 700.0,
+        wood_price: float = 18.50,
     ):
         self.wood_thickness = wood_thickness
+        self.wood_material = str(wood_material)
+        self.wood_density = float(wood_density)
+        self.wood_price = float(wood_price)
         self.lid_alu_profile_offset = lid_alu_profile_offset
         self.corner_extrusion_rebate = corner_extrusion_rebate
         self.edge_profile_width = edge_profile_width
@@ -185,7 +194,8 @@ class CalculationResult:
     
     # Summary metrics
     total_wood_area_m2: float = 0.0
-    total_wood_weight_kg: float = 0.0  # Approx birch plywood 700 kg/m3
+    total_wood_weight_kg: float = 0.0  # Volumetric weight from wood density
+    total_wood_cost: float = 0.0
     standard_sheets_required: float = 0.0  # standard 2440 x 1220 mm sheet
     sheet_utilization_pct: float = 0.0
     

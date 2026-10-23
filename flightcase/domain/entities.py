@@ -45,6 +45,9 @@ class FlightCase:
     edge_profile_width: float = 30.0
     self_cut_lid: bool = False
     _walls: List[InsideWall] = field(default_factory=list)
+    wood_material: str = "Birch plywood 9mm"
+    wood_density: float = 700.0
+    wood_price: float = 18.50
 
     def __post_init__(self) -> None:
         self.validate()

@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QApplication,
     QFileDialog,
-    QMessageBox,
+    QMessageBox, QAbstractItemView,
 )
 from ...application import CalculationResultDTO, CutPieceDTO
 
@@ -36,18 +36,17 @@ class AluProfilesWidget(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(12)
 
-        # 1. Prominent Highlighted KPI Cards for Aluminum Profiles
-        kpi_box = QGroupBox("Required Aluminum Profile Lengths", self)
+        # 1. Prominently Highlighted KPI Cards for Aluminum Profiles
+        kpi_box = QGroupBox("Alu Profile Lengths", self)
         kpi_layout = QGridLayout(kpi_box)
-        kpi_layout.setSpacing(12)
 
         # Highlighted Lid Mating Profile Length
-        kpi_layout.addWidget(QLabel("<b>★ Lid Alu Profile Required Length:</b>"), 0, 0)
+        kpi_layout.addWidget(QLabel("<b>Lid Alu Length:</b>"), 0, 0)
         self.lbl_lid_profile_len = QLabel("0.0 mm (0.00 m)")
         kpi_layout.addWidget(self.lbl_lid_profile_len, 0, 1)
 
         # Edge Angle Protection Profiles Length
-        kpi_layout.addWidget(QLabel("<b>Edge Protection Angle Profiles:</b>"), 1, 0)
+        kpi_layout.addWidget(QLabel("<b>Edge Protection:</b>"), 1, 0)
         self.lbl_edge_profile_len = QLabel("0.0 mm (0.00 m)")
         kpi_layout.addWidget(self.lbl_edge_profile_len, 1, 1)
 

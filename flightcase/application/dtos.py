@@ -123,6 +123,9 @@ class CaseInputDTO:
     inner_total_height: float = 400.0
     inner_lid_height: float = 100.0
     wood_thickness: float = 9.0
+    wood_material: str = "Birch plywood 9mm"
+    wood_density: float = 700.0
+    wood_price: float = 18.50
     lid_alu_profile_offset: float = 10.0  # Added dimension to subtract from height
     corner_extrusion_rebate: float = 0.0
     edge_profile_width: float = 30.0
@@ -148,9 +151,15 @@ class CaseInputDTO:
         total_height: Optional[float] = None,
         lid_height: Optional[float] = None,
         title: str = "",
+        wood_material: str = "Birch plywood 9mm",
+        wood_density: float = 700.0,
+        wood_price: float = 18.50,
     ):
         self.title = str(title) if title is not None else ""
         self.wood_thickness = wood_thickness
+        self.wood_material = str(wood_material)
+        self.wood_density = float(wood_density)
+        self.wood_price = float(wood_price)
         self.lid_alu_profile_offset = lid_alu_profile_offset
         self.corner_extrusion_rebate = corner_extrusion_rebate
         self.edge_profile_width = edge_profile_width
@@ -212,6 +221,9 @@ class CaseInputDTO:
             "inner_total_height": self.inner_total_height,
             "inner_lid_height": self.inner_lid_height,
             "wood_thickness": self.wood_thickness,
+            "wood_material": self.wood_material,
+            "wood_density": self.wood_density,
+            "wood_price": self.wood_price,
             "lid_alu_profile_offset": self.lid_alu_profile_offset,
             "corner_extrusion_rebate": self.corner_extrusion_rebate,
             "edge_profile_width": self.edge_profile_width,
@@ -269,6 +281,9 @@ class CaseInputDTO:
             inner_total_height=in_h,
             inner_lid_height=in_lid_h,
             wood_thickness=t_wood,
+            wood_material=str(data.get("wood_material", "Birch plywood 9mm")),
+            wood_density=float(data.get("wood_density", data.get("density", 700.0))),
+            wood_price=float(data.get("wood_price", data.get("price", 18.50))),
             lid_alu_profile_offset=float(data.get("lid_alu_profile_offset", 10.0)),
             corner_extrusion_rebate=float(data.get("corner_extrusion_rebate", 0.0)),
             edge_profile_width=float(data.get("edge_profile_width", 30.0)),
@@ -318,8 +333,6 @@ class CalculationResultDTO:
     # Summary & Metrics
     total_wood_area_m2: float
     total_wood_weight_kg: float
-    standard_sheets_required: float
-    sheet_utilization_pct: float
     
     # Required Alu Profile Lengths
     total_lid_mating_profile_length_mm: float
@@ -334,6 +347,10 @@ class CalculationResultDTO:
     base_wood_height: float
     lid_wood_height: float
     total_wood_height: float
+
+    total_wood_cost: float = 0.0
+    standard_sheets_required: float = 0.0
+    sheet_utilization_pct: float = 0.0
 
     # Cut lists & Compartments
     wood_cut_list: List[CutPieceDTO] = field(default_factory=list)

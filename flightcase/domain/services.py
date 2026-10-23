@@ -27,11 +27,11 @@ class FlightCaseCalculationReport:
     # Material totals
     total_wood_area_m2: float
     total_wood_weight_kg: float
-    standard_sheets_required: float
-    sheet_utilization_pct: float
-    
     total_lid_mating_profile_length_mm: float
     total_edge_angle_profile_length_mm: float
+    total_wood_cost: float = 0.0
+    standard_sheets_required: float = 0.0
+    sheet_utilization_pct: float = 0.0
 
 
 @dataclass
@@ -55,7 +55,10 @@ class FlightCaseDomainService:
         total_wood_area = sum(p.total_area_m2 for p in wood_cuts)
         # Volume in m³ = Area (m²) * thickness (m)
         total_wood_vol = sum((p.total_area_m2 * (p.thickness_mm / 1000.0)) for p in wood_cuts)
-        wood_weight = total_wood_vol * 700.0  # Approx birch plywood 700 kg/m³
+        density = getattr(case, "wood_density", 700.0)
+        wood_price = getattr(case, "wood_price", 18.50)
+        wood_weight = total_wood_vol * density
+        wood_cost = total_wood_area * wood_price
 
         # Standard plywood sheet 2440 x 1220 mm = 2.9768 m²
         sheet_area = (2440.0 * 1220.0) / 1_000_000.0
@@ -71,6 +74,7 @@ class FlightCaseDomainService:
             compartments=compartments,
             total_wood_area_m2=total_wood_area,
             total_wood_weight_kg=wood_weight,
+            total_wood_cost=wood_cost,
             standard_sheets_required=sheets_req,
             sheet_utilization_pct=(sheets_req / max(1, math.ceil(sheets_req))) * 100.0 if sheets_req > 0 else 100.0,
             total_lid_mating_profile_length_mm=total_lid_mating_len,
