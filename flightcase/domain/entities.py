@@ -471,7 +471,95 @@ class FlightCase:
                     notes=f"Positioned along width at {wall.position_mm:.1f}mm"
                 ))
 
-        return cuts
+        return self._group_wood_cut_pieces(cuts)
+
+    @staticmethod
+    def _group_wood_cut_pieces(pieces: List[CutPiece]) -> List[CutPiece]:
+        """
+        Groups panels that have the same cut length, width, and thickness.
+        Combines quantities, updates panel names to reflect the combined set,
+        and consolidates relevant notes.
+        """
+        if not pieces:
+            return []
+
+        grouped: dict[tuple[float, float, float], list[CutPiece]] = {}
+        for p in pieces:
+            dim_key = (
+                round(min(p.length_mm, p.width_mm), 2),
+                round(max(p.length_mm, p.width_mm), 2),
+                round(p.thickness_mm, 2),
+            )
+            grouped.setdefault(dim_key, []).append(p)
+
+        result: List[CutPiece] = []
+        for group in grouped.values():
+            if len(group) == 1:
+                result.append(group[0])
+                continue
+
+            total_qty = sum(p.quantity for p in group)
+            primary = group[0]
+            length_mm = primary.length_mm
+            width_mm = primary.width_mm
+            thickness_mm = primary.thickness_mm
+
+            names_lower = [p.name.lower() for p in group]
+
+            # 1. Top and Bottom panels
+            has_bottom = any("bottom" in n for n in names_lower)
+            has_top = any("top" in n for n in names_lower)
+            if has_bottom and has_top:
+                name = "Top & Bottom Panels"
+                notes = "Floor and roof panels"
+                category = primary.category
+            # 2. Long sides (Front & Back) - e.g. base and lid with equal heights
+            elif any("long side" in n or ("front" in n and "back" in n) for n in names_lower) and not any("short" in n for n in names_lower):
+                name = "Long Sides (Front & Back)"
+                notes = "Front and back side panels"
+                category = primary.category
+            # 3. Short sides (Left & Right) - e.g. base and lid with equal heights
+            elif any("short side" in n or ("left" in n and "right" in n) for n in names_lower) and not any("long" in n for n in names_lower):
+                name = "Short Sides (Left & Right)"
+                notes = "Left and right short side panels"
+                category = primary.category
+            # 4. Inside divider walls
+            elif all(
+                ("divider" in p.category.name.lower() if hasattr(p.category, "name") else "divider" in str(p.category).lower())
+                or "wall" in p.name.lower()
+                for p in group
+            ):
+                if all("width" in n for n in names_lower):
+                    name = f"Inside Walls ({total_qty} pcs, Width-wise)" if total_qty > 2 else "Inside Walls (Width-wise)"
+                elif all("length" in n for n in names_lower):
+                    name = f"Inside Walls ({total_qty} pcs, Length-wise)" if total_qty > 2 else "Inside Walls (Length-wise)"
+                else:
+                    name = f"Inside Walls ({total_qty} pcs)"
+                notes_list = [p.notes for p in group if p.notes]
+                notes = " • ".join(dict.fromkeys(notes_list))
+                category = primary.category
+            # 5. General fallback
+            else:
+                distinct_names = list(dict.fromkeys(p.name for p in group))
+                if len(distinct_names) == 1:
+                    name = distinct_names[0]
+                else:
+                    name = " / ".join(distinct_names)
+                notes_list = [p.notes for p in group if p.notes]
+                notes = " • ".join(dict.fromkeys(notes_list))
+                category = primary.category
+
+            result.append(CutPiece(
+                name=name,
+                category=category,
+                length_mm=length_mm,
+                width_mm=width_mm,
+                thickness_mm=thickness_mm,
+                quantity=total_qty,
+                notes=notes,
+            ))
+
+        return result
 
     def calculate_alu_profiles(self) -> List[CutPiece]:
         """Calculates exact cut lengths for lid aluminum mating extrusions and edge angles."""

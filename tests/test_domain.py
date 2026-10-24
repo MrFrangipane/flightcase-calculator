@@ -81,14 +81,14 @@ def test_wood_panels_cut_list_calculation():
     )
 
     cuts = case.calculate_wood_cut_list()
-    assert len(cuts) == 6
+    assert len(cuts) == 5
 
-    bottom = next(p for p in cuts if p.name == "Base Bottom Panel")
-    assert bottom.length_mm == 818.0
-    assert bottom.width_mm == 518.0
-    assert bottom.thickness_mm == 9.0
-    assert bottom.quantity == 1
-    assert bottom.category == CutPieceCategory.WOOD_BASE
+    top_bottom = next(p for p in cuts if p.name == "Top & Bottom Panels")
+    assert top_bottom.length_mm == 818.0
+    assert top_bottom.width_mm == 518.0
+    assert top_bottom.thickness_mm == 9.0
+    assert top_bottom.quantity == 2
+    assert top_bottom.category == CutPieceCategory.WOOD_BASE
 
     base_long = next(p for p in cuts if "Base Long Sides" in p.name)
     assert base_long.length_mm == 818.0
@@ -329,20 +329,15 @@ def test_self_cut_lid_domain_and_geometry():
         self_cut_lid=True,
     )
 
-    # 1. Wood cut list has 4 entries representing 6 outer walls
+    # 1. Wood cut list has 3 entries representing 6 outer walls (Top & Bottom qty 2, Long qty 2, Short qty 2)
     cuts = case.calculate_wood_cut_list()
-    assert len(cuts) == 4
+    assert len(cuts) == 3
     assert sum(c.quantity for c in cuts) == 6
 
-    bottom = next(c for c in cuts if c.name == "Bottom Panel")
-    assert bottom.length_mm == 818.0
-    assert bottom.width_mm == 518.0
-    assert bottom.quantity == 1
-
-    top = next(c for c in cuts if c.name == "Top Panel")
-    assert top.length_mm == 818.0
-    assert top.width_mm == 518.0
-    assert top.quantity == 1
+    top_bottom = next(c for c in cuts if c.name == "Top & Bottom Panels")
+    assert top_bottom.length_mm == 818.0
+    assert top_bottom.width_mm == 518.0
+    assert top_bottom.quantity == 2
 
     long_s = next(c for c in cuts if c.name == "Long Sides (Front & Back)")
     assert long_s.length_mm == 818.0
@@ -623,9 +618,7 @@ def test_wood_panels_svg_generator():
     assert "xmlns=\"http://www.w3.org/2000/svg\"" in svg_content
     assert "fill=\"#ffffff\"" in svg_content  # Printer-friendly white background
     assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in svg_content
-    assert "Base Bottom Panel" in svg_content
-    assert "Lid Top Panel" in svg_content
-    assert "QTY: 1" in svg_content
+    assert "Top &amp; Bottom Panels" in svg_content or "Top & Bottom Panels" in svg_content
     assert "QTY: 2" in svg_content
     assert "818.0 mm" in svg_content  # 800 + 18 outer length
     assert "518.0 mm" in svg_content  # 500 + 18 outer width
@@ -636,3 +629,35 @@ def test_wood_panels_svg_generator():
     svg_with_title = WoodPanelsSvgGenerator.generate_wood_panels_svg(case, title="Laser Tour Trunk")
     assert "Laser Tour Trunk — Wood Panels Cut Diagram" in svg_with_title
     assert "<title>Laser Tour Trunk — Wood Panels Cut Diagram</title>" in svg_with_title
+
+
+def test_panel_grouping_same_size_and_width():
+    """Verifies that panels with identical dimensions (cut length, width, thickness) are grouped together in cut list and 2D view."""
+    # Case with 3 identical width-wise divider walls
+    case = FlightCase(
+        dimensions=Dimensions3D(1000.0, 600.0, 400.0),
+        lid_height=100.0,
+        wood_thickness=9.0,
+        lid_alu_profile_offset=10.0,
+    )
+    case.add_wall(InsideWall(orientation=WallOrientation.WIDTH_WISE, position_mm=200.0, label="Wall 1"))
+    case.add_wall(InsideWall(orientation=WallOrientation.WIDTH_WISE, position_mm=400.0, label="Wall 2"))
+    case.add_wall(InsideWall(orientation=WallOrientation.WIDTH_WISE, position_mm=600.0, label="Wall 3"))
+
+    cuts = case.calculate_wood_cut_list()
+    # Top & Bottom grouped (qty 2), Base Long (qty 2), Base Short (qty 2), Lid Long (qty 2), Lid Short (qty 2), Walls (qty 3) = 6 cut items (total 13 pieces)
+    assert len(cuts) == 6
+    assert sum(c.quantity for c in cuts) == 13
+
+    # Inside walls should be grouped into a single entry with quantity 3
+    wall_cuts = [c for c in cuts if "Wall" in c.name or "Divider" in c.name or c.category == CutPieceCategory.WOOD_DIVIDER]
+    assert len(wall_cuts) == 1
+    assert wall_cuts[0].quantity == 3
+    assert wall_cuts[0].length_mm == 600.0
+    assert wall_cuts[0].width_mm == 400.0
+
+    # 2D SVG Diagram should also reflect the grouped panel with QTY: 3
+    from flightcase.domain import WoodPanelsSvgGenerator
+    svg = WoodPanelsSvgGenerator.generate_wood_panels_svg(case)
+    assert "QTY: 3" in svg
+    assert "Inside Walls (3 pcs, Width-wise)" in svg or "Inside Walls" in svg

@@ -32,7 +32,7 @@ def test_main_window_lifecycle(qapp):
 
     # Initial recalculation ran
     assert window._current_result is not None
-    assert len(window._current_result.wood_cut_list) == 6
+    assert len(window._current_result.wood_cut_list) == 5
     t_wood = window.input_panel.spin_wood_thickness.value()
     expected_lid_profile = 2 * 2 * ((800.0 + 2 * t_wood) + (500.0 + 2 * t_wood))
     assert window._current_result.total_lid_mating_profile_length_mm == expected_lid_profile
@@ -49,7 +49,8 @@ def test_main_window_lifecycle(qapp):
     window.walls_widget._on_comp_tab_add()
     window.walls_widget._on_comp_tab_add()
     assert len(window.walls_widget.get_walls()) == 2
-    assert len(window._current_result.wood_cut_list) == 8  # 6 main panels + 2 walls
+    assert len(window._current_result.wood_cut_list) == 6  # 5 grouped shell panels + 1 grouped wall entry (qty 2)
+    assert sum(p.quantity for p in window._current_result.wood_cut_list) == 12  # 10 shell panels + 2 walls
 
     window.close()
 
@@ -299,14 +300,15 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
 
     # 3. Test Wood Cut List table selection highlighting
     window.tabs.setCurrentIndex(0)
-    # Select first row in cut list table ("Base Bottom Panel")
+    # Select first row in cut list table ("Top & Bottom Panels")
     window.cutlist_widget.table.selectRow(0)
     assert len(window.schema_widget.canvas.highlighted_labels) > 0
-    assert "Base Bottom Panel" in window.schema_widget.canvas.highlighted_labels
+    assert "Top & Bottom Panels" in window.schema_widget.canvas.highlighted_labels
 
     highlighted_wood_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
     assert len(highlighted_wood_faces) > 0
     assert any("bottom" in f.label.lower() for f in highlighted_wood_faces)
+    assert any("top" in f.label.lower() for f in highlighted_wood_faces)
 
     # 4. Test selecting an Inside Wall inside the Wood Cut List table
     wall_cut_row = -1
@@ -338,16 +340,16 @@ def test_self_cut_lid_ui_interaction(qapp):
 
     window = FlightCaseMainWindow()
 
-    # Default is False (split lid wood cut list with 6 rows)
+    # Default is False (split lid wood cut list with 5 rows: Top&Bottom qty 2, base long qty 2, base short qty 2, lid long qty 2, lid short qty 2)
     assert window.input_panel.chk_self_cut_lid.isChecked() is False
-    assert len(window._current_result.wood_cut_list) == 6
-    assert window.cutlist_widget.table.rowCount() == 6
+    assert len(window._current_result.wood_cut_list) == 5
+    assert window.cutlist_widget.table.rowCount() == 5
 
-    # Toggle to self-cut lid (6-wall uncut box)
+    # Toggle to self-cut lid (6-wall uncut box: Top&Bottom qty 2, Long sides qty 2, Short sides qty 2)
     window.input_panel.set_self_cut_lid(True)
     assert window.input_panel.chk_self_cut_lid.isChecked() is True
-    assert len(window._current_result.wood_cut_list) == 4  # 4 rows representing 6 outer walls
-    assert window.cutlist_widget.table.rowCount() == 4
+    assert len(window._current_result.wood_cut_list) == 3  # 3 rows representing 6 outer walls
+    assert window.cutlist_widget.table.rowCount() == 3
 
     # Verify 3D model maintains base and lid components
     assert window.schema_widget.canvas.mesh is not None
@@ -356,23 +358,24 @@ def test_self_cut_lid_ui_interaction(qapp):
     assert "lid" in color_groups
     assert "profile" in color_groups
 
-    # Select "Bottom Panel" row and verify highlighting
+    # Select "Top & Bottom Panels" row and verify highlighting
     window.tabs.setCurrentIndex(0)
     window.cutlist_widget.table.selectRow(0)
     highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
     assert len(highlighted_faces) > 0
     assert any("bottom" in f.label.lower() for f in highlighted_faces)
+    assert any("top" in f.label.lower() for f in highlighted_faces)
 
-    # Select "Top Panel" row and verify highlighting
+    # Select "Long Sides (Front & Back)" row and verify highlighting
     window.cutlist_widget.table.selectRow(1)
-    highlighted_top_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
-    assert len(highlighted_top_faces) > 0
-    assert any("top" in f.label.lower() for f in highlighted_top_faces)
+    highlighted_long_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
+    assert len(highlighted_long_faces) > 0
+    assert any(s in f.label.lower() for s in ("front", "back") for f in highlighted_long_faces)
 
     # Toggle back to standard mode
     window.input_panel.set_self_cut_lid(False)
-    assert len(window._current_result.wood_cut_list) == 6
-    assert window.cutlist_widget.table.rowCount() == 6
+    assert len(window._current_result.wood_cut_list) == 5
+    assert window.cutlist_widget.table.rowCount() == 5
 
     window.close()
 
@@ -758,80 +761,55 @@ def test_open_recent_menu_section(qapp, tmp_path):
 
 def test_top_and_bottom_panel_selection_does_not_highlight_lid_profile(qapp):
     """
-    Validates that selecting top or bottom wood panels (both in standard and self-cut lid mode)
+    Validates that selecting top and bottom wood panels (both in standard and self-cut lid mode)
     highlights only the corresponding wood panels and does NOT highlight lid/base aluminum profiles.
     """
     from flightcase.ui import FlightCaseMainWindow
 
     window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
 
-    # 1. Standard mode: Select "Base Bottom Panel"
+    # 1. Standard mode: Select "Top & Bottom Panels"
     window.tabs.setCurrentIndex(0)
-    bottom_row = -1
-    top_row = -1
+    tb_row = -1
     for r, item in enumerate(window._current_result.wood_cut_list):
-        if item.name == "Base Bottom Panel":
-            bottom_row = r
-        elif item.name == "Lid Top Panel":
-            top_row = r
+        if item.name == "Top & Bottom Panels":
+            tb_row = r
+            break
 
-    assert bottom_row >= 0
-    assert top_row >= 0
+    assert tb_row >= 0
 
-    # Select Base Bottom Panel
-    window.cutlist_widget.table.selectRow(bottom_row)
+    # Select Top & Bottom Panels
+    window.cutlist_widget.table.selectRow(tb_row)
     highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
     assert len(highlighted_faces) > 0
-    # Must only highlight wood base bottom panel faces
+    # Must only highlight wood panels, never aluminum profiles
     for f in highlighted_faces:
-        assert f.color_group in ("base", "endgrain")
+        assert f.color_group in ("base", "lid", "endgrain")
         assert "profile" not in f.label.lower()
         assert f.color_group != "profile"
-        assert "lid" not in f.label.lower()
+    assert any("bottom" in f.label.lower() for f in highlighted_faces)
+    assert any("top" in f.label.lower() for f in highlighted_faces)
 
-    # Select Lid Top Panel
-    window.cutlist_widget.table.selectRow(top_row)
-    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
-    assert len(highlighted_faces) > 0
-    # Must only highlight wood lid top panel faces
-    for f in highlighted_faces:
-        assert f.color_group in ("lid", "endgrain")
-        assert "profile" not in f.label.lower()
-        assert f.color_group != "profile"
-        assert "base" not in f.label.lower()
-
-    # 2. Self-cut lid mode: Select "Bottom Panel" and "Top Panel"
+    # 2. Self-cut lid mode: Select "Top & Bottom Panels"
     window.input_panel.set_self_cut_lid(True)
-    sc_bottom_row = -1
-    sc_top_row = -1
+    sc_tb_row = -1
     for r, item in enumerate(window._current_result.wood_cut_list):
-        if item.name == "Bottom Panel":
-            sc_bottom_row = r
-        elif item.name == "Top Panel":
-            sc_top_row = r
+        if item.name == "Top & Bottom Panels":
+            sc_tb_row = r
+            break
 
-    assert sc_bottom_row >= 0
-    assert sc_top_row >= 0
+    assert sc_tb_row >= 0
 
-    # Select Bottom Panel in self-cut mode
-    window.cutlist_widget.table.selectRow(sc_bottom_row)
+    # Select Top & Bottom Panels in self-cut mode
+    window.cutlist_widget.table.selectRow(sc_tb_row)
     highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
     assert len(highlighted_faces) > 0
     for f in highlighted_faces:
-        assert f.color_group in ("base", "endgrain")
+        assert f.color_group in ("base", "lid", "endgrain")
         assert "profile" not in f.label.lower()
         assert f.color_group != "profile"
-        assert "lid" not in f.label.lower()
-
-    # Select Top Panel in self-cut mode
-    window.cutlist_widget.table.selectRow(sc_top_row)
-    highlighted_faces = [f for f in window.schema_widget.canvas.mesh.faces if window.schema_widget.canvas.is_face_highlighted(f)]
-    assert len(highlighted_faces) > 0
-    for f in highlighted_faces:
-        assert f.color_group in ("lid", "endgrain")
-        assert "profile" not in f.label.lower()
-        assert f.color_group != "profile"
-        assert "base" not in f.label.lower()
+    assert any("bottom" in f.label.lower() for f in highlighted_faces)
+    assert any("top" in f.label.lower() for f in highlighted_faces)
 
     # 3. Alu Profiles selection: selecting a profile should highlight only profiles, NOT wood panels
     window.tabs.setCurrentIndex(1)
@@ -1274,7 +1252,8 @@ def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
     # Verify cut list contains divider panels with 12.0 mm thickness
     window.recalculate()
     divider_cuts = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
-    assert len(divider_cuts) == 2
+    assert len(divider_cuts) == 1
+    assert divider_cuts[0].quantity == 2
     for dc in divider_cuts:
         assert dc.thickness_mm == 12.0
 
@@ -1396,7 +1375,8 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
 
     # Verify cut list result and table widgets display 12.0 immediately
     divider_cuts_12 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
-    assert len(divider_cuts_12) == 2
+    assert len(divider_cuts_12) == 1
+    assert divider_cuts_12[0].quantity == 2
     for dc in divider_cuts_12:
         assert dc.thickness_mm == 12.0
 
@@ -1409,7 +1389,7 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
         if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
             divider_row_count += 1
             assert thick_item.text() == "12.0"
-    assert divider_row_count == 2
+    assert divider_row_count == 1
 
     # Switch thickness directly to 18mm
     idx_18 = window.input_panel.combo_wood_material.findText("Bolivar plywood 18mm")
@@ -1418,7 +1398,8 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
 
     # Verify cut list result and table widgets display 18.0 immediately (not previous 12.0)
     divider_cuts_18 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
-    assert len(divider_cuts_18) == 2
+    assert len(divider_cuts_18) == 1
+    assert divider_cuts_18[0].quantity == 2
     for dc in divider_cuts_18:
         assert dc.thickness_mm == 18.0
 
@@ -1429,6 +1410,6 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
         if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
             divider_row_count += 1
             assert thick_item.text() == "18.0"
-    assert divider_row_count == 2
+    assert divider_row_count == 1
 
     window.close()

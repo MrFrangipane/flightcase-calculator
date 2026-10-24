@@ -38,13 +38,14 @@ def test_standard_case_dimensions():
     assert params.lid_wood_height + params.base_wood_height == 390.0
 
     res = calculate_flightcase(params)
-    assert len(res.wood_cut_list) == 6  # 2 top/bottom + 2 long base + 2 short base + 2 long lid + 2 short lid = 6 items (each with qty)
+    assert len(res.wood_cut_list) == 5  # Top & Bottom grouped (qty 2) + 2 base long + 2 base short + 2 lid long + 2 lid short = 5 items (total qty 10)
+    assert sum(p.quantity for p in res.wood_cut_list) == 10
 
-    # Base Bottom
-    bottom = next(p for p in res.wood_cut_list if p.name == "Base Bottom Panel")
-    assert bottom.length_mm == 818.0
-    assert bottom.width_mm == 518.0
-    assert bottom.quantity == 1
+    # Top & Bottom
+    top_bottom = next(p for p in res.wood_cut_list if p.name == "Top & Bottom Panels")
+    assert top_bottom.length_mm == 818.0
+    assert top_bottom.width_mm == 518.0
+    assert top_bottom.quantity == 2
 
     # Base Long Sides
     base_long = next(p for p in res.wood_cut_list if p.name == "Base Long Sides (Front & Back)")
@@ -112,17 +113,20 @@ def test_dividers_cut_list():
 
     res = calculate_flightcase(params)
     divider_cuts = [p for p in res.wood_cut_list if p.category == "Wood Panel - Divider"]
-    assert len(divider_cuts) == 3
+    assert len(divider_cuts) == 2  # 2 width-wise dividers grouped into 1 entry (qty 2) + 1 length-wise divider
+    assert sum(p.quantity for p in divider_cuts) == 3
 
-    # Width-wise divider length is inner width = 500.0
-    w_cut = next(p for p in divider_cuts if "Compartment 1 Wall" in p.name)
+    # Width-wise divider length is inner width = 500.0, qty = 2
+    w_cut = next(p for p in divider_cuts if "Across Width" in p.name)
     assert w_cut.length_mm == 500.0
     assert w_cut.width_mm == 400.0  # inner total height up to lid roof
+    assert w_cut.quantity == 2
 
-    # Length-wise divider length is inner length = 800.0
-    l_cut = next(p for p in divider_cuts if "Longitudinal Wall" in p.name)
+    # Length-wise divider length is inner length = 800.0, qty = 1
+    l_cut = next(p for p in divider_cuts if "Across Length" in p.name)
     assert l_cut.length_mm == 800.0
     assert l_cut.width_mm == 400.0
+    assert l_cut.quantity == 1
 
 
 def test_equispaced_divider_generator():
@@ -186,20 +190,15 @@ def test_self_cut_lid_calculation():
     )
 
     res = calculate_flightcase(params)
-    # When self_cut_lid=True, wood_cut_list should contain exactly 4 entries (6 outer panels: 1 bottom, 1 top, 2 long, 2 short)
-    assert len(res.wood_cut_list) == 4
+    # When self_cut_lid=True, wood_cut_list should contain 3 entries (Top & Bottom qty 2, Long sides qty 2, Short sides qty 2)
+    assert len(res.wood_cut_list) == 3
     total_panels = sum(p.quantity for p in res.wood_cut_list)
     assert total_panels == 6
 
-    bottom = next(p for p in res.wood_cut_list if p.name == "Bottom Panel")
-    assert bottom.length_mm == 818.0
-    assert bottom.width_mm == 518.0
-    assert bottom.quantity == 1
-
-    top = next(p for p in res.wood_cut_list if p.name == "Top Panel")
-    assert top.length_mm == 818.0
-    assert top.width_mm == 518.0
-    assert top.quantity == 1
+    top_bottom = next(p for p in res.wood_cut_list if p.name == "Top & Bottom Panels")
+    assert top_bottom.length_mm == 818.0
+    assert top_bottom.width_mm == 518.0
+    assert top_bottom.quantity == 2
 
     long_sides = next(p for p in res.wood_cut_list if p.name == "Long Sides (Front & Back)")
     assert long_sides.length_mm == 818.0

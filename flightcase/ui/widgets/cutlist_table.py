@@ -138,6 +138,7 @@ class CutListTableWidget(QWidget):
 
         # Update Table
         self.table.blockSignals(True)
+        self.table.clearSelection()
         self.table.setRowCount(len(result.wood_cut_list))
         for row, item in enumerate(result.wood_cut_list):
             self._set_table_row(row, item)

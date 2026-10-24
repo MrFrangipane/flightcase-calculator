@@ -214,29 +214,33 @@ class Schema3DCanvas(QOpenGLWidget):
 
             # 2. Inside wall selections (from cut list or wall positions)
             if face.color_group == "wall" or face.wall_index is not None:
+                if any(k in hl_lower for k in ("inside walls", "divider", "partition")):
+                    return True
                 if lbl_lower and (lbl_lower in hl_lower or hl_lower in lbl_lower):
                     return True
                 continue
 
             # 3. Wood panel selections (from Cut List table)
-            if face.color_group in ("base", "lid", "endgrain"):
+            if face.color_group in ("base", "lid", "endgrain", "uncut_box"):
                 # Bottom panel: floor of base box
                 if "bottom" in hl_lower and "panel" in hl_lower:
                     if "bottom" in lbl_lower and "panel" in lbl_lower:
                         return True
-                    continue
+                    if "top" not in hl_lower:
+                        continue
 
                 # Top panel: roof of lid box
                 if "top" in hl_lower and "panel" in hl_lower:
                     if "top" in lbl_lower and "panel" in lbl_lower:
                         return True
-                    continue
+                    if "bottom" not in hl_lower:
+                        continue
 
                 # Long Sides (Front & Back)
                 if "long side" in hl_lower or ("front" in hl_lower and "back" in hl_lower):
-                    if "base" in hl_lower and "base" not in lbl_lower:
+                    if "base" in hl_lower and "base" not in lbl_lower and "lid" not in hl_lower:
                         continue
-                    if "lid" in hl_lower and "lid" not in lbl_lower:
+                    if "lid" in hl_lower and "lid" not in lbl_lower and "base" not in hl_lower:
                         continue
                     if any(s in lbl_lower for s in ("front", "back")):
                         return True
@@ -244,9 +248,9 @@ class Schema3DCanvas(QOpenGLWidget):
 
                 # Short Sides (Left & Right)
                 if "short side" in hl_lower or ("left" in hl_lower and "right" in hl_lower):
-                    if "base" in hl_lower and "base" not in lbl_lower:
+                    if "base" in hl_lower and "base" not in lbl_lower and "lid" not in hl_lower:
                         continue
-                    if "lid" in hl_lower and "lid" not in lbl_lower:
+                    if "lid" in hl_lower and "lid" not in lbl_lower and "base" not in hl_lower:
                         continue
                     if any(s in lbl_lower for s in ("left", "right")):
                         return True
@@ -802,8 +806,6 @@ class Schema3DWidget(QWidget):
         self.btn_proj_toggle.clicked.connect(self._on_toggle_projection_clicked)
         t_layout.addWidget(self.btn_proj_toggle)
 
-        t_layout.addSpacing(6)
-
         # Exploded Lid Slider
         gap_header = QHBoxLayout()
         gap_header.addWidget(QLabel("<b>Lid Split Gap:</b>"))
@@ -818,25 +820,6 @@ class Schema3DWidget(QWidget):
         self.slider_gap.setToolTip("Exploded lid view gap in mm")
         self.slider_gap.valueChanged.connect(self._on_gap_changed)
         t_layout.addWidget(self.slider_gap)
-
-        t_layout.addSpacing(6)
-
-        # Explode View Slider (Explode all panels)
-        explode_header = QHBoxLayout()
-        explode_header.addWidget(QLabel("<b>Explode View:</b>"))
-        self.lbl_explode = QLabel("0 mm")
-        self.lbl_explode.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        explode_header.addWidget(self.lbl_explode)
-        t_layout.addLayout(explode_header)
-
-        self.slider_explode = QSlider(Qt.Orientation.Horizontal, self)
-        self.slider_explode.setRange(0, 250)
-        self.slider_explode.setValue(0)
-        self.slider_explode.setToolTip("Explode all panels to display separated panels with dimensions")
-        self.slider_explode.valueChanged.connect(self._on_explode_changed)
-        t_layout.addWidget(self.slider_explode)
-
-        t_layout.addSpacing(6)
 
         # Lid Rotation Angle Slider & Hinge Side Selector
         angle_header = QHBoxLayout()
@@ -861,7 +844,20 @@ class Schema3DWidget(QWidget):
         self.combo_hinge.currentTextChanged.connect(self._on_hinge_side_changed)
         t_layout.addWidget(self.combo_hinge)
 
-        t_layout.addSpacing(6)
+        # Explode View Slider (Explode all panels)
+        explode_header = QHBoxLayout()
+        explode_header.addWidget(QLabel("<b>Explode View:</b>"))
+        self.lbl_explode = QLabel("0 mm")
+        self.lbl_explode.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        explode_header.addWidget(self.lbl_explode)
+        t_layout.addLayout(explode_header)
+
+        self.slider_explode = QSlider(Qt.Orientation.Horizontal, self)
+        self.slider_explode.setRange(0, 250)
+        self.slider_explode.setValue(0)
+        self.slider_explode.setToolTip("Explode all panels to display separated panels with dimensions")
+        self.slider_explode.valueChanged.connect(self._on_explode_changed)
+        t_layout.addWidget(self.slider_explode)
 
         # Checkboxes
         t_layout.addWidget(QLabel("<b>Display:</b>"))

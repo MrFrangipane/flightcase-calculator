@@ -33,8 +33,8 @@ def test_calculate_flightcase_use_case():
     result = CalculateFlightCaseUseCase.execute(input_dto)
 
     # 1. Wood Panels Cut List
-    assert len(result.wood_cut_list) == 7  # 6 main panels + 1 divider
-    divider_item = next(p for p in result.wood_cut_list if "Divider A" in p.name)
+    assert len(result.wood_cut_list) == 6  # 5 grouped shell panels + 1 divider
+    divider_item = next(p for p in result.wood_cut_list if "Divider A" in p.name or "Inside Wall" in p.name)
     assert divider_item.length_mm == 500.0  # inner width
     assert divider_item.quantity == 1
 
@@ -91,9 +91,9 @@ def test_self_cut_lid_use_cases():
         self_cut_lid=True,
     )
 
-    # Calculate use case produces 4 piece items (6 panels)
+    # Calculate use case produces 3 piece items (6 panels)
     result = CalculateFlightCaseUseCase.execute(input_dto)
-    assert len(result.wood_cut_list) == 4
+    assert len(result.wood_cut_list) == 3
     assert sum(p.quantity for p in result.wood_cut_list) == 6
 
     # 3D Schema generation use case keeps the lid and base
@@ -268,8 +268,7 @@ def test_generate_wood_panels_svg_use_case():
     assert isinstance(svg_str, str)
     assert "<svg" in svg_str
     assert "</svg>" in svg_str
-    assert "Base Bottom Panel" in svg_str
-    assert "Lid Top Panel" in svg_str
+    assert "Top &amp; Bottom Panels" in svg_str or "Top & Bottom Panels" in svg_str
     assert "Custom Stage Rack — Wood Panels Cut Diagram" in svg_str
 
 
