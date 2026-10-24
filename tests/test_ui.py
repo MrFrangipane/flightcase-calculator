@@ -1376,3 +1376,59 @@ def test_about_menu_and_dialog_removed(qapp):
     assert not hasattr(window, "_show_about")
 
     window.close()
+
+
+def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
+    """Verifies that changing wood thickness immediately updates inside wall thickness in cutlist table."""
+    from flightcase.ui import FlightCaseMainWindow
+
+    window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
+
+    # Add 2 inside walls
+    window.walls_widget._on_comp_tab_add()
+    window.walls_widget._on_comp_tab_add()
+    assert len(window.walls_widget.get_walls()) == 2
+
+    # Change material to 12mm
+    idx_12 = window.input_panel.combo_wood_material.findText("Bolivar plywood 12mm")
+    assert idx_12 >= 0
+    window.input_panel.combo_wood_material.setCurrentIndex(idx_12)
+
+    # Verify cut list result and table widgets display 12.0 immediately
+    divider_cuts_12 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
+    assert len(divider_cuts_12) == 2
+    for dc in divider_cuts_12:
+        assert dc.thickness_mm == 12.0
+
+    table = window.cutlist_widget.table
+    # Find divider rows in table and verify thickness column (col 5)
+    divider_row_count = 0
+    for r in range(table.rowCount()):
+        cat_item = table.item(r, 1)
+        thick_item = table.item(r, 5)
+        if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
+            divider_row_count += 1
+            assert thick_item.text() == "12.0"
+    assert divider_row_count == 2
+
+    # Switch thickness directly to 18mm
+    idx_18 = window.input_panel.combo_wood_material.findText("Bolivar plywood 18mm")
+    assert idx_18 >= 0
+    window.input_panel.combo_wood_material.setCurrentIndex(idx_18)
+
+    # Verify cut list result and table widgets display 18.0 immediately (not previous 12.0)
+    divider_cuts_18 = [p for p in window._current_result.wood_cut_list if "divider" in p.category.lower() or "wall" in p.name.lower()]
+    assert len(divider_cuts_18) == 2
+    for dc in divider_cuts_18:
+        assert dc.thickness_mm == 18.0
+
+    divider_row_count = 0
+    for r in range(table.rowCount()):
+        cat_item = table.item(r, 1)
+        thick_item = table.item(r, 5)
+        if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
+            divider_row_count += 1
+            assert thick_item.text() == "18.0"
+    assert divider_row_count == 2
+
+    window.close()

@@ -544,6 +544,11 @@ class FlightCaseMainWindow(QMainWindow):
     def recalculate(self) -> None:
         """Executes application use cases to update all outputs live."""
         input_dto = self.input_panel.get_input_dto()
+        self.walls_widget.set_case_dimensions(
+            inner_length=input_dto.inner_length,
+            inner_width=input_dto.inner_width,
+            wood_thickness=input_dto.wood_thickness,
+        )
         input_dto.walls = self.walls_widget.get_walls()
 
         try:
@@ -552,11 +557,6 @@ class FlightCaseMainWindow(QMainWindow):
             self._current_result = result
 
             # 2. Update UI widgets
-            self.walls_widget.set_case_dimensions(
-                inner_length=result.inner_length,
-                inner_width=result.inner_width,
-                wood_thickness=input_dto.wood_thickness,
-            )
             self.cutlist_widget.set_calculation_result(result)
             self.alu_widget.set_calculation_result(result)
 
