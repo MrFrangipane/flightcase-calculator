@@ -103,9 +103,3 @@ pytest
 ## Traducción
 
 La interfaz, los mensajes, las exportaciones (CSV y SVG) y este README están en español. Los nombres de piezas, notas y etiquetas que genera el modelo se siguen calculando en inglés internamente (se usan para agrupar piezas, resaltar en 3D y guardar proyectos) y se traducen al mostrarlos o exportarlos mediante `flightcase/i18n.py`. Los proyectos `.fcproj` guardados con la versión en inglés se abren sin cambios.
-
----
-
-## Nota sobre el uso de IA
-
-Este software se desarrolló con ayuda de Inteligencia Artificial (IA) para el diseño de la arquitectura, los cálculos geométricos, los flujos de renderizado 3D/2D y los tests automáticos.
