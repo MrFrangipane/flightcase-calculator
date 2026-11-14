@@ -55,36 +55,36 @@ class FlightCase:
     def validate(self) -> None:
         """Enforces all domain invariants."""
         if self.lid_height <= 0.0:
-            raise InvalidDimensionError(f"Inner lid height must be positive, got {self.lid_height}mm")
+            raise InvalidDimensionError(f"La altura interior de la tapa debe ser positiva (se recibió {self.lid_height}mm)")
 
         if self.lid_height >= self.dimensions.height_mm:
             raise InvalidLidConfigurationError(
-                f"Inner lid height ({self.lid_height}mm) must be strictly less than inner total height ({self.dimensions.height_mm}mm)"
+                f"La altura interior de la tapa ({self.lid_height}mm) debe ser menor que la altura interior total ({self.dimensions.height_mm}mm)"
             )
 
         if self.lid_alu_profile_offset < 0.0:
             raise InvalidDimensionError(
-                f"Lid profile offset cannot be negative, got {self.lid_alu_profile_offset}mm"
+                f"El suplemento del perfil de tapa no puede ser negativo (se recibió {self.lid_alu_profile_offset}mm)"
             )
 
         if self.wood_thickness <= 0.0:
-            raise InvalidDimensionError(f"Wood thickness must be positive, got {self.wood_thickness}mm")
+            raise InvalidDimensionError(f"El espesor de la madera debe ser positivo (se recibió {self.wood_thickness}mm)")
 
         if self.dimensions.length_mm <= 0.0 or self.dimensions.width_mm <= 0.0:
             raise InvalidDimensionError(
-                f"Inner dimensions must be positive (L={self.dimensions.length_mm}mm, W={self.dimensions.width_mm}mm)"
+                f"Las medidas interiores deben ser positivas (L={self.dimensions.length_mm}mm, W={self.dimensions.width_mm}mm)"
             )
 
         half_offset = self.lid_alu_profile_offset / 2.0
         if (self.lid_height + self.wood_thickness) <= half_offset:
             raise InvalidLidConfigurationError(
-                f"Lid height ({self.lid_height}mm) is too small for profile offset ({self.lid_alu_profile_offset}mm)"
+                f"La altura de la tapa ({self.lid_height}mm) es demasiado chica para el suplemento del perfil ({self.lid_alu_profile_offset}mm)"
             )
 
         base_nominal_h = (self.dimensions.height_mm - self.lid_height) + self.wood_thickness
         if base_nominal_h <= half_offset:
             raise InvalidLidConfigurationError(
-                f"Base height ({base_nominal_h}mm) is too small for profile offset ({self.lid_alu_profile_offset}mm)"
+                f"La altura del cuerpo ({base_nominal_h}mm) es demasiado chica para el suplemento del perfil ({self.lid_alu_profile_offset}mm)"
             )
 
         for wall in self._walls:
@@ -95,12 +95,12 @@ class FlightCase:
         if wall.orientation == WallOrientation.WIDTH_WISE:
             if wall.position_mm <= 0.0 or wall.position_mm >= self.inner_length:
                 raise WallOutOfBoundsError(
-                    f"Width-wise wall position {wall.position_mm}mm is outside usable inner length (0 to {self.inner_length:.1f}mm)"
+                    f"El divisor transversal en {wall.position_mm}mm queda fuera del largo interior útil (0 a {self.inner_length:.1f}mm)"
                 )
         else:
             if wall.position_mm <= 0.0 or wall.position_mm >= self.inner_width:
                 raise WallOutOfBoundsError(
-                    f"Length-wise wall position {wall.position_mm}mm is outside usable inner width (0 to {self.inner_width:.1f}mm)"
+                    f"El divisor longitudinal en {wall.position_mm}mm queda fuera del ancho interior útil (0 a {self.inner_width:.1f}mm)"
                 )
 
     # --- Dimension Properties ---

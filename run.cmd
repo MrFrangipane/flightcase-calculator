@@ -1,23 +1,23 @@
 @echo off
 setlocal
 
-:: Switch to script directory
+:: Ir a la carpeta del script
 cd /d "%~dp0"
 
-:: 1. Prefer uv if available
+:: 1. Usar uv si esta disponible
 where uv >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     uv run python main.py %*
     goto :end
 )
 
-:: 2. Use local virtual environment if present
+:: 2. Usar el entorno virtual local si existe
 if exist ".venv\Scripts\python.exe" (
     ".venv\Scripts\python.exe" main.py %*
     goto :end
 )
 
-:: 3. Fallback to system Python
+:: 3. Si no, usar el Python del sistema
 where python >nul 2>nul
 if %ERRORLEVEL% equ 0 (
     python main.py %*
@@ -30,7 +30,7 @@ if %ERRORLEVEL% equ 0 (
     goto :end
 )
 
-echo [ERROR] Python environment not found. Please install Python or uv.
+echo [ERROR] No se encontro Python. Instala Python o uv.
 pause
 exit /b 1
 

@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QMessageBox, QAbstractItemView,
 )
 from ...application import CalculationResultDTO, CutPieceDTO
+from ...i18n import tr
 
 
 class AluProfilesWidget(QWidget):
@@ -37,23 +38,23 @@ class AluProfilesWidget(QWidget):
         layout.setSpacing(12)
 
         # 1. Prominently Highlighted KPI Cards for Aluminum Profiles
-        kpi_box = QGroupBox("Alu Profile Lengths", self)
+        kpi_box = QGroupBox("Largos de perfiles de aluminio", self)
         kpi_layout = QGridLayout(kpi_box)
 
         # Highlighted Lid Mating Profile Length
-        kpi_layout.addWidget(QLabel("<b>Lid Alu Length:</b>"), 0, 0)
+        kpi_layout.addWidget(QLabel("<b>Perfil de cierre de tapa:</b>"), 0, 0)
         self.lbl_lid_profile_len = QLabel("0.0 mm (0.00 m)")
         kpi_layout.addWidget(self.lbl_lid_profile_len, 0, 1)
 
         # Edge Angle Protection Profiles Length
-        kpi_layout.addWidget(QLabel("<b>Edge Protection:</b>"), 1, 0)
+        kpi_layout.addWidget(QLabel("<b>Protección de cantos:</b>"), 1, 0)
         self.lbl_edge_profile_len = QLabel("0.0 mm (0.00 m)")
         kpi_layout.addWidget(self.lbl_edge_profile_len, 1, 1)
 
         layout.addWidget(kpi_box)
 
         # 2. Detailed Profiles Cut List Table
-        table_box = QGroupBox("Aluminum Extrusion Cut List", self)
+        table_box = QGroupBox("Lista de cortes de perfiles de aluminio", self)
         t_layout = QVBoxLayout(table_box)
         t_layout.setSpacing(8)
 
@@ -62,12 +63,12 @@ class AluProfilesWidget(QWidget):
         self.table_profiles.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_profiles.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_profiles.setHorizontalHeaderLabels([
-            "Profile Description",
-            "Category",
-            "Qty",
-            "Cut Length (mm)",
-            "Total Length (m)",
-            "Mounting Location / Notes",
+            "Perfil",
+            "Categoría",
+            "Cant.",
+            "Largo de corte (mm)",
+            "Largo total (m)",
+            "Ubicación de montaje / notas",
         ])
         self.table_profiles.horizontalHeader().setMinimumSectionSize(60)
         self.table_profiles.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
@@ -85,7 +86,7 @@ class AluProfilesWidget(QWidget):
         t_layout.addWidget(self.table_profiles)
 
         btn_row = QHBoxLayout()
-        btn_copy = QPushButton("Copy Profiles to Clipboard", self)
+        btn_copy = QPushButton("Copiar perfiles", self)
         btn_copy.clicked.connect(self._copy_profiles_clipboard)
         btn_row.addWidget(btn_copy)
         btn_row.addStretch()
@@ -94,7 +95,7 @@ class AluProfilesWidget(QWidget):
         layout.addWidget(table_box)
 
         # 3. Internal Compartments Analysis Table
-        comp_box = QGroupBox("Calculated Internal Compartments Breakdown", self)
+        comp_box = QGroupBox("Detalle de compartimentos interiores", self)
         c_layout = QVBoxLayout(comp_box)
         c_layout.setSpacing(8)
 
@@ -103,11 +104,11 @@ class AluProfilesWidget(QWidget):
         self.table_comps.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_comps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_comps.setHorizontalHeaderLabels([
-            "Compartment Name",
-            "Usable Length (mm)",
-            "Usable Width (mm)",
-            "Usable Height (mm)",
-            "Volume (Liters)",
+            "Compartimento",
+            "Largo útil (mm)",
+            "Ancho útil (mm)",
+            "Alto útil (mm)",
+            "Volumen (litros)",
         ])
         self.table_comps.horizontalHeader().setMinimumSectionSize(60)
         self.table_comps.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
@@ -138,11 +139,11 @@ class AluProfilesWidget(QWidget):
         self.table_profiles.blockSignals(True)
         self.table_profiles.setRowCount(len(result.alu_profiles_list))
         for row, item in enumerate(result.alu_profiles_list):
-            it_name = QTableWidgetItem(item.name)
+            it_name = QTableWidgetItem(tr(item.name))
             it_name.setFlags(it_name.flags() & ~Qt.ItemIsEditable)
             self.table_profiles.setItem(row, 0, it_name)
 
-            it_cat = QTableWidgetItem(item.category)
+            it_cat = QTableWidgetItem(tr(item.category))
             it_cat.setFlags(it_cat.flags() & ~Qt.ItemIsEditable)
             self.table_profiles.setItem(row, 1, it_cat)
 
@@ -161,7 +162,7 @@ class AluProfilesWidget(QWidget):
             it_tot_m.setFlags(it_tot_m.flags() & ~Qt.ItemIsEditable)
             self.table_profiles.setItem(row, 4, it_tot_m)
 
-            it_notes = QTableWidgetItem(item.notes)
+            it_notes = QTableWidgetItem(tr(item.notes))
             it_notes.setFlags(it_notes.flags() & ~Qt.ItemIsEditable)
             self.table_profiles.setItem(row, 5, it_notes)
         self.table_profiles.blockSignals(False)
@@ -170,7 +171,7 @@ class AluProfilesWidget(QWidget):
         # 3. Update Compartments Table
         self.table_comps.setRowCount(len(result.compartments))
         for row, comp in enumerate(result.compartments):
-            it_cname = QTableWidgetItem(comp.name)
+            it_cname = QTableWidgetItem(tr(comp.name))
             it_cname.setFlags(it_cname.flags() & ~Qt.ItemIsEditable)
             self.table_comps.setItem(row, 0, it_cname)
 
@@ -214,12 +215,12 @@ class AluProfilesWidget(QWidget):
         if not self.current_result:
             return
         lines = [
-            f"Lid Alu Profile Total Length: {self.current_result.total_lid_mating_profile_length_mm:.1f} mm ({self.current_result.total_lid_mating_profile_length_mm/1000.0:.2f} m)",
-            f"Edge Angle Profiles Total Length: {self.current_result.total_edge_angle_profile_length_mm:.1f} mm ({self.current_result.total_edge_angle_profile_length_mm/1000.0:.2f} m)",
+            f"Largo total de perfil de cierre: {self.current_result.total_lid_mating_profile_length_mm:.1f} mm ({self.current_result.total_lid_mating_profile_length_mm/1000.0:.2f} m)",
+            f"Largo total de ángulos de borde: {self.current_result.total_edge_angle_profile_length_mm:.1f} mm ({self.current_result.total_edge_angle_profile_length_mm/1000.0:.2f} m)",
             "",
-            "Profile Description\tCategory\tQty\tCut Length (mm)\tTotal Length (m)\tNotes"
+            "Perfil\tCategoría\tCant.\tLargo de corte (mm)\tLargo total (m)\tNotas"
         ]
         for p in self.current_result.alu_profiles_list:
-            lines.append(f"{p.name}\t{p.category}\t{p.quantity}\t{p.length_mm:.1f}\t{p.total_length_m:.2f}\t{p.notes}")
+            lines.append(f"{tr(p.name)}\t{tr(p.category)}\t{p.quantity}\t{p.length_mm:.1f}\t{p.total_length_m:.2f}\t{tr(p.notes)}")
         QApplication.clipboard().setText("\n".join(lines))
-        QMessageBox.information(self, "Clipboard", "Aluminum profiles cut list copied to clipboard.")
+        QMessageBox.information(self, "Portapapeles", "Lista de cortes de perfiles copiada al portapapeles.")

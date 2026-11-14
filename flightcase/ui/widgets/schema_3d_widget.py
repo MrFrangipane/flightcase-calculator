@@ -40,6 +40,7 @@ from ...domain import (
 )
 from ...application import UISettingsDTO
 from ..theme import COLORS
+from ...i18n import tr, HINGE_SIDES
 
 
 class Schema3DCanvas(QOpenGLWidget):
@@ -335,7 +336,7 @@ class Schema3DCanvas(QOpenGLWidget):
             painter = QPainter(self)
             painter.setPen(QColor("#7a7a90"))
             painter.setFont(QFont("Segoe UI", 11))
-            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No flightcase geometry to display")
+            painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, "No hay geometría de flightcase para mostrar")
             painter.end()
             return
 
@@ -635,7 +636,8 @@ class Schema3DCanvas(QOpenGLWidget):
         font = QFont("Segoe UI", 10, QFont.Weight.Bold)
         painter.setFont(font)
         fm = QFontMetrics(font)
-        text_rect = fm.boundingRect(dim.label)
+        dim_text = tr(dim.label)
+        text_rect = fm.boundingRect(dim_text)
 
         padding_x = 6
         padding_y = 3
@@ -650,7 +652,7 @@ class Schema3DCanvas(QOpenGLWidget):
 
         # Text string
         painter.setPen(QColor(COLORS.get("dim_text", "#fbbf24")))
-        painter.drawText(badge_rect, Qt.AlignmentFlag.AlignCenter, dim.label)
+        painter.drawText(badge_rect, Qt.AlignmentFlag.AlignCenter, dim_text)
 
     def _draw_arrow_tick(self, painter: QPainter, pt: QPointF, towards_pt: QPointF) -> None:
         """Draws small dimension arrow or tick marker at terminal point."""
@@ -723,15 +725,15 @@ class Schema3DCanvas(QOpenGLWidget):
         """Draws HUD viewport status overlay in top-left."""
         painter.setFont(QFont("Segoe UI", 9))
         painter.setPen(QColor("#9e9eb4"))
-        proj_name = "Perspective" if self.is_perspective else "Parallel (Ortho)"
-        info = f"OpenGL {proj_name} | Azimuth: {self.azimuth_deg:.0f}° | Elevation: {self.elevation_deg:.0f}° | Zoom: {self.zoom_factor:.2f}x"
+        proj_name = "Perspectiva" if self.is_perspective else "Paralela (orto)"
+        info = f"OpenGL {proj_name} | Azimut: {self.azimuth_deg:.0f}° | Elevación: {self.elevation_deg:.0f}° | Zoom: {self.zoom_factor:.2f}x"
         painter.drawText(12, 20, info)
 
         if self.highlighted_labels or self.highlighted_wall_indices:
-            sel_text = ", ".join(sorted(self.highlighted_labels)) if self.highlighted_labels else f"Wall #{list(self.highlighted_wall_indices)[0] + 1}"
+            sel_text = ", ".join(sorted(tr(lbl) for lbl in self.highlighted_labels)) if self.highlighted_labels else f"Divisor #{list(self.highlighted_wall_indices)[0] + 1}"
             painter.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
             painter.setPen(QColor(COLORS.get("highlight_edge", "#fde047")))
-            painter.drawText(12, 38, f"★ Highlighted: {sel_text}")
+            painter.drawText(12, 38, f"★ Resaltado: {sel_text}")
 
 
 class Schema3DWidget(QWidget):
@@ -768,21 +770,21 @@ class Schema3DWidget(QWidget):
         t_layout.setSpacing(8)
 
         # View Preset Buttons
-        t_layout.addWidget(QLabel("<b>View Presets:</b>"))
+        t_layout.addWidget(QLabel("<b>Vistas:</b>"))
 
-        btn_iso = QPushButton("Isometric View", self)
+        btn_iso = QPushButton("Isométrica", self)
         btn_iso.setObjectName("secondaryButton")
         btn_iso.clicked.connect(lambda: self.canvas.reset_view(45.0, 30.0))
 
-        btn_front = QPushButton("Front", self)
+        btn_front = QPushButton("Frente", self)
         btn_front.setObjectName("secondaryButton")
         btn_front.clicked.connect(lambda: self.canvas.reset_view(0.0, 0.0))
 
-        btn_side = QPushButton("Side", self)
+        btn_side = QPushButton("Lateral", self)
         btn_side.setObjectName("secondaryButton")
         btn_side.clicked.connect(lambda: self.canvas.reset_view(90.0, 0.0))
 
-        btn_top = QPushButton("Top", self)
+        btn_top = QPushButton("Superior", self)
         btn_top.setObjectName("secondaryButton")
         btn_top.clicked.connect(lambda: self.canvas.reset_view(0.0, 89.0))
 
@@ -797,18 +799,18 @@ class Schema3DWidget(QWidget):
         t_layout.addSpacing(6)
 
         # Projection Mode Toggle Button
-        t_layout.addWidget(QLabel("<b>Projection:</b>"))
-        self.btn_proj_toggle = QPushButton("Parallel (Ortho)", self)
+        t_layout.addWidget(QLabel("<b>Proyección:</b>"))
+        self.btn_proj_toggle = QPushButton("Paralela (orto)", self)
         self.btn_proj_toggle.setObjectName("secondaryButton")
         self.btn_proj_toggle.setCheckable(True)
         self.btn_proj_toggle.setChecked(False)
-        self.btn_proj_toggle.setToolTip("Toggle between Parallel (Orthographic) and Perspective 3D rendering")
+        self.btn_proj_toggle.setToolTip("Alternar entre proyección paralela (ortográfica) y en perspectiva")
         self.btn_proj_toggle.clicked.connect(self._on_toggle_projection_clicked)
         t_layout.addWidget(self.btn_proj_toggle)
 
         # Exploded Lid Slider
         gap_header = QHBoxLayout()
-        gap_header.addWidget(QLabel("<b>Lid Split Gap:</b>"))
+        gap_header.addWidget(QLabel("<b>Separar tapa:</b>"))
         self.lbl_gap = QLabel("0 mm")
         self.lbl_gap.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         gap_header.addWidget(self.lbl_gap)
@@ -817,13 +819,13 @@ class Schema3DWidget(QWidget):
         self.slider_gap = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_gap.setRange(0, 200)
         self.slider_gap.setValue(0)
-        self.slider_gap.setToolTip("Exploded lid view gap in mm")
+        self.slider_gap.setToolTip("Separación de la tapa en la vista explotada, en mm")
         self.slider_gap.valueChanged.connect(self._on_gap_changed)
         t_layout.addWidget(self.slider_gap)
 
         # Lid Rotation Angle Slider & Hinge Side Selector
         angle_header = QHBoxLayout()
-        angle_header.addWidget(QLabel("<b>Lid Angle:</b>"))
+        angle_header.addWidget(QLabel("<b>Abrir tapa:</b>"))
         self.lbl_angle = QLabel("0°")
         self.lbl_angle.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         angle_header.addWidget(self.lbl_angle)
@@ -832,21 +834,22 @@ class Schema3DWidget(QWidget):
         self.slider_angle = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_angle.setRange(0, 180)
         self.slider_angle.setValue(0)
-        self.slider_angle.setToolTip("Rotate lid open along selected hinge side (0° to 180°)")
+        self.slider_angle.setToolTip("Abrir la tapa girando sobre el lado de bisagra elegido (0° a 180°)")
         self.slider_angle.valueChanged.connect(self._on_angle_changed)
         t_layout.addWidget(self.slider_angle)
 
-        t_layout.addWidget(QLabel("<b>Hinge Side:</b>"))
+        t_layout.addWidget(QLabel("<b>Lado de bisagra:</b>"))
         self.combo_hinge = QComboBox(self)
-        self.combo_hinge.addItems(["Back", "Front", "Left", "Right"])
-        self.combo_hinge.setCurrentText("Back")
-        self.combo_hinge.setToolTip("Select hinge side for rotating lid open")
-        self.combo_hinge.currentTextChanged.connect(self._on_hinge_side_changed)
+        for side_value, side_label in HINGE_SIDES:
+            self.combo_hinge.addItem(side_label, side_value)
+        self.combo_hinge.setCurrentIndex(0)
+        self.combo_hinge.setToolTip("Elegir el lado de la bisagra para abrir la tapa")
+        self.combo_hinge.currentIndexChanged.connect(lambda _: self._on_hinge_side_changed(self.hinge_side))
         t_layout.addWidget(self.combo_hinge)
 
         # Explode View Slider (Explode all panels)
         explode_header = QHBoxLayout()
-        explode_header.addWidget(QLabel("<b>Explode View:</b>"))
+        explode_header.addWidget(QLabel("<b>Explotar:</b>"))
         self.lbl_explode = QLabel("0 mm")
         self.lbl_explode.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         explode_header.addWidget(self.lbl_explode)
@@ -855,17 +858,17 @@ class Schema3DWidget(QWidget):
         self.slider_explode = QSlider(Qt.Orientation.Horizontal, self)
         self.slider_explode.setRange(0, 250)
         self.slider_explode.setValue(0)
-        self.slider_explode.setToolTip("Explode all panels to display separated panels with dimensions")
+        self.slider_explode.setToolTip("Separar todos los paneles para verlos por separado con sus medidas")
         self.slider_explode.valueChanged.connect(self._on_explode_changed)
         t_layout.addWidget(self.slider_explode)
 
         # Checkboxes
-        t_layout.addWidget(QLabel("<b>Display:</b>"))
-        self.chk_dims = QCheckBox("Dimensions", self)
+        t_layout.addWidget(QLabel("<b>Mostrar:</b>"))
+        self.chk_dims = QCheckBox("Cotas", self)
         self.chk_dims.setChecked(True)
         self.chk_dims.toggled.connect(self._on_toggles_changed)
 
-        self.chk_walls = QCheckBox("Inside Walls", self)
+        self.chk_walls = QCheckBox("Divisores", self)
         self.chk_walls.setChecked(True)
         self.chk_walls.toggled.connect(self._on_toggles_changed)
 
@@ -884,9 +887,9 @@ class Schema3DWidget(QWidget):
     def _on_canvas_projection_changed(self, is_perspective: bool) -> None:
         self.btn_proj_toggle.setChecked(is_perspective)
         if is_perspective:
-            self.btn_proj_toggle.setText("Perspective")
+            self.btn_proj_toggle.setText("Perspectiva")
         else:
-            self.btn_proj_toggle.setText("Parallel (Ortho)")
+            self.btn_proj_toggle.setText("Paralela (orto)")
         self.projection_changed.emit(is_perspective)
 
     def _on_gap_changed(self, val: int) -> None:
@@ -899,7 +902,7 @@ class Schema3DWidget(QWidget):
 
     def _on_angle_changed(self, val: int) -> None:
         self.lbl_angle.setText(f"{val}°")
-        self.lid_rotation_changed.emit(float(val), self.combo_hinge.currentText())
+        self.lid_rotation_changed.emit(float(val), self.hinge_side)
 
     def _on_hinge_side_changed(self, side: str) -> None:
         self.lid_rotation_changed.emit(float(self.slider_angle.value()), side)
@@ -942,7 +945,7 @@ class Schema3DWidget(QWidget):
 
     @property
     def hinge_side(self) -> str:
-        return self.combo_hinge.currentText()
+        return self.combo_hinge.currentData() or "Back"
 
     def set_lid_rotation(self, angle_deg: float, hinge_side: str = "Back") -> None:
         """Sets lid rotation angle (0-180 deg) and hinge side."""
@@ -954,7 +957,7 @@ class Schema3DWidget(QWidget):
 
         self.combo_hinge.blockSignals(True)
         side_norm = hinge_side.capitalize()
-        idx = self.combo_hinge.findText(side_norm)
+        idx = self.combo_hinge.findData(side_norm)
         if idx >= 0:
             self.combo_hinge.setCurrentIndex(idx)
         self.combo_hinge.blockSignals(False)
@@ -991,7 +994,7 @@ class Schema3DWidget(QWidget):
             lid_exploded_gap_mm=float(self.slider_gap.value()),
             explode_gap_mm=float(self.slider_explode.value()),
             lid_rotation_angle_deg=float(self.slider_angle.value()),
-            lid_hinge_side=self.combo_hinge.currentText(),
+            lid_hinge_side=self.hinge_side,
             show_dimensions=self.chk_dims.isChecked(),
             show_inside_walls=self.chk_walls.isChecked(),
             show_axes=self.canvas.show_axes,
@@ -1015,7 +1018,7 @@ class Schema3DWidget(QWidget):
 
         self.combo_hinge.blockSignals(True)
         side_norm = (settings.lid_hinge_side or "Back").capitalize()
-        idx = self.combo_hinge.findText(side_norm)
+        idx = self.combo_hinge.findData(side_norm)
         if idx >= 0:
             self.combo_hinge.setCurrentIndex(idx)
         self.combo_hinge.blockSignals(False)
@@ -1030,9 +1033,9 @@ class Schema3DWidget(QWidget):
 
         self.btn_proj_toggle.setChecked(settings.is_perspective)
         if settings.is_perspective:
-            self.btn_proj_toggle.setText("Perspective")
+            self.btn_proj_toggle.setText("Perspectiva")
         else:
-            self.btn_proj_toggle.setText("Parallel (Ortho)")
+            self.btn_proj_toggle.setText("Paralela (orto)")
 
         self.canvas.set_view_state(
             azimuth_deg=settings.camera_azimuth_deg,

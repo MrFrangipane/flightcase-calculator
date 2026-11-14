@@ -82,7 +82,7 @@ def test_wood_types_widget_lifecycle_and_editing(qapp, tmp_path: Path):
     assert widget.table.rowCount() == initial_count + 1
     assert len(received_materials) == 1
     new_mats = widget.get_materials()
-    assert new_mats[-1].name.startswith("Custom Wood")
+    assert new_mats[-1].name.startswith("Madera personalizada")
     assert new_mats[-1].thickness_mm == 9.0
 
     # 2. Test editing in-table cell
@@ -121,7 +121,7 @@ def test_wood_types_widget_lifecycle_and_editing(qapp, tmp_path: Path):
     widget._copy_to_clipboard()
     cb = QApplication.clipboard()
     if cb is not None:
-        assert "Thickness" in cb.text()
+        assert "Espesor" in cb.text()
 
     widget.close()
 
@@ -220,7 +220,7 @@ def test_case_input_panel_ui_wood_material_selection(qapp):
         assert panel.spin_wood_price.isReadOnly() is True
 
     # Select Custom
-    idx_custom = panel.combo_wood_material.findText("Custom")
+    idx_custom = panel.combo_wood_material.findData("custom")
     assert idx_custom >= 0
     panel.combo_wood_material.setCurrentIndex(idx_custom)
     assert panel.spin_wood_thickness.isReadOnly() is False
@@ -272,7 +272,7 @@ def test_case_input_panel_set_input_dto(qapp):
         wood_price=19.99,
     )
     panel.set_input_dto(dto_custom)
-    assert panel.combo_wood_material.currentText() == "Custom"
+    assert panel.combo_wood_material.currentText() == "Personalizado"
     assert panel.spin_wood_thickness.value() == 8.0
     assert panel.spin_wood_density.value() == 620.0
     assert panel.spin_wood_price.value() == 19.99
@@ -292,7 +292,7 @@ def test_case_input_panel_set_wood_materials_dynamic(qapp):
     assert panel.combo_wood_material.count() == 3  # 2 mats + Custom
     assert panel.combo_wood_material.itemText(0) == "Custom Plywood 8mm"
     assert panel.combo_wood_material.itemText(1) == "Custom Plywood 16mm"
-    assert panel.combo_wood_material.itemText(2) == "Custom"
+    assert panel.combo_wood_material.itemText(2) == "Personalizado"
 
     panel.combo_wood_material.setCurrentIndex(1)
     assert panel.spin_wood_thickness.value() == 16.0

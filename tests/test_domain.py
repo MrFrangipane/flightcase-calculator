@@ -617,9 +617,9 @@ def test_wood_panels_svg_generator():
     assert svg_content.endswith("</svg>")
     assert "xmlns=\"http://www.w3.org/2000/svg\"" in svg_content
     assert "fill=\"#ffffff\"" in svg_content  # Printer-friendly white background
-    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in svg_content
-    assert "Top &amp; Bottom Panels" in svg_content or "Top & Bottom Panels" in svg_content
-    assert "QTY: 2" in svg_content
+    assert "PLANO DE CORTE DE PANELES DE MADERA DEL FLIGHTCASE" in svg_content
+    assert "Piso y techo" in svg_content
+    assert "CANT: 2" in svg_content
     assert "818.0 mm" in svg_content  # 800 + 18 outer length
     assert "518.0 mm" in svg_content  # 500 + 18 outer width
     assert "<line" in svg_content
@@ -627,8 +627,8 @@ def test_wood_panels_svg_generator():
 
     # With custom project title
     svg_with_title = WoodPanelsSvgGenerator.generate_wood_panels_svg(case, title="Laser Tour Trunk")
-    assert "Laser Tour Trunk — Wood Panels Cut Diagram" in svg_with_title
-    assert "<title>Laser Tour Trunk — Wood Panels Cut Diagram</title>" in svg_with_title
+    assert "Laser Tour Trunk — Plano de corte de paneles de madera" in svg_with_title
+    assert "<title>Laser Tour Trunk — Plano de corte de paneles de madera</title>" in svg_with_title
 
 
 def test_panel_grouping_same_size_and_width():
@@ -656,8 +656,8 @@ def test_panel_grouping_same_size_and_width():
     assert wall_cuts[0].length_mm == 600.0
     assert wall_cuts[0].width_mm == 400.0
 
-    # 2D SVG Diagram should also reflect the grouped panel with QTY: 3
+    # 2D SVG Diagram should also reflect the grouped panel with CANT: 3
     from flightcase.domain import WoodPanelsSvgGenerator
     svg = WoodPanelsSvgGenerator.generate_wood_panels_svg(case)
-    assert "QTY: 3" in svg
-    assert "Inside Walls (3 pcs, Width-wise)" in svg or "Inside Walls" in svg
+    assert "CANT: 3" in svg
+    assert "Divisores (3 u., transversales)" in svg
