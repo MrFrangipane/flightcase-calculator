@@ -201,16 +201,16 @@ class WoodPanelsSvgWidget(QWidget):
         t_layout.setSpacing(8)
 
         # Export & Copy Buttons
-        t_layout.addWidget(QLabel("<b>Actions:</b>"))
-        btn_export = QPushButton("Export SVG...", self)
+        t_layout.addWidget(QLabel("<b>Acciones:</b>"))
+        btn_export = QPushButton("Exportar SVG...", self)
         btn_export.setObjectName("primaryButton")
-        btn_export.setToolTip("Save the wood panels diagram as a scalable SVG file")
+        btn_export.setToolTip("Guardar el plano de paneles como archivo SVG")
         btn_export.clicked.connect(self.export_svg)
         t_layout.addWidget(btn_export)
 
-        btn_copy = QPushButton("Copy SVG Code", self)
+        btn_copy = QPushButton("Copiar código SVG", self)
         btn_copy.setObjectName("secondaryButton")
-        btn_copy.setToolTip("Copy raw SVG XML markup to clipboard")
+        btn_copy.setToolTip("Copiar el código XML del SVG al portapapeles")
         btn_copy.clicked.connect(self._copy_svg_to_clipboard)
         t_layout.addWidget(btn_copy)
 
@@ -223,7 +223,7 @@ class WoodPanelsSvgWidget(QWidget):
         zoom_row.setSpacing(4)
         btn_zoom_out = QPushButton("−", self)
         btn_zoom_out.setFixedWidth(32)
-        btn_zoom_out.setToolTip("Zoom Out (Wheel Down)")
+        btn_zoom_out.setToolTip("Alejar (rueda hacia abajo)")
         btn_zoom_out.clicked.connect(self._zoom_out)
         zoom_row.addWidget(btn_zoom_out)
 
@@ -233,25 +233,25 @@ class WoodPanelsSvgWidget(QWidget):
 
         btn_zoom_in = QPushButton("+", self)
         btn_zoom_in.setFixedWidth(32)
-        btn_zoom_in.setToolTip("Zoom In (Wheel Up)")
+        btn_zoom_in.setToolTip("Acercar (rueda hacia arriba)")
         btn_zoom_in.clicked.connect(self._zoom_in)
         zoom_row.addWidget(btn_zoom_in)
         t_layout.addLayout(zoom_row)
 
-        btn_fit_view = QPushButton("Fit View", self)
+        btn_fit_view = QPushButton("Ajustar vista", self)
         btn_fit_view.setObjectName("secondaryButton")
-        btn_fit_view.setToolTip("Fit complete diagram into viewport (Double-Click)")
+        btn_fit_view.setToolTip("Ajustar todo el plano a la ventana (doble clic)")
         btn_fit_view.clicked.connect(self.fit_to_view)
         t_layout.addWidget(btn_fit_view)
 
-        btn_reset_zoom = QPushButton("Reset (100%)", self)
+        btn_reset_zoom = QPushButton("Restablecer (100%)", self)
         btn_reset_zoom.setObjectName("secondaryButton")
-        btn_reset_zoom.setToolTip("Reset zoom level to 100%")
+        btn_reset_zoom.setToolTip("Volver el zoom al 100%")
         btn_reset_zoom.clicked.connect(self._reset_zoom)
         t_layout.addWidget(btn_reset_zoom)
 
         t_layout.addSpacing(6)
-        hint_label = QLabel("<small style='color: #9e9eb4;'>• Drag to Pan<br>• Wheel to Zoom<br>• Double-Click to Fit</small>")
+        hint_label = QLabel("<small style='color: #9e9eb4;'>• Arrastrar para mover<br>• Rueda para zoom<br>• Doble clic para ajustar</small>")
         hint_label.setWordWrap(True)
         t_layout.addWidget(hint_label)
 
@@ -313,26 +313,26 @@ class WoodPanelsSvgWidget(QWidget):
         if not self._svg_data:
             return
         QApplication.clipboard().setText(self._svg_data)
-        QMessageBox.information(self, "Clipboard", "Wood panels SVG code copied to clipboard successfully.")
+        QMessageBox.information(self, "Portapapeles", "Código SVG de los paneles copiado al portapapeles.")
 
     def export_svg(self) -> None:
         """Opens file dialog and exports current wood panels SVG to disk."""
         if not self._svg_data:
-            QMessageBox.warning(self, "Export SVG", "No wood panels data available to export.")
+            QMessageBox.warning(self, "Exportar SVG", "No hay paneles de madera para exportar.")
             return
 
         if self._project_title:
             import re
             slug = re.sub(r"[^\w\s-]", "", self._project_title).strip().replace(" ", "_").lower()
-            default_name = f"{slug}_wood_panels_diagram.svg" if slug else "flightcase_wood_panels_diagram.svg"
+            default_name = f"{slug}_plano_paneles.svg" if slug else "flightcase_plano_paneles.svg"
         else:
-            default_name = "flightcase_wood_panels_diagram.svg"
+            default_name = "flightcase_plano_paneles.svg"
 
         file_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Export Wood Panels SVG Diagram",
+            "Exportar plano SVG de paneles",
             default_name,
-            "SVG Files (*.svg);;All Files (*)",
+            "Archivos SVG (*.svg);;Todos los archivos (*)",
         )
         if not file_path:
             return
@@ -342,12 +342,12 @@ class WoodPanelsSvgWidget(QWidget):
                 f.write(self._svg_data)
             QMessageBox.information(
                 self,
-                "Export Successful",
-                f"Wood panels SVG diagram saved successfully to:\n{file_path}"
+                "Exportación correcta",
+                f"Plano SVG de paneles guardado en:\n{file_path}"
             )
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Export Error",
-                f"Failed to export SVG file:\n{str(e)}"
+                "Error de exportación",
+                f"No se pudo exportar el archivo SVG:\n{str(e)}"
             )

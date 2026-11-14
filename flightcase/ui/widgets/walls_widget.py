@@ -56,17 +56,17 @@ class InsideWallsWidget(QWidget):
         main_layout.setContentsMargins(10, 10, 10, 10)
         main_layout.setSpacing(10)
 
-        group_box = QGroupBox("Inside Walls & Compartments", self)
+        group_box = QGroupBox("Divisores y compartimentos", self)
         group_layout = QVBoxLayout(group_box)
         group_layout.setContentsMargins(8, 12, 8, 8)
         group_layout.setSpacing(8)
 
         # Orientation Selector
         header_row = QHBoxLayout()
-        header_row.addWidget(QLabel("Orientation:"))
+        header_row.addWidget(QLabel("Orientación:"))
         self.combo_comp_orient = QComboBox(self)
-        self.combo_comp_orient.addItem("Width-wise (Divides Length)", "width_wise")
-        self.combo_comp_orient.addItem("Length-wise (Divides Width)", "length_wise")
+        self.combo_comp_orient.addItem("Transversal (divide el largo)", "width_wise")
+        self.combo_comp_orient.addItem("Longitudinal (divide el ancho)", "length_wise")
         self.combo_comp_orient.currentIndexChanged.connect(self._on_comp_orient_changed)
         header_row.addWidget(self.combo_comp_orient)
         header_row.addStretch(1)
@@ -79,9 +79,9 @@ class InsideWallsWidget(QWidget):
         self.table_comps.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table_comps.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_comps.setHorizontalHeaderLabels([
-            "Compartment",
-            "Auto-Equalize",
-            "Available Space (mm)",
+            "Compartimento",
+            "Igualar auto.",
+            "Espacio libre (mm)",
         ])
         self.table_comps.horizontalHeader().setMinimumSectionSize(60)
         self.table_comps.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
@@ -101,9 +101,9 @@ class InsideWallsWidget(QWidget):
 
         # Compartment actions
         btn_comp_row = QHBoxLayout()
-        btn_comp_add = QPushButton("+ Add Compartment", self)
+        btn_comp_add = QPushButton("+ Agregar compartimento", self)
         btn_comp_add.clicked.connect(self._on_comp_tab_add)
-        btn_comp_remove = QPushButton("- Remove Compartment", self)
+        btn_comp_remove = QPushButton("- Quitar compartimento", self)
         btn_comp_remove.clicked.connect(self._on_comp_tab_remove)
 
         btn_comp_row.addWidget(btn_comp_add)
@@ -231,7 +231,7 @@ class InsideWallsWidget(QWidget):
 
         for row, c_val in enumerate(clearances):
             # 0: Name
-            it_name = QTableWidgetItem(f"Compartment {row + 1}")
+            it_name = QTableWidgetItem(f"Compartimento {row + 1}")
             it_name.setFlags(it_name.flags() & ~Qt.ItemIsEditable)
             self.table_comps.setItem(row, 0, it_name)
 

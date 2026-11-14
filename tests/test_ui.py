@@ -28,7 +28,7 @@ def test_main_window_lifecycle(qapp):
     from flightcase.ui import FlightCaseMainWindow
 
     window = FlightCaseMainWindow()
-    assert window.windowTitle().startswith("Flightcase Calculator")
+    assert window.windowTitle().startswith("Calculadora de Flightcases")
 
     # Initial recalculation ran
     assert window._current_result is not None
@@ -97,17 +97,17 @@ def test_schema_3d_canvas_rendering(qapp):
 
     # Test projection toggling
     assert widget.is_perspective is False
-    assert widget.btn_proj_toggle.text() == "Parallel (Ortho)"
+    assert widget.btn_proj_toggle.text() == "Paralela (orto)"
     
     # Toggle to perspective via button click
     widget.btn_proj_toggle.click()
     assert widget.is_perspective is True
-    assert widget.btn_proj_toggle.text() == "Perspective"
+    assert widget.btn_proj_toggle.text() == "Perspectiva"
 
     # Toggle back to parallel via canvas method
     widget.canvas.toggle_projection()
     assert widget.is_perspective is False
-    assert widget.btn_proj_toggle.text() == "Parallel (Ortho)"
+    assert widget.btn_proj_toggle.text() == "Paralela (orto)"
 
     # Render OpenGL pass in parallel mode
     widget.resize(600, 400)
@@ -263,9 +263,9 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     assert isinstance(left_tabs, QTabWidget)
     assert left_tabs == window.tabs
     assert left_tabs.count() == 3
-    assert left_tabs.tabText(0).endswith("Wood Cut List")
-    assert left_tabs.tabText(1).endswith("Alu Profiles")
-    assert left_tabs.tabText(2).endswith("Wood Types")
+    assert left_tabs.tabText(0).endswith("Lista de cortes")
+    assert left_tabs.tabText(1).endswith("Perfiles de aluminio")
+    assert left_tabs.tabText(2).endswith("Tipos de madera")
 
     # Center child must be QTabWidget containing 3D schema and 2D wood panels SVG
     center_tabs = splitter.widget(1)
@@ -457,7 +457,7 @@ def test_project_save_load_file_and_qsettings(tmp_path, qapp):
     # Step 3: Test New Project reset
     window2._new_project()
     assert window2._current_project_path is None
-    assert "Untitled" in window2.windowTitle()
+    assert "Sin título" in window2.windowTitle()
     assert window2.input_panel.spin_length.value() == 800.0
     assert len(window2.walls_widget.get_walls()) == 0
 
@@ -520,7 +520,7 @@ def test_project_ui_settings_storage_and_restoration(tmp_path, qapp):
     assert window2.schema_widget.canvas.pan_offset_y == -25.0
     assert window2.schema_widget.is_perspective is True
     assert window2.schema_widget.btn_proj_toggle.isChecked() is True
-    assert window2.schema_widget.btn_proj_toggle.text() == "Perspective"
+    assert window2.schema_widget.btn_proj_toggle.text() == "Perspectiva"
 
     # Verify lid split gap slider and label
     assert window2.schema_widget.slider_gap.value() == 65
@@ -840,7 +840,7 @@ def test_schema_3d_widget_lid_rotation_ui_and_settings(qapp):
     assert widget.lbl_angle.text() == "90°"
 
     # Manipulate hinge side combo
-    widget.combo_hinge.setCurrentText("Left")
+    widget.combo_hinge.setCurrentIndex(widget.combo_hinge.findData("Left"))
     assert widget.hinge_side == "Left"
 
     # Helper method set_lid_rotation
@@ -873,7 +873,7 @@ def test_schema_3d_widget_lid_rotation_ui_and_settings(qapp):
     assert max(y_coords) > window._current_result.inner_width
 
     # Changing hinge side to Front rotates lid forwards: min Y becomes negative
-    window.schema_widget.combo_hinge.setCurrentText("Front")
+    window.schema_widget.combo_hinge.setCurrentIndex(window.schema_widget.combo_hinge.findData("Front"))
     lid_roof_front = [f for f in window.schema_widget.canvas.mesh.faces if f.layer_order == ComponentLayer.LID_ROOF]
     y_coords_front = [v.y for f in lid_roof_front for v in f.vertices]
     assert min(y_coords_front) < 0.0
@@ -1068,7 +1068,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
 
     # Recalculate populates SVG data
     assert "<svg" in window.svg_widget.get_svg_data()
-    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in window.svg_widget.get_svg_data()
+    assert "PLANO DE CORTE DE PANELES DE MADERA DEL FLIGHTCASE" in window.svg_widget.get_svg_data()
 
     # Menu view switching
     window._fit_svg_view()
@@ -1085,7 +1085,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     )
     window._export_wood_panels_svg()
     assert export_main_file.is_file()
-    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in export_main_file.read_text(encoding="utf-8")
+    assert "PLANO DE CORTE DE PANELES DE MADERA DEL FLIGHTCASE" in export_main_file.read_text(encoding="utf-8")
 
     window.close()
 
@@ -1119,20 +1119,20 @@ def test_project_title_and_svg_export_integration(qapp, monkeypatch, tmp_path):
 
     # Initial state
     assert window.input_panel.edit_title.text() == ""
-    assert "Untitled" in window.windowTitle()
-    assert "FLIGHTCASE WOOD PANELS CUT DIAGRAM" in window.svg_widget.get_svg_data()
+    assert "Sin título" in window.windowTitle()
+    assert "PLANO DE CORTE DE PANELES DE MADERA DEL FLIGHTCASE" in window.svg_widget.get_svg_data()
 
     # Change title
     window.input_panel.edit_title.setText("Amp Rack Case")
     assert "Amp Rack Case" in window.windowTitle()
-    assert "Amp Rack Case — Wood Panels Cut Diagram" in window.svg_widget.get_svg_data()
+    assert "Amp Rack Case — Plano de corte de paneles de madera" in window.svg_widget.get_svg_data()
 
     # Test SVG export default filename uses project title
     saved_paths = []
 
     def mock_save_file_name(parent, caption, dir_or_file, filter_str):
         saved_paths.append(dir_or_file)
-        out_file = tmp_path / "amp_rack_case_wood_panels_diagram.svg"
+        out_file = tmp_path / "amp_rack_case_plano_paneles.svg"
         return str(out_file), filter_str
 
     monkeypatch.setattr(QFileDialog, "getSaveFileName", mock_save_file_name)
@@ -1140,7 +1140,7 @@ def test_project_title_and_svg_export_integration(qapp, monkeypatch, tmp_path):
 
     window.svg_widget.export_svg()
     assert len(saved_paths) > 0
-    assert "amp_rack_case_wood_panels_diagram.svg" in saved_paths[-1]
+    assert "amp_rack_case_plano_paneles.svg" in saved_paths[-1]
 
     # Save Project As suggests title as filename
     proj_dialog_defaults = []
@@ -1233,7 +1233,7 @@ def test_inside_walls_widget_uses_material_specifications_wood_type(qapp):
     table = window.walls_widget.table_comps
     assert table.columnCount() == 3
     headers = [table.horizontalHeaderItem(c).text() for c in range(3)]
-    assert headers == ["Compartment", "Auto-Equalize", "Available Space (mm)"]
+    assert headers == ["Compartimento", "Igualar auto.", "Espacio libre (mm)"]
 
     # 3. Select wood material "Bolivar plywood 12mm"
     idx_12 = window.input_panel.combo_wood_material.findText("Bolivar plywood 12mm")
@@ -1307,7 +1307,7 @@ def test_main_window_wood_types_tab(qapp):
     assert hasattr(window, "wood_types_widget")
     assert isinstance(window.wood_types_widget, WoodTypesWidget)
     assert window.tabs.indexOf(window.wood_types_widget) >= 0
-    assert window.tabs.tabText(window.tabs.indexOf(window.wood_types_widget)) == "Wood Types"
+    assert window.tabs.tabText(window.tabs.indexOf(window.wood_types_widget)) == "Tipos de madera"
 
     # 2. Add a new wood type in the tab
     initial_rows = window.wood_types_widget.table.rowCount()
@@ -1386,7 +1386,7 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
     for r in range(table.rowCount()):
         cat_item = table.item(r, 1)
         thick_item = table.item(r, 5)
-        if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
+        if cat_item and ("divisor" in cat_item.text().lower() or "divisor" in table.item(r, 0).text().lower()):
             divider_row_count += 1
             assert thick_item.text() == "12.0"
     assert divider_row_count == 1
@@ -1407,7 +1407,7 @@ def test_wood_cut_table_inside_wall_thickness_sync_on_thickness_change(qapp):
     for r in range(table.rowCount()):
         cat_item = table.item(r, 1)
         thick_item = table.item(r, 5)
-        if cat_item and ("divider" in cat_item.text().lower() or "wall" in table.item(r, 0).text().lower()):
+        if cat_item and ("divisor" in cat_item.text().lower() or "divisor" in table.item(r, 0).text().lower()):
             divider_row_count += 1
             assert thick_item.text() == "18.0"
     assert divider_row_count == 1

@@ -1,71 +1,71 @@
-# Flightcase Calculator
+# Calculadora de Flightcases
 
-A desktop CAD/CAM estimation and design tool built with Python, PySide6, and OpenGL to streamline the design, calculation, and fabrication of custom flightcases and road trunks.
+Herramienta de escritorio de diseño y cálculo (CAD/CAM) hecha con Python, PySide6 y OpenGL para agilizar el diseño, el cálculo y la fabricación de flightcases y baúles de gira a medida.
 
-![Screenshot 3D](screenshot-3d.jpg)
+![Captura 3D](screenshot-3d.jpg)
 
-![Screenshot 2D](screenshot-2d.jpg)
-
----
-
-## Features
-
-- **Precise Material Calculations & Cost/Weight Estimation**:
-  - Automatically computes exact cut dimensions, surface areas, and quantities for wood panels (sides, lid, base, top) and aluminum profiles (corner extrusions, lid mating profiles).
-  - Calculates total wood area ($m^2$), estimated wood weight ($kg$), total estimated material cost ($€$), and standard $2440 \times 1220\text{ mm}$ sheet count.
-- **Wood Material Library & Custom Presets**:
-  - Built-in material presets from JSON resources (Birch plywood 4–18mm, Hexa textured birch, lightweight Poplar, and Astroboard / Con-Pearl panels).
-  - Automatically loads and synchronizes thickness, density ($\text{kg/m}^3$), and unit price ($€/\text{m}^2$).
-  - Full support for custom material specifications.
-- **Interactive 3D OpenGL Visualizer**:
-  - Full 3D orbit, pan, and zoom navigation with hardware-accelerated anti-aliased wireframe and solid rendering.
-  - Exploded view slider with automatic panel dimension callouts.
-  - Interactive lid opening simulation with selectable hinge sides (Back, Front, Left, Right) and 0°–180° rotation.
-  - Dynamic inner partition wall rendering and bidirectional selection highlighting with cut list tables.
-  - Support for both standard split-lid construction and self-cut lid (6-wall uncut box) workflows with cut markings.
-- **2D Wood Panels Technical Drawings (SVG)**:
-  - Generates printer-friendly, high-contrast vector cut sheets.
-  - Interactive 2D viewport with smooth pan and zoom.
-  - One-click SVG export formatted for physical print or laser/CNC cut prep.
-- **Dynamic Compartment & Partition Wall Management**:
-  - Configure inside dividing walls along X and Y axes with real-time recalculation.
-  - One-click auto-equalize distribution or custom width allocation per compartment.
-  - Partition wall thickness automatically synchronized with the active wood material specification.
-- **Bill of Materials (BOM) & Cut Lists**:
-  - Detailed wood cut list and aluminum profile tables with smooth pixel-level scrolling.
-  - Full BOM export to CSV for workshop cut lists and supplier orders.
-- **Project Management & Ergonomic UI**:
-  - Save and load `.fcproj` project files with automatic window state and project snapshot restoration.
-  - Quick access to recently opened project files.
-  - Workshop-optimized dark theme with a streamlined, fixed configuration panel layout.
+![Captura 2D](screenshot-2d.jpg)
 
 ---
 
-## Requirements
+## Funciones
+
+- **Cálculo preciso de materiales, costo y peso**:
+  - Calcula automáticamente las medidas exactas de corte, superficies y cantidades de los paneles de madera (laterales, tapa, piso, techo) y de los perfiles de aluminio (ángulos esquineros y perfiles de cierre de tapa).
+  - Calcula la superficie total de madera ($m^2$), el peso estimado ($kg$), el costo total estimado de material ($€$) y la cantidad de placas estándar de $2440 \times 1220\text{ mm}$.
+- **Biblioteca de maderas y materiales propios**:
+  - Materiales predefinidos cargados desde un JSON (multilaminado de abedul de 4 a 18 mm, abedul texturado hexagonal, álamo liviano y paneles Astroboard / Con-Pearl).
+  - Carga y sincroniza automáticamente el espesor, la densidad ($\text{kg/m}^3$) y el precio por unidad de superficie ($€/\text{m}^2$).
+  - Soporte completo para materiales personalizados.
+- **Visor 3D interactivo con OpenGL**:
+  - Navegación 3D completa (órbita, desplazamiento y zoom) con renderizado acelerado por hardware, en alambre y sólido con antialiasing.
+  - Control de vista explotada con cotas automáticas de cada panel.
+  - Simulación de apertura de la tapa con lado de bisagra a elección (trasero, delantero, izquierdo, derecho) y giro de 0° a 180°.
+  - Dibujo dinámico de los divisores internos y resaltado sincronizado entre la vista 3D y las tablas de cortes.
+  - Soporta tanto la construcción con tapa separada como la de tapa cortada a mano (caja cerrada de 6 caras), con la línea de corte marcada.
+- **Planos 2D de los paneles de madera (SVG)**:
+  - Genera planos de corte vectoriales de alto contraste, listos para imprimir.
+  - Vista 2D interactiva con desplazamiento y zoom suaves.
+  - Exportación a SVG con un clic, lista para imprimir o preparar el corte láser/CNC.
+- **Gestión dinámica de compartimentos y divisores**:
+  - Configuración de divisores internos en los ejes X e Y con recálculo en tiempo real.
+  - Distribución automática en partes iguales o ancho personalizado por compartimento.
+  - El espesor de los divisores se sincroniza automáticamente con el material de madera elegido.
+- **Listado de materiales y listas de cortes**:
+  - Tablas detalladas de cortes de madera y de perfiles de aluminio con desplazamiento suave.
+  - Exportación del listado completo de materiales a CSV para el taller y los pedidos a proveedores.
+- **Gestión de proyectos e interfaz cómoda**:
+  - Guardado y apertura de archivos de proyecto `.fcproj`, con restauración automática del estado de la ventana y del último proyecto.
+  - Acceso rápido a los proyectos abiertos recientemente.
+  - Tema oscuro pensado para el taller, con un panel de configuración fijo y ordenado.
+
+---
+
+## Requisitos
 
 - Python >= 3.14
-- Supported operating systems: Windows, macOS, Linux
+- Sistemas operativos: Windows, macOS, Linux
 
-### Core Dependencies
+### Dependencias principales
 
-- `PySide6`: Modern Qt-based desktop UI
-- `PyOpenGL`: Hardware-accelerated 3D wireframe and solid surface rendering
-- `numpy`: Fast 3D vector and matrix geometric transformations
-- `pytest`: Automated test suite
+- `PySide6`: interfaz de escritorio moderna basada en Qt
+- `PyOpenGL`: renderizado 3D acelerado por hardware (alambre y superficies sólidas)
+- `numpy`: transformaciones geométricas 3D rápidas con vectores y matrices
+- `pytest`: tests automáticos
 
 ---
 
-## Getting Started
+## Primeros pasos
 
-### 1. Installation
+### 1. Instalación
 
-Clone or download the repository, then install dependencies:
+Cloná o descargá el repositorio e instalá las dependencias:
 
 ```bash
-# Using uv (recommended)
+# Con uv (recomendado)
 uv sync
 
-# Or using standard pip
+# O con pip
 python -m venv .venv
 # Windows:
 .venv\Scripts\activate
@@ -75,31 +75,37 @@ source .venv/bin/activate
 pip install -e .
 ```
 
-### 2. Running the Application
+### 2. Ejecutar la aplicación
 
-- **Windows Shortcut**: Double-click `run.cmd` or execute:
+- **Acceso directo en Windows**: hacé doble clic en `run.cmd` o ejecutá:
   ```cmd
   run.cmd
   ```
-- **Direct CLI Execution**:
+- **Desde la terminal**:
   ```bash
   python main.py
-  # or with uv
+  # o con uv
   uv run python main.py
   ```
 
-### 3. Running Automated Tests
+### 3. Ejecutar los tests
 
-Run the complete test suite:
+Para correr todos los tests:
 
 ```bash
 uv run pytest
-# or with active virtual environment:
+# o con el entorno virtual activado:
 pytest
 ```
 
 ---
 
-## AI Attribution & Development Note
+## Traducción
 
-This software was developed with the assistance of Artificial Intelligence (AI) for architecture design, geometric calculations, 3D/2D rendering workflows, and comprehensive automated test suites.
+La interfaz, los mensajes, las exportaciones (CSV y SVG) y este README están en español. Los nombres de piezas, notas y etiquetas que genera el modelo se siguen calculando en inglés internamente (se usan para agrupar piezas, resaltar en 3D y guardar proyectos) y se traducen al mostrarlos o exportarlos mediante `flightcase/i18n.py`. Los proyectos `.fcproj` guardados con la versión en inglés se abren sin cambios.
+
+---
+
+## Nota sobre el uso de IA
+
+Este software se desarrolló con ayuda de Inteligencia Artificial (IA) para el diseño de la arquitectura, los cálculos geométricos, los flujos de renderizado 3D/2D y los tests automáticos.

@@ -268,8 +268,8 @@ def test_generate_wood_panels_svg_use_case():
     assert isinstance(svg_str, str)
     assert "<svg" in svg_str
     assert "</svg>" in svg_str
-    assert "Top &amp; Bottom Panels" in svg_str or "Top & Bottom Panels" in svg_str
-    assert "Custom Stage Rack — Wood Panels Cut Diagram" in svg_str
+    assert "Piso y techo" in svg_str
+    assert "Custom Stage Rack — Plano de corte de paneles de madera" in svg_str
 
 
 def test_project_dto_title_serialization(tmp_path):

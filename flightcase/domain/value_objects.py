@@ -17,7 +17,7 @@ class Dimensions3D:
     def __post_init__(self) -> None:
         if self.length_mm <= 0.0 or self.width_mm <= 0.0 or self.height_mm <= 0.0:
             raise InvalidDimensionError(
-                f"Dimensions must be positive: L={self.length_mm}, W={self.width_mm}, H={self.height_mm}"
+                f"Las medidas deben ser positivas: L={self.length_mm}, W={self.width_mm}, H={self.height_mm}"
             )
 
     @property
@@ -33,8 +33,8 @@ class WallOrientation(str, Enum):
     @property
     def display_name(self) -> str:
         if self == WallOrientation.WIDTH_WISE:
-            return "Width-wise (Transverse, ⟂ Length)"
-        return "Length-wise (Longitudinal, ⟂ Width)"
+            return "Transversal (⟂ al largo)"
+        return "Longitudinal (⟂ al ancho)"
 
 
 @dataclass(frozen=True)
@@ -48,11 +48,11 @@ class InsideWall:
 
     def __post_init__(self) -> None:
         if self.position_mm <= 0.0:
-            raise InvalidDimensionError(f"Wall position must be strictly positive: {self.position_mm}")
+            raise InvalidDimensionError(f"La posición del divisor debe ser mayor que cero: {self.position_mm}")
         if self.thickness_mm <= 0.0:
-            raise InvalidDimensionError(f"Wall thickness must be strictly positive: {self.thickness_mm}")
+            raise InvalidDimensionError(f"El espesor del divisor debe ser mayor que cero: {self.thickness_mm}")
         if self.height_mm is not None and self.height_mm <= 0.0:
-            raise InvalidDimensionError(f"Wall height must be strictly positive: {self.height_mm}")
+            raise InvalidDimensionError(f"La altura del divisor debe ser mayor que cero: {self.height_mm}")
 
 
 class CutPieceCategory(str, Enum):
@@ -77,9 +77,9 @@ class CutPiece:
 
     def __post_init__(self) -> None:
         if self.length_mm < 0.0 or self.width_mm < 0.0 or self.thickness_mm < 0.0:
-            raise InvalidDimensionError("Cut piece dimensions cannot be negative")
+            raise InvalidDimensionError("Las medidas de una pieza no pueden ser negativas")
         if self.quantity <= 0:
-            raise InvalidDimensionError(f"Quantity must be at least 1, got {self.quantity}")
+            raise InvalidDimensionError(f"La cantidad debe ser al menos 1 (se recibió {self.quantity})")
 
     @property
     def single_area_m2(self) -> float:

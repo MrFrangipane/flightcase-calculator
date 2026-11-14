@@ -40,14 +40,14 @@ class WoodTypesWidget(QWidget):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(12)
 
-        group_box = QGroupBox("Wood Types & Material Specifications", self)
+        group_box = QGroupBox("Tipos de madera y sus características", self)
         g_layout = QVBoxLayout(group_box)
         g_layout.setContentsMargins(8, 12, 8, 8)
         g_layout.setSpacing(8)
 
         # Instruction note
         lbl_hint = QLabel(
-            "Double-click any cell to edit properties. Changes automatically update the material presets.",
+            "Hacé doble clic en una celda para editarla. Los cambios actualizan los materiales al instante.",
             self,
         )
         lbl_hint.setStyleSheet("color: #888888; font-size: 11px;")
@@ -60,10 +60,10 @@ class WoodTypesWidget(QWidget):
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels([
             "ID",
-            "Name",
-            "Thickness (mm)",
-            "Density (kg/m³)",
-            "Price (€/m²)",
+            "Nombre",
+            "Espesor (mm)",
+            "Densidad (kg/m³)",
+            "Precio (€/m²)",
         ])
 
         self.table.horizontalHeader().setMinimumSectionSize(60)
@@ -85,23 +85,23 @@ class WoodTypesWidget(QWidget):
         btn_row1 = QHBoxLayout()
         btn_row1.setSpacing(6)
 
-        self.btn_add = QPushButton("+ Add Wood Type", self)
-        self.btn_add.setToolTip("Add a new wood material specification")
+        self.btn_add = QPushButton("+ Agregar madera", self)
+        self.btn_add.setToolTip("Agregar un tipo de madera nuevo")
         self.btn_add.clicked.connect(self._on_add_material)
         btn_row1.addWidget(self.btn_add)
 
-        self.btn_delete = QPushButton("- Delete Selected", self)
-        self.btn_delete.setToolTip("Remove selected wood material(s)")
+        self.btn_delete = QPushButton("- Borrar seleccionadas", self)
+        self.btn_delete.setToolTip("Borrar las maderas seleccionadas")
         self.btn_delete.clicked.connect(self._on_delete_material)
         btn_row1.addWidget(self.btn_delete)
 
-        self.btn_move_up = QPushButton("▲ Move Up", self)
-        self.btn_move_up.setToolTip("Move selected wood type up in the list")
+        self.btn_move_up = QPushButton("▲ Subir", self)
+        self.btn_move_up.setToolTip("Subir la madera seleccionada en la lista")
         self.btn_move_up.clicked.connect(self._on_move_up)
         btn_row1.addWidget(self.btn_move_up)
 
-        self.btn_move_down = QPushButton("▼ Move Down", self)
-        self.btn_move_down.setToolTip("Move selected wood type down in the list")
+        self.btn_move_down = QPushButton("▼ Bajar", self)
+        self.btn_move_down.setToolTip("Bajar la madera seleccionada en la lista")
         self.btn_move_down.clicked.connect(self._on_move_down)
         btn_row1.addWidget(self.btn_move_down)
 
@@ -112,18 +112,18 @@ class WoodTypesWidget(QWidget):
         btn_row2 = QHBoxLayout()
         btn_row2.setSpacing(6)
 
-        self.btn_save = QPushButton("Save to File", self)
-        self.btn_save.setToolTip("Save wood materials to resources/wood_types.json")
+        self.btn_save = QPushButton("Guardar en archivo", self)
+        self.btn_save.setToolTip("Guardar las maderas en resources/wood_types.json")
         self.btn_save.clicked.connect(self._on_save_materials)
         btn_row2.addWidget(self.btn_save)
 
-        self.btn_reload = QPushButton("Reload from File", self)
-        self.btn_reload.setToolTip("Reload wood materials from disk, discarding unsaved edits")
+        self.btn_reload = QPushButton("Recargar del archivo", self)
+        self.btn_reload.setToolTip("Recargar las maderas desde el disco, descartando los cambios sin guardar")
         self.btn_reload.clicked.connect(self._on_reload_materials)
         btn_row2.addWidget(self.btn_reload)
 
-        self.btn_copy = QPushButton("Copy to Clipboard", self)
-        self.btn_copy.setToolTip("Copy wood types table to clipboard as TSV")
+        self.btn_copy = QPushButton("Copiar al portapapeles", self)
+        self.btn_copy.setToolTip("Copiar la tabla de maderas al portapapeles (TSV)")
         self.btn_copy.clicked.connect(self._copy_to_clipboard)
         btn_row2.addWidget(self.btn_copy)
 
@@ -154,7 +154,7 @@ class WoodTypesWidget(QWidget):
 
         self.table.blockSignals(False)
         self._is_updating = False
-        self.lbl_status.setText(f"{len(materials)} wood types loaded.")
+        self.lbl_status.setText(f"{len(materials)} tipos de madera cargados.")
 
     def _set_row_items(self, row: int, mat: WoodMaterial) -> None:
         """Helper to create and configure table items for a single material row."""
@@ -261,14 +261,14 @@ class WoodTypesWidget(QWidget):
         self._is_updating = False
 
         mats = self.get_materials()
-        self.lbl_status.setText(f"Modified material '{mats[row].name}' (unsaved changes in session).")
+        self.lbl_status.setText(f"Madera '{mats[row].name}' modificada (cambios sin guardar).")
         self.materials_changed.emit(mats)
 
     def _on_add_material(self) -> None:
         """Appends a new wood material row to the table."""
         count = self.table.rowCount()
         new_mat = WoodMaterial(
-            name=f"Custom Wood {count + 1}",
+            name=f"Madera personalizada {count + 1}",
             thickness_mm=9.0,
             density_kg_m3=500.0,
             price_per_m2=20.00,
@@ -286,7 +286,7 @@ class WoodTypesWidget(QWidget):
         self.table.scrollToItem(self.table.item(count, 1))
 
         mats = self.get_materials()
-        self.lbl_status.setText(f"Added new material '{new_mat.name}'.")
+        self.lbl_status.setText(f"Madera nueva '{new_mat.name}' agregada.")
         self.materials_changed.emit(mats)
 
     def _on_delete_material(self) -> None:
@@ -303,7 +303,7 @@ class WoodTypesWidget(QWidget):
         self._is_updating = False
 
         mats = self.get_materials()
-        self.lbl_status.setText(f"Removed {len(selected_rows)} wood type(s).")
+        self.lbl_status.setText(f"Se borraron {len(selected_rows)} tipo(s) de madera.")
         self.materials_changed.emit(mats)
 
     def _on_move_up(self) -> None:
@@ -337,24 +337,24 @@ class WoodTypesWidget(QWidget):
         mats = self.get_materials()
         try:
             save_wood_materials(mats)
-            self.lbl_status.setText(f"Successfully saved {len(mats)} wood types to disk.")
+            self.lbl_status.setText(f"Se guardaron {len(mats)} tipos de madera en el disco.")
             self.materials_saved.emit(mats)
             self.materials_changed.emit(mats)
         except Exception as e:
-            QMessageBox.critical(self, "Save Wood Types Error", f"Failed to save wood types:\n{str(e)}")
+            QMessageBox.critical(self, "Error al guardar maderas", f"No se pudieron guardar los tipos de madera:\n{str(e)}")
 
     def _on_reload_materials(self) -> None:
         """Reloads wood materials from disk, discarding in-memory edits."""
         self.load_materials()
         mats = self.get_materials()
-        self.lbl_status.setText(f"Reloaded {len(mats)} wood types from disk.")
+        self.lbl_status.setText(f"Se recargaron {len(mats)} tipos de madera desde el disco.")
         self.materials_changed.emit(mats)
 
     def _copy_to_clipboard(self) -> None:
         """Exports wood types table to clipboard as TSV format."""
         output = io.StringIO()
         writer = csv.writer(output, delimiter="\t")
-        headers = ["ID", "Name", "Thickness (mm)", "Density (kg/m3)", "Price (EUR/m2)"]
+        headers = ["ID", "Nombre", "Espesor (mm)", "Densidad (kg/m3)", "Precio (EUR/m2)"]
         writer.writerow(headers)
 
         for mat in self.get_materials():
@@ -363,4 +363,4 @@ class WoodTypesWidget(QWidget):
         clipboard = QApplication.clipboard()
         if clipboard is not None:
             clipboard.setText(output.getvalue())
-            self.lbl_status.setText("Wood types copied to clipboard.")
+            self.lbl_status.setText("Tipos de madera copiados al portapapeles.")

@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from typing import List, Tuple
+from ..i18n import tr
 from .entities import FlightCase, CaseCompartment
 from .value_objects import (
     Point3D,
@@ -1068,11 +1069,11 @@ class WoodPanelsSvgGenerator:
 
         clean_title = title.strip() if title else ""
         if clean_title:
-            main_title_text = f"{html.escape(clean_title)} — Wood Panels Cut Diagram"
-            svg_doc_title = f"{html.escape(clean_title)} — Wood Panels Cut Diagram"
+            main_title_text = f"{html.escape(clean_title)} — Plano de corte de paneles de madera"
+            svg_doc_title = f"{html.escape(clean_title)} — Plano de corte de paneles de madera"
         else:
-            main_title_text = "FLIGHTCASE WOOD PANELS CUT DIAGRAM"
-            svg_doc_title = "Flightcase Wood Panels Cut Diagram"
+            main_title_text = "PLANO DE CORTE DE PANELES DE MADERA DEL FLIGHTCASE"
+            svg_doc_title = "Plano de corte de paneles de madera del flightcase"
 
         if cut_list is None:
             raw_cuts = case.calculate_wood_cut_list()
@@ -1092,7 +1093,7 @@ class WoodPanelsSvgGenerator:
                 f'<title>{svg_doc_title}</title>'
                 '<rect width="100%" height="100%" fill="#ffffff"/>'
                 '<text x="400" y="200" text-anchor="middle" fill="#64748b" font-size="18" '
-                'font-family="system-ui, -apple-system, sans-serif">No wood panels to display.</text>'
+                'font-family="system-ui, -apple-system, sans-serif">No hay paneles de madera para mostrar.</text>'
                 '</svg>'
             )
 
@@ -1134,7 +1135,7 @@ class WoodPanelsSvgGenerator:
             f'  <g id="headerBanner" transform="translate({margin_x}, 20)">',
             f'    <rect width="{svg_w - 2 * margin_x}" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>',
             f'    <text x="24" y="30" fill="#0f172a" font-size="18" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">{main_title_text}</text>',
-            f'    <text x="24" y="52" fill="#475569" font-size="13" font-family="system-ui, -apple-system, sans-serif">Outer: {case.outer_length:.0f}×{case.outer_width:.0f}×{case.total_height:.0f} mm  |  Thickness: {case.wood_thickness:.1f} mm  |  Total Panels: {total_pieces} pcs  |  Total Area: {total_area:.2f} m²</text>',
+            f'    <text x="24" y="52" fill="#475569" font-size="13" font-family="system-ui, -apple-system, sans-serif">Exterior: {case.outer_length:.0f}×{case.outer_width:.0f}×{case.total_height:.0f} mm  |  Espesor: {case.wood_thickness:.1f} mm  |  Total de paneles: {total_pieces} u.  |  Superficie total: {total_area:.2f} m²</text>',
             '  </g>',
             '',
         ]
@@ -1147,9 +1148,9 @@ class WoodPanelsSvgGenerator:
             cx = margin_x + col * (card_w + spacing)
             cy = margin_top + row * (card_h + spacing)
 
-            name_esc = html.escape(piece.name)
-            notes_esc = html.escape(piece.notes or "")
-            cat_esc = html.escape(piece.category.value)
+            name_esc = html.escape(tr(piece.name))
+            notes_esc = html.escape(tr(piece.notes or ""))
+            cat_esc = html.escape(tr(piece.category.value))
 
             # Available panel drawing box inside the card
             # Card has header (top 45px) and footer (bottom 35px)
@@ -1176,7 +1177,7 @@ class WoodPanelsSvgGenerator:
             # Quantity Badge
             badge_x = cx + card_w - 85
             lines.append(f'    <rect x="{badge_x}" y="{cy + 12}" width="70" height="22" rx="4" fill="#ecfdf5" stroke="#10b981" stroke-width="1"/>')
-            lines.append(f'    <text x="{badge_x + 35}" y="{cy + 27}" text-anchor="middle" fill="#047857" font-size="11" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">QTY: {piece.quantity}</text>')
+            lines.append(f'    <text x="{badge_x + 35}" y="{cy + 27}" text-anchor="middle" fill="#047857" font-size="11" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">CANT: {piece.quantity}</text>')
 
             # Scaled 2D Wood Panel Rectangle
             lines.append(f'    <rect x="{px:.1f}" y="{py:.1f}" width="{pw:.1f}" height="{ph:.1f}" rx="3" fill="#eff6ff" fill-opacity="0.85" stroke="#2563eb" stroke-width="1.6"/>')
@@ -1199,10 +1200,10 @@ class WoodPanelsSvgGenerator:
 
             # Center text on panel
             lines.append(f'    <text x="{px + pw / 2.0:.1f}" y="{py + ph / 2.0 - 2.0:.1f}" text-anchor="middle" fill="#0f172a" font-size="12" font-weight="bold" font-family="system-ui, -apple-system, sans-serif">{piece.length_mm:.1f} × {piece.width_mm:.1f} mm</text>')
-            lines.append(f'    <text x="{px + pw / 2.0:.1f}" y="{py + ph / 2.0 + 14.0:.1f}" text-anchor="middle" fill="#2563eb" font-size="10" font-family="system-ui, -apple-system, sans-serif">Thick: {piece.thickness_mm:.1f} mm</text>')
+            lines.append(f'    <text x="{px + pw / 2.0:.1f}" y="{py + ph / 2.0 + 14.0:.1f}" text-anchor="middle" fill="#2563eb" font-size="10" font-family="system-ui, -apple-system, sans-serif">Esp.: {piece.thickness_mm:.1f} mm</text>')
 
             # Card Footer: Area & Notes
-            footer_text = f"Area: {piece.total_area_m2:.3f} m²"
+            footer_text = f"Superficie: {piece.total_area_m2:.3f} m²"
             if notes_esc:
                 footer_text += f"  •  {notes_esc}"
             lines.append(f'    <text x="{cx + 18}" y="{cy + card_h - 16}" fill="#64748b" font-size="11" font-family="system-ui, -apple-system, sans-serif">{footer_text}</text>')

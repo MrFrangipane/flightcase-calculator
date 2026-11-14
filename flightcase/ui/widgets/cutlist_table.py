@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QAbstractItemView,
 )
 from ...application import CalculationResultDTO, CutPieceDTO
+from ...i18n import tr
 
 
 class CutListTableWidget(QWidget):
@@ -39,38 +40,38 @@ class CutListTableWidget(QWidget):
         layout.setSpacing(12)
 
         # 1. KPI Summary Cards Frame
-        kpi_box = QGroupBox("Material Summary", self)
+        kpi_box = QGroupBox("Resumen de material", self)
         kpi_layout = QGridLayout(kpi_box)
 
         # Total Area
-        kpi_layout.addWidget(QLabel("<b>Total Wood Area:</b>"), 0, 0)
+        kpi_layout.addWidget(QLabel("<b>Superficie total de madera:</b>"), 0, 0)
         self.lbl_total_area = QLabel("0.00 m²")
         kpi_layout.addWidget(self.lbl_total_area, 0, 1)
 
         # Estimated Weight
-        kpi_layout.addWidget(QLabel("<b>Estimated Weight:</b>"), 1, 0)
+        kpi_layout.addWidget(QLabel("<b>Peso estimado:</b>"), 1, 0)
         self.lbl_weight = QLabel("0.0 kg")
         kpi_layout.addWidget(self.lbl_weight, 1, 1)
 
         # Standard Sheets (2440 x 1220 mm)
-        kpi_layout.addWidget(QLabel("<b>Standard Sheets (2440x1220):</b>"), 2, 0)
-        self.lbl_sheets = QLabel("0.0 sheets")
+        kpi_layout.addWidget(QLabel("<b>Placas estándar (2440x1220):</b>"), 2, 0)
+        self.lbl_sheets = QLabel("0.0 placas")
         kpi_layout.addWidget(self.lbl_sheets, 2, 1)
 
         # Sheet Utilization
-        kpi_layout.addWidget(QLabel("<b>Sheet Utilization:</b>"), 3, 0)
+        kpi_layout.addWidget(QLabel("<b>Aprovechamiento de placa:</b>"), 3, 0)
         self.lbl_utilization = QLabel("0.0 %")
         kpi_layout.addWidget(self.lbl_utilization, 3, 1)
 
         # Estimated Wood Cost
-        kpi_layout.addWidget(QLabel("<b>Estimated Wood Cost:</b>"), 4, 0)
+        kpi_layout.addWidget(QLabel("<b>Costo estimado de madera:</b>"), 4, 0)
         self.lbl_cost = QLabel("€0.00")
         kpi_layout.addWidget(self.lbl_cost, 4, 1)
 
         layout.addWidget(kpi_box)
 
         # 2. Wood Panels Cut List Table
-        table_box = QGroupBox("Wood Panels Cutting Dimensions (Cut List / BOM)", self)
+        table_box = QGroupBox("Medidas de corte de los paneles de madera (lista de cortes)", self)
         t_layout = QVBoxLayout(table_box)
         t_layout.setSpacing(8)
 
@@ -79,14 +80,14 @@ class CutListTableWidget(QWidget):
         self.table.setHorizontalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self.table.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table.setHorizontalHeaderLabels([
-            "Panel Description",
-            "Category",
-            "Qty",
-            "Cut Length (mm)",
-            "Cut Width (mm)",
-            "Thickness (mm)",
-            "Total Area (m²)",
-            "Notes / Alignment",
+            "Panel",
+            "Categoría",
+            "Cant.",
+            "Largo de corte (mm)",
+            "Ancho de corte (mm)",
+            "Espesor (mm)",
+            "Superficie total (m²)",
+            "Notas / ubicación",
         ])
         self.table.horizontalHeader().setMinimumSectionSize(60)
         self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
@@ -107,14 +108,14 @@ class CutListTableWidget(QWidget):
 
         # Bottom Buttons
         btn_layout = QHBoxLayout()
-        btn_copy = QPushButton("Copy Cut List to Clipboard", self)
+        btn_copy = QPushButton("Copiar lista de cortes", self)
         btn_copy.clicked.connect(self._copy_to_clipboard)
 
-        btn_export = QPushButton("Export to CSV...", self)
+        btn_export = QPushButton("Exportar a CSV...", self)
         btn_export.setObjectName("secondaryButton")
         btn_export.clicked.connect(self._export_csv)
 
-        btn_export_svg = QPushButton("Export SVG Diagram...", self)
+        btn_export_svg = QPushButton("Exportar plano SVG...", self)
         btn_export_svg.setObjectName("secondaryButton")
         btn_export_svg.clicked.connect(self.export_svg_requested.emit)
 
@@ -132,7 +133,7 @@ class CutListTableWidget(QWidget):
         # Update KPIs
         self.lbl_total_area.setText(f"{result.total_wood_area_m2:.3f} m²")
         self.lbl_weight.setText(f"{result.total_wood_weight_kg:.1f} kg")
-        self.lbl_sheets.setText(f"{result.standard_sheets_required:.2f} sheets")
+        self.lbl_sheets.setText(f"{result.standard_sheets_required:.2f} placas")
         self.lbl_utilization.setText(f"{result.sheet_utilization_pct:.1f} %")
         self.lbl_cost.setText(f"€{result.total_wood_cost:.2f}")
 
@@ -163,12 +164,12 @@ class CutListTableWidget(QWidget):
 
     def _set_table_row(self, row: int, item: CutPieceDTO) -> None:
         # 0: Name
-        it_name = QTableWidgetItem(item.name)
+        it_name = QTableWidgetItem(tr(item.name))
         it_name.setFlags(it_name.flags() & ~Qt.ItemIsEditable)
         self.table.setItem(row, 0, it_name)
 
         # 1: Category
-        it_cat = QTableWidgetItem(item.category)
+        it_cat = QTableWidgetItem(tr(item.category))
         it_cat.setFlags(it_cat.flags() & ~Qt.ItemIsEditable)
         self.table.setItem(row, 1, it_cat)
 
@@ -203,29 +204,29 @@ class CutListTableWidget(QWidget):
         self.table.setItem(row, 6, it_area)
 
         # 7: Notes
-        it_notes = QTableWidgetItem(item.notes)
+        it_notes = QTableWidgetItem(tr(item.notes))
         it_notes.setFlags(it_notes.flags() & ~Qt.ItemIsEditable)
         self.table.setItem(row, 7, it_notes)
 
     def _copy_to_clipboard(self) -> None:
         if not self.current_result:
             return
-        lines = ["Panel Description\tCategory\tQty\tLength (mm)\tWidth (mm)\tThickness (mm)\tTotal Area (m²)\tNotes"]
+        lines = ["Panel\tCategoría\tCant.\tLargo (mm)\tAncho (mm)\tEspesor (mm)\tSuperficie total (m²)\tNotas"]
         for p in self.current_result.wood_cut_list:
-            lines.append(f"{p.name}\t{p.category}\t{p.quantity}\t{p.length_mm:.1f}\t{p.width_mm:.1f}\t{p.thickness_mm:.1f}\t{p.total_area_m2:.4f}\t{p.notes}")
+            lines.append(f"{tr(p.name)}\t{tr(p.category)}\t{p.quantity}\t{p.length_mm:.1f}\t{p.width_mm:.1f}\t{p.thickness_mm:.1f}\t{p.total_area_m2:.4f}\t{tr(p.notes)}")
         QApplication.clipboard().setText("\n".join(lines))
-        QMessageBox.information(self, "Clipboard", "Wood cut list copied to clipboard successfully.")
+        QMessageBox.information(self, "Portapapeles", "Lista de cortes de madera copiada al portapapeles.")
 
     def _export_csv(self) -> None:
         if not self.current_result:
             return
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save Wood Cut List CSV", "flightcase_wood_cutlist.csv", "CSV Files (*.csv)")
+        file_path, _ = QFileDialog.getSaveFileName(self, "Guardar lista de cortes en CSV", "flightcase_lista_cortes_madera.csv", "Archivos CSV (*.csv)")
         if file_path:
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write("Panel Description,Category,Qty,Length_mm,Width_mm,Thickness_mm,TotalArea_m2,Notes\n")
+                    f.write("Panel,Categoría,Cant.,Largo_mm,Ancho_mm,Espesor_mm,SuperficieTotal_m2,Notas\n")
                     for p in self.current_result.wood_cut_list:
-                        f.write(f'"{p.name}","{p.category}",{p.quantity},{p.length_mm:.1f},{p.width_mm:.1f},{p.thickness_mm:.1f},{p.total_area_m2:.4f},"{p.notes}"\n')
-                QMessageBox.information(self, "Export Successful", f"Saved cut list to:\n{file_path}")
+                        f.write(f'"{tr(p.name)}","{tr(p.category)}",{p.quantity},{p.length_mm:.1f},{p.width_mm:.1f},{p.thickness_mm:.1f},{p.total_area_m2:.4f},"{tr(p.notes)}"\n')
+                QMessageBox.information(self, "Exportación correcta", f"Lista de cortes guardada en:\n{file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "Export Error", f"Failed to save CSV file:\n{str(e)}")
+                QMessageBox.critical(self, "Error de exportación", f"No se pudo guardar el archivo CSV:\n{str(e)}")

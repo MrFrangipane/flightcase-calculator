@@ -32,6 +32,7 @@ from ..application import (
     LoadProjectUseCase,
     CalculationResultDTO,
 )
+from ..i18n import tr
 from .theme import DARK_THEME_QSS
 from .widgets import (
     CaseInputPanel,
@@ -54,7 +55,7 @@ class FlightCaseMainWindow(QMainWindow):
         load_last_project: bool = True,
     ):
         super().__init__(parent)
-        self.setWindowTitle("Flightcase Calculator — Untitled")
+        self.setWindowTitle("Calculadora de Flightcases — Sin título")
         self._current_result: Optional[CalculationResultDTO] = None
         self._current_project_path: Optional[str] = None
 
@@ -89,9 +90,9 @@ class FlightCaseMainWindow(QMainWindow):
         self.alu_widget = AluProfilesWidget(self)
         self.wood_types_widget = WoodTypesWidget(self)
 
-        self.tabs.addTab(self.cutlist_widget, "Wood Cut List")
-        self.tabs.addTab(self.alu_widget, "Alu Profiles")
-        self.tabs.addTab(self.wood_types_widget, "Wood Types")
+        self.tabs.addTab(self.cutlist_widget, "Lista de cortes")
+        self.tabs.addTab(self.alu_widget, "Perfiles de aluminio")
+        self.tabs.addTab(self.wood_types_widget, "Tipos de madera")
         self.main_splitter.addWidget(self.tabs)
 
         # 2. Center Pane: Central tabs containing 3D Schema and 2D Wood Panels Diagram
@@ -99,8 +100,8 @@ class FlightCaseMainWindow(QMainWindow):
         self.schema_widget = Schema3DWidget(self)
         self.svg_widget = WoodPanelsSvgWidget(self)
 
-        self.center_tabs.addTab(self.schema_widget, "3D Schema")
-        self.center_tabs.addTab(self.svg_widget, "2D Wood Panels (SVG)")
+        self.center_tabs.addTab(self.schema_widget, "Vista 3D")
+        self.center_tabs.addTab(self.svg_widget, "Paneles 2D (SVG)")
         self.main_splitter.addWidget(self.center_tabs)
 
         # Set splitter proportions (40% left output tables, 60% center 3D schema)
@@ -125,40 +126,40 @@ class FlightCaseMainWindow(QMainWindow):
         # Status Bar
         self.status_bar = QStatusBar(self)
         self.setStatusBar(self.status_bar)
-        self.status_bar.showMessage("Ready. All domain invariants verified.")
+        self.status_bar.showMessage("Listo. Todas las validaciones del modelo son correctas.")
 
     def _init_menus(self) -> None:
         menu_bar = self.menuBar()
 
         # File Menu
-        self.file_menu = menu_bar.addMenu("&File")
+        self.file_menu = menu_bar.addMenu("&Archivo")
 
-        new_action = QAction("&New Project", self)
+        new_action = QAction("&Nuevo proyecto", self)
         new_action.setShortcut("Ctrl+N")
-        new_action.setStatusTip("Create a new flightcase project")
+        new_action.setStatusTip("Crear un proyecto de flightcase nuevo")
         new_action.triggered.connect(self._new_project)
         self.file_menu.addAction(new_action)
 
-        open_action = QAction("&Open Project...", self)
+        open_action = QAction("A&brir proyecto...", self)
         open_action.setShortcut("Ctrl+O")
-        open_action.setStatusTip("Open an existing flightcase project file")
+        open_action.setStatusTip("Abrir un archivo de proyecto existente")
         open_action.triggered.connect(self._open_project)
         self.file_menu.addAction(open_action)
 
-        save_action = QAction("&Save Project", self)
+        save_action = QAction("&Guardar proyecto", self)
         save_action.setShortcut("Ctrl+S")
-        save_action.setStatusTip("Save the current flightcase project")
+        save_action.setStatusTip("Guardar el proyecto actual")
         save_action.triggered.connect(self._save_project)
         self.file_menu.addAction(save_action)
 
-        save_as_action = QAction("Save Project &As...", self)
+        save_as_action = QAction("Guardar proyecto &como...", self)
         save_as_action.setShortcut("Ctrl+Shift+S")
-        save_as_action.setStatusTip("Save the flightcase project to a new file")
+        save_as_action.setStatusTip("Guardar el proyecto en un archivo nuevo")
         save_as_action.triggered.connect(self._save_project_as)
         self.file_menu.addAction(save_as_action)
 
         # Open Recent Section (up to 5 recent files, directly in the menu, no submenu)
-        self.recent_section_action = self.file_menu.addSection("Open Recent")
+        self.recent_section_action = self.file_menu.addSection("Recientes")
         self.recent_file_actions: List[QAction] = []
         for _ in range(5):
             act = QAction(self)
@@ -170,59 +171,59 @@ class FlightCaseMainWindow(QMainWindow):
 
         self.file_menu.addSeparator()
 
-        export_action = QAction("&Export Full Cut List...", self)
+        export_action = QAction("&Exportar lista de cortes completa...", self)
         export_action.setShortcut("Ctrl+E")
-        export_action.setStatusTip("Export comprehensive Bill of Materials to CSV")
+        export_action.setStatusTip("Exportar el listado completo de materiales a CSV")
         export_action.triggered.connect(self._export_full_report)
         self.file_menu.addAction(export_action)
 
-        export_svg_action = QAction("Export &Wood Panels SVG...", self)
+        export_svg_action = QAction("Exportar &paneles de madera a SVG...", self)
         export_svg_action.setShortcut("Ctrl+Shift+E")
-        export_svg_action.setStatusTip("Export all wood panels technical drawing to SVG file")
+        export_svg_action.setStatusTip("Exportar el plano de todos los paneles de madera a un archivo SVG")
         export_svg_action.triggered.connect(self._export_wood_panels_svg)
         self.file_menu.addAction(export_svg_action)
 
         self.file_menu.addSeparator()
 
-        exit_action = QAction("E&xit", self)
+        exit_action = QAction("&Salir", self)
         exit_action.setShortcut("Ctrl+Q")
-        exit_action.setStatusTip("Exit Flightcase Calculator")
+        exit_action.setStatusTip("Salir de la Calculadora de Flightcases")
         exit_action.triggered.connect(self.close)
         self.file_menu.addAction(exit_action)
 
         # View Menu
-        view_menu = menu_bar.addMenu("&View")
+        view_menu = menu_bar.addMenu("&Ver")
 
-        view_3d_action = QAction("&3D Schema View", self)
+        view_3d_action = QAction("Vista &3D", self)
         view_3d_action.setShortcut("Ctrl+1")
-        view_3d_action.setStatusTip("Switch to 3D interactive schema view")
+        view_3d_action.setStatusTip("Cambiar a la vista 3D interactiva")
         view_3d_action.triggered.connect(lambda: self.center_tabs.setCurrentWidget(self.schema_widget))
         view_menu.addAction(view_3d_action)
 
-        reset_view_action = QAction("&Reset 3D Schema View", self)
+        reset_view_action = QAction("&Restablecer vista 3D", self)
         reset_view_action.setShortcut("Ctrl+R")
-        reset_view_action.setStatusTip("Reset 3D camera to default isometric view")
+        reset_view_action.setStatusTip("Volver la cámara 3D a la vista isométrica predeterminada")
         reset_view_action.triggered.connect(self._reset_3d_view)
         view_menu.addAction(reset_view_action)
 
         view_menu.addSeparator()
 
-        view_wood_types_action = QAction("Edit &Wood Types", self)
-        view_wood_types_action.setStatusTip("Switch to Wood Types management and editing tab")
+        view_wood_types_action = QAction("Editar &tipos de madera", self)
+        view_wood_types_action.setStatusTip("Ir a la pestaña de gestión de tipos de madera")
         view_wood_types_action.triggered.connect(lambda: self.tabs.setCurrentWidget(self.wood_types_widget))
         view_menu.addAction(view_wood_types_action)
 
         view_menu.addSeparator()
 
-        view_svg_action = QAction("View 2D &Wood Panels Diagram (SVG)", self)
+        view_svg_action = QAction("Ver plano 2D de &paneles (SVG)", self)
         view_svg_action.setShortcut("Ctrl+2")
-        view_svg_action.setStatusTip("Switch to 2D technical diagram of wood panels")
+        view_svg_action.setStatusTip("Cambiar al plano técnico 2D de los paneles de madera")
         view_svg_action.triggered.connect(lambda: self.center_tabs.setCurrentWidget(self.svg_widget))
         view_menu.addAction(view_svg_action)
 
-        fit_svg_action = QAction("&Fit 2D Diagram to View", self)
+        fit_svg_action = QAction("&Ajustar plano 2D a la ventana", self)
         fit_svg_action.setShortcut("Ctrl+D")
-        fit_svg_action.setStatusTip("Fit 2D wood panels diagram into viewport")
+        fit_svg_action.setStatusTip("Ajustar el plano 2D de paneles a la ventana")
         fit_svg_action.triggered.connect(self._fit_svg_view)
         view_menu.addAction(fit_svg_action)
 
@@ -407,14 +408,14 @@ class FlightCaseMainWindow(QMainWindow):
         if title:
             if self._current_project_path:
                 file_name = os.path.basename(self._current_project_path)
-                self.setWindowTitle(f"Flightcase Calculator — {title} ({file_name})")
+                self.setWindowTitle(f"Calculadora de Flightcases — {title} ({file_name})")
             else:
-                self.setWindowTitle(f"Flightcase Calculator — {title}")
+                self.setWindowTitle(f"Calculadora de Flightcases — {title}")
         elif self._current_project_path:
             name = os.path.basename(self._current_project_path)
-            self.setWindowTitle(f"Flightcase Calculator — {name}")
+            self.setWindowTitle(f"Calculadora de Flightcases — {name}")
         else:
-            self.setWindowTitle("Flightcase Calculator — Untitled")
+            self.setWindowTitle("Calculadora de Flightcases — Sin título")
 
     def _apply_project_dto(self, dto: CaseInputDTO) -> None:
         self.input_panel.set_input_dto(dto)
@@ -429,14 +430,14 @@ class FlightCaseMainWindow(QMainWindow):
         self._apply_project_dto(default_dto)
         self.schema_widget.canvas.reset_view(45.0, 30.0)
         self._update_window_title()
-        self.status_bar.showMessage("New project created with default dimensions.")
+        self.status_bar.showMessage("Proyecto nuevo creado con las medidas predeterminadas.")
 
     def _open_project(self) -> None:
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Open Flightcase Project",
+            "Abrir proyecto de flightcase",
             "",
-            "Flightcase Project (*.fcproj *.json);;All Files (*)",
+            "Proyecto de flightcase (*.fcproj *.json);;Todos los archivos (*)",
         )
         if file_path:
             self._load_project_file(file_path)
@@ -451,9 +452,9 @@ class FlightCaseMainWindow(QMainWindow):
                 settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
                 settings.setValue("lastProjectPath", file_path)
             self._add_recent_file(file_path)
-            self.status_bar.showMessage(f"Project loaded from {os.path.basename(file_path)}")
+            self.status_bar.showMessage(f"Proyecto cargado desde {os.path.basename(file_path)}")
         except Exception as e:
-            QMessageBox.critical(self, "Load Project Error", f"Failed to load project from {file_path}:\n{str(e)}")
+            QMessageBox.critical(self, "Error al abrir el proyecto", f"No se pudo abrir el proyecto {file_path}:\n{tr(str(e))}")
 
     def _save_project(self) -> None:
         if self._current_project_path:
@@ -468,15 +469,15 @@ class FlightCaseMainWindow(QMainWindow):
         elif title:
             import re
             slug = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_").lower()
-            default_name = f"{slug}.fcproj" if slug else "my_flightcase.fcproj"
+            default_name = f"{slug}.fcproj" if slug else "mi_flightcase.fcproj"
         else:
-            default_name = "my_flightcase.fcproj"
+            default_name = "mi_flightcase.fcproj"
 
         file_path, _ = QFileDialog.getSaveFileName(
             self,
-            "Save Flightcase Project As",
+            "Guardar proyecto de flightcase como",
             default_name,
-            "Flightcase Project (*.fcproj *.json);;All Files (*)",
+            "Proyecto de flightcase (*.fcproj *.json);;Todos los archivos (*)",
         )
         if file_path:
             self._save_project_file(file_path)
@@ -492,9 +493,9 @@ class FlightCaseMainWindow(QMainWindow):
             settings = QSettings("FlightcaseCalculator", "FlightcaseCalculator")
             settings.setValue("lastProjectPath", file_path)
             self._add_recent_file(file_path)
-            self.status_bar.showMessage(f"Project saved to {os.path.basename(file_path)}")
+            self.status_bar.showMessage(f"Proyecto guardado en {os.path.basename(file_path)}")
         except Exception as e:
-            QMessageBox.critical(self, "Save Project Error", f"Failed to save project to {file_path}:\n{str(e)}")
+            QMessageBox.critical(self, "Error al guardar el proyecto", f"No se pudo guardar el proyecto en {file_path}:\n{str(e)}")
 
     def closeEvent(self, event: QCloseEvent) -> None:
         self._save_settings()
@@ -570,13 +571,13 @@ class FlightCaseMainWindow(QMainWindow):
             # 3. Status Bar
             lid_m = result.total_lid_mating_profile_length_mm / 1000.0
             self.status_bar.showMessage(
-                f"✓ Inner: {input_dto.inner_length:.0f}×{input_dto.inner_width:.0f}×{input_dto.inner_total_height:.0f} mm | "
-                f"Outer: {input_dto.outer_length:.0f}×{input_dto.outer_width:.0f}×{input_dto.total_height:.0f} mm | "
-                f"Lid Alu Profile Required Length: {result.total_lid_mating_profile_length_mm:.1f} mm ({lid_m:.2f} m) | "
-                f"Wood Panels: {len(result.wood_cut_list)} pieces ({result.total_wood_area_m2:.2f} m²)"
+                f"✓ Interior: {input_dto.inner_length:.0f}×{input_dto.inner_width:.0f}×{input_dto.inner_total_height:.0f} mm | "
+                f"Exterior: {input_dto.outer_length:.0f}×{input_dto.outer_width:.0f}×{input_dto.total_height:.0f} mm | "
+                f"Perfil de cierre necesario: {result.total_lid_mating_profile_length_mm:.1f} mm ({lid_m:.2f} m) | "
+                f"Paneles de madera: {len(result.wood_cut_list)} piezas ({result.total_wood_area_m2:.2f} m²)"
             )
         except FlightCaseDomainError as e:
-            self.status_bar.showMessage(f"⚠ Domain Validation Error: {str(e)}")
+            self.status_bar.showMessage(f"⚠ Error de validación: {str(e)}")
         except Exception as e:
             self.status_bar.showMessage(f"⚠ Error: {str(e)}")
 
@@ -605,31 +606,31 @@ class FlightCaseMainWindow(QMainWindow):
         if not self._current_result:
             return
         file_path, _ = QFileDialog.getSaveFileName(
-            self, "Export Flightcase BOM", "flightcase_calculation_bom.csv", "CSV Files (*.csv)"
+            self, "Exportar listado de materiales", "flightcase_listado_materiales.csv", "Archivos CSV (*.csv)"
         )
         if file_path:
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write("=== FLIGHTCASE CALCULATION REPORT ===\n\n")
-                    f.write(f"Total Wood Area (m2),{self._current_result.total_wood_area_m2:.4f}\n")
-                    f.write(f"Estimated Wood Weight (kg),{self._current_result.total_wood_weight_kg:.2f}\n")
-                    f.write(f"Standard Sheets (2440x1220),{self._current_result.standard_sheets_required:.2f}\n")
-                    f.write(f"Lid Alu Profile Required Length (mm),{self._current_result.total_lid_mating_profile_length_mm:.1f}\n")
-                    f.write(f"Edge Angle Profiles Required Length (mm),{self._current_result.total_edge_angle_profile_length_mm:.1f}\n\n")
+                    f.write("=== INFORME DE CÁLCULO DEL FLIGHTCASE ===\n\n")
+                    f.write(f"Superficie total de madera (m2),{self._current_result.total_wood_area_m2:.4f}\n")
+                    f.write(f"Peso estimado de la madera (kg),{self._current_result.total_wood_weight_kg:.2f}\n")
+                    f.write(f"Placas estándar (2440x1220),{self._current_result.standard_sheets_required:.2f}\n")
+                    f.write(f"Largo necesario de perfil de cierre (mm),{self._current_result.total_lid_mating_profile_length_mm:.1f}\n")
+                    f.write(f"Largo necesario de ángulos de borde (mm),{self._current_result.total_edge_angle_profile_length_mm:.1f}\n\n")
 
-                    f.write("=== WOOD PANELS CUT LIST ===\n")
-                    f.write("Panel Description,Category,Qty,Length_mm,Width_mm,Thickness_mm,TotalArea_m2,Notes\n")
+                    f.write("=== LISTA DE CORTES DE PANELES DE MADERA ===\n")
+                    f.write("Panel,Categoría,Cant.,Largo_mm,Ancho_mm,Espesor_mm,SuperficieTotal_m2,Notas\n")
                     for p in self._current_result.wood_cut_list:
-                        f.write(f'"{p.name}","{p.category}",{p.quantity},{p.length_mm:.1f},{p.width_mm:.1f},{p.thickness_mm:.1f},{p.total_area_m2:.4f},"{p.notes}"\n')
+                        f.write(f'"{tr(p.name)}","{tr(p.category)}",{p.quantity},{p.length_mm:.1f},{p.width_mm:.1f},{p.thickness_mm:.1f},{p.total_area_m2:.4f},"{tr(p.notes)}"\n')
 
-                    f.write("\n=== ALUMINUM PROFILES CUT LIST ===\n")
-                    f.write("Profile Description,Category,Qty,CutLength_mm,TotalLength_m,Notes\n")
+                    f.write("\n=== LISTA DE CORTES DE PERFILES DE ALUMINIO ===\n")
+                    f.write("Perfil,Categoría,Cant.,LargoCorte_mm,LargoTotal_m,Notas\n")
                     for p in self._current_result.alu_profiles_list:
-                        f.write(f'"{p.name}","{p.category}",{p.quantity},{p.length_mm:.1f},{p.total_length_m:.2f},"{p.notes}"\n')
+                        f.write(f'"{tr(p.name)}","{tr(p.category)}",{p.quantity},{p.length_mm:.1f},{p.total_length_m:.2f},"{tr(p.notes)}"\n')
 
-                QMessageBox.information(self, "Export Successful", f"Full report exported to:\n{file_path}")
+                QMessageBox.information(self, "Exportación correcta", f"Informe completo exportado a:\n{file_path}")
             except Exception as e:
-                QMessageBox.critical(self, "Export Error", f"Failed to save CSV file:\n{str(e)}")
+                QMessageBox.critical(self, "Error de exportación", f"No se pudo guardar el archivo CSV:\n{str(e)}")
 
 
 def run_app() -> int:
