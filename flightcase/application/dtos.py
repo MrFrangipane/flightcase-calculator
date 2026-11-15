@@ -5,6 +5,8 @@ import json
 from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any
 
+from ..production.quote import ProductionSettings
+
 
 @dataclass
 class InsideWallDTO:
@@ -132,6 +134,7 @@ class CaseInputDTO:
     self_cut_lid: bool = False
     walls: List[InsideWallDTO] = field(default_factory=list)
     ui_settings: UISettingsDTO = field(default_factory=UISettingsDTO)
+    production: ProductionSettings = field(default_factory=ProductionSettings)
 
     def __init__(
         self,
@@ -154,6 +157,7 @@ class CaseInputDTO:
         wood_material: str = "Birch plywood 9mm",
         wood_density: float = 700.0,
         wood_price: float = 18.50,
+        production: Optional[ProductionSettings] = None,
     ):
         self.title = str(title) if title is not None else ""
         self.wood_thickness = wood_thickness
@@ -166,6 +170,7 @@ class CaseInputDTO:
         self.self_cut_lid = self_cut_lid
         self.walls = list(walls) if walls is not None else []
         self.ui_settings = ui_settings if ui_settings is not None else UISettingsDTO()
+        self.production = production if production is not None else ProductionSettings()
 
         if inner_length is not None:
             self.inner_length = inner_length
@@ -230,6 +235,7 @@ class CaseInputDTO:
             "self_cut_lid": self.self_cut_lid,
             "walls": [w.to_dict() for w in self.walls],
             "ui_settings": self.ui_settings.to_dict() if self.ui_settings else UISettingsDTO().to_dict(),
+            "production": self.production.to_dict(),
         }
 
     @classmethod
@@ -290,6 +296,7 @@ class CaseInputDTO:
             self_cut_lid=bool(data.get("self_cut_lid", False)),
             walls=walls,
             ui_settings=ui_settings,
+            production=ProductionSettings.from_dict(data.get("production")),
         )
 
     def to_json(self, indent: int = 2) -> str:

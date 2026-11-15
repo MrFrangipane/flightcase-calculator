@@ -7,6 +7,7 @@ from .cutlist_table import CutListTableWidget
 from .alu_profiles_widget import AluProfilesWidget
 from .svg_diagram_widget import WoodPanelsSvgWidget
 from .wood_types_widget import WoodTypesWidget
+from .costs_widget import CostsWidget, CatalogWidget
 
 __all__ = [
     "Schema3DWidget",
@@ -17,4 +18,6 @@ __all__ = [
     "AluProfilesWidget",
     "WoodPanelsSvgWidget",
     "WoodTypesWidget",
+    "CostsWidget",
+    "CatalogWidget",
 ]
