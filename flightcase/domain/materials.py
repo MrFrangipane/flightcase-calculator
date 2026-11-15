@@ -6,7 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 
-_DEFAULT_WOOD_TYPES_FILE = Path(__file__).resolve().parent.parent / "resources" / "wood_types.json"
+from ..paths import editable_resource, user_resource
+
+_WOOD_TYPES_NAME = "wood_types.json"
 
 
 @dataclass
@@ -69,7 +71,7 @@ class WoodMaterial:
 
 def load_wood_materials(file_path: Optional[Path] = None) -> List[WoodMaterial]:
     """Loads wood material specifications from the JSON resource file."""
-    path = file_path if file_path is not None else _DEFAULT_WOOD_TYPES_FILE
+    path = file_path if file_path is not None else editable_resource(_WOOD_TYPES_NAME)
     if path.is_file():
         try:
             content = path.read_text(encoding="utf-8")
@@ -96,7 +98,7 @@ def load_wood_materials(file_path: Optional[Path] = None) -> List[WoodMaterial]:
 
 def save_wood_materials(materials: List[WoodMaterial], file_path: Optional[Path] = None) -> None:
     """Saves wood material specifications to the JSON resource file."""
-    path = file_path if file_path is not None else _DEFAULT_WOOD_TYPES_FILE
+    path = file_path if file_path is not None else user_resource(_WOOD_TYPES_NAME)
     data = [mat.to_dict() for mat in materials]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")

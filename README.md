@@ -68,7 +68,16 @@ Herramienta de escritorio de diseño y cálculo (CAD/CAM) hecha con Python, PySi
 
 ## Primeros pasos
 
-### 1. Instalación
+### Instalar en Windows o Mac (sin Python)
+
+Los instaladores se generan solos en GitHub (*Actions → Instaladores*). Para publicar una versión, creá una etiqueta `vX.Y.Z`: aparecen en *Releases*.
+
+- **Windows**: `FlightcaseCalculator-X.Y.Z-Windows-Instalador.exe`. Si aparece «Windows protegió su PC», tocá *Más información → Ejecutar de todas formas* (el instalador todavía no está firmado).
+- **Mac**: `…-macOS-AppleSilicon.dmg` (M1 o más nuevo) o `…-macOS-Intel.dmg`. Arrastrá la app a Aplicaciones. La primera vez, clic derecho sobre la app → *Abrir* (todavía no está firmada por Apple).
+
+Los catálogos que edites (maderas, herrajes, perfiles) se guardan en tu carpeta de usuario (`%APPDATA%\FlightcaseCalculator` en Windows, `~/Library/Application Support/FlightcaseCalculator` en Mac), así que no se pierden al actualizar.
+
+### 1. Instalación para desarrollo
 
 Cloná o descargá el repositorio e instalá las dependencias:
 
