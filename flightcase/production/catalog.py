@@ -7,9 +7,10 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-_RESOURCES = Path(__file__).resolve().parent.parent / "resources"
-DEFAULT_HARDWARE_FILE = _RESOURCES / "hardware.json"
-DEFAULT_ALU_PROFILES_FILE = _RESOURCES / "alu_profiles.json"
+from ..paths import editable_resource, user_resource
+
+HARDWARE_NAME = "hardware.json"
+ALU_PROFILES_NAME = "alu_profiles.json"
 
 # Tipos de perfil que usa el cálculo de cortes (ver FlightCase.calculate_alu_profiles)
 PROFILE_KIND_LID_MALE = "lid_male"
@@ -76,21 +77,25 @@ def _load_list(path: Path) -> List[Dict[str, Any]]:
 
 
 def load_hardware(path: Optional[Path] = None) -> List[HardwareItem]:
-    return [HardwareItem.from_dict(d) for d in _load_list(path or DEFAULT_HARDWARE_FILE)]
+    return [HardwareItem.from_dict(d) for d in _load_list(path or editable_resource(HARDWARE_NAME))]
 
 
 def save_hardware(items: List[HardwareItem], path: Optional[Path] = None) -> None:
-    (path or DEFAULT_HARDWARE_FILE).write_text(
+    path = path or user_resource(HARDWARE_NAME)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
         json.dumps([i.to_dict() for i in items], indent=2, ensure_ascii=False), encoding="utf-8"
     )
 
 
 def load_alu_profiles(path: Optional[Path] = None) -> List[AluProfileSpec]:
-    return [AluProfileSpec.from_dict(d) for d in _load_list(path or DEFAULT_ALU_PROFILES_FILE)]
+    return [AluProfileSpec.from_dict(d) for d in _load_list(path or editable_resource(ALU_PROFILES_NAME))]
 
 
 def save_alu_profiles(items: List[AluProfileSpec], path: Optional[Path] = None) -> None:
-    (path or DEFAULT_ALU_PROFILES_FILE).write_text(
+    path = path or user_resource(ALU_PROFILES_NAME)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
         json.dumps([i.to_dict() for i in items], indent=2, ensure_ascii=False), encoding="utf-8"
     )
 

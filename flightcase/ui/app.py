@@ -4,7 +4,7 @@ from __future__ import annotations
 import sys
 import os
 from typing import Optional, List
-from PySide6.QtCore import Qt, QSettings
+from PySide6.QtCore import Qt, QSettings, QObject, QEvent
 from PySide6.QtGui import QIcon, QAction, QCloseEvent, QSurfaceFormat
 from PySide6.QtWidgets import (
     QApplication,
@@ -677,5 +677,23 @@ def run_app() -> int:
 
     app.setStyleSheet(DARK_THEME_QSS)
     window = FlightCaseMainWindow()
+
+    # Abrir un proyecto pasado al ejecutar (doble clic en un .fcproj en Windows)
+    for arg in sys.argv[1:]:
+        if arg.lower().endswith((".fcproj", ".json")) and os.path.isfile(arg):
+            window._load_project_file(arg)
+            break
+
+    # macOS entrega los archivos abiertos desde el Finder como QFileOpenEvent
+    class _FileOpenFilter(QObject):
+        def eventFilter(self, obj, event):
+            if event.type() == QEvent.FileOpen and event.file():
+                window._load_project_file(event.file())
+                return True
+            return False
+
+    file_filter = _FileOpenFilter(app)
+    app.installEventFilter(file_filter)
+
     window.show()
     return app.exec()
