@@ -1,0 +1,472 @@
+{
+ "origen": "mi_case.scad",
+ "params": {
+  "int_ancho": 600,
+  "int_prof": 400,
+  "int_alto_cuerpo": 250,
+  "int_alto_tapa": 80,
+  "placa_esp": 9,
+  "placa_material": "Fenólico 9 mm",
+  "sistema": "angulo",
+  "color_placa": "Black",
+  "angulo_ala": 30,
+  "esq_pata": 45,
+  "esq_descuento": 25,
+  "manijas": true,
+  "ruedas": 0,
+  "encastres": false,
+  "abrir_tapa": 0,
+  "bisagras": 3,
+  "topes": 1,
+  "pies": 4,
+  "ref_pie": "08-4907"
+ },
+ "datos": {
+  "INFO": [
+   [
+    "sistema",
+    "angulo"
+   ],
+   [
+    "material",
+    "Fenólico 9 mm"
+   ],
+   [
+    "espesor",
+    "9"
+   ],
+   [
+    "color",
+    "Black",
+    "Black"
+   ],
+   [
+    "interior",
+    "600",
+    "400",
+    "250",
+    "80"
+   ],
+   [
+    "exterior",
+    "618",
+    "418",
+    "259",
+    "89"
+   ],
+   [
+    "espuma",
+    "0"
+   ],
+   [
+    "tapa_abatible",
+    "1",
+    "1"
+   ],
+   [
+    "tipo",
+    "1",
+    "vertical",
+    "0",
+    "259",
+    "89"
+   ],
+   [
+    "mundo",
+    "618",
+    "418",
+    "348"
+   ],
+   [
+    "barra",
+    "6000",
+    "3"
+   ],
+   [
+    "montaje",
+    "100",
+    "4",
+    "25",
+    "1",
+    "2",
+    "0",
+    "2",
+    "0",
+    "3",
+    "1",
+    "1"
+   ],
+   [
+    "encastres",
+    "0",
+    "30"
+   ],
+   [
+    "ruedas",
+    "0",
+    "15",
+    "8.5",
+    "80",
+    "60"
+   ],
+   [
+    "placa",
+    "2440",
+    "1220",
+    "4",
+    "10",
+    ""
+   ],
+   [
+    "cantidad",
+    "1"
+   ],
+   [
+    "cierre",
+    "0",
+    "",
+    "20",
+    "20",
+    "6",
+    "3",
+    "1.5",
+    "0",
+    "9"
+   ],
+   [
+    "descuento",
+    "0"
+   ]
+  ],
+  "PANEL": [
+   [
+    "piso",
+    "Piso (cuerpo)",
+    "cuerpo",
+    "600",
+    "400"
+   ],
+   [
+    "cuerpo_frente",
+    "Frente cuerpo",
+    "cuerpo",
+    "618",
+    "253"
+   ],
+   [
+    "cuerpo_trasera",
+    "Trasera cuerpo",
+    "cuerpo",
+    "618",
+    "253"
+   ],
+   [
+    "cuerpo_izq",
+    "Lateral izq. cuerpo",
+    "cuerpo",
+    "400",
+    "253"
+   ],
+   [
+    "cuerpo_der",
+    "Lateral der. cuerpo",
+    "cuerpo",
+    "400",
+    "253"
+   ],
+   [
+    "techo",
+    "Techo (tapa)",
+    "tapa",
+    "600",
+    "400"
+   ],
+   [
+    "tapa_frente",
+    "Frente tapa",
+    "tapa",
+    "618",
+    "86"
+   ],
+   [
+    "tapa_trasera",
+    "Trasera tapa",
+    "tapa",
+    "618",
+    "86"
+   ],
+   [
+    "tapa_izq",
+    "Lateral izq. tapa",
+    "tapa",
+    "400",
+    "86"
+   ],
+   [
+    "tapa_der",
+    "Lateral der. tapa",
+    "tapa",
+    "400",
+    "86"
+   ]
+  ],
+  "CALADO": [
+   [
+    "cuerpo_izq",
+    "manija",
+    "200",
+    "173",
+    "170",
+    "100",
+    "10"
+   ],
+   [
+    "cuerpo_der",
+    "manija",
+    "200",
+    "173",
+    "170",
+    "100",
+    "10"
+   ]
+  ],
+  "MARCA": [
+   [
+    "cuerpo_frente",
+    "cierre",
+    "100",
+    "239",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "100",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "518",
+    "239",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "518",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "bisagra",
+    "100",
+    "239",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "bisagra",
+    "100",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "bisagra",
+    "309",
+    "239",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "bisagra",
+    "309",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "bisagra",
+    "518",
+    "239",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "bisagra",
+    "518",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "piso",
+    "pie",
+    "65",
+    "65",
+    "38",
+    "38",
+    "pie"
+   ],
+   [
+    "piso",
+    "pie",
+    "65",
+    "335",
+    "38",
+    "38",
+    "pie"
+   ],
+   [
+    "piso",
+    "pie",
+    "535",
+    "65",
+    "38",
+    "38",
+    "pie"
+   ],
+   [
+    "piso",
+    "pie",
+    "535",
+    "335",
+    "38",
+    "38",
+    "pie"
+   ]
+  ],
+  "PERFIL": [
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas a lo ancho (piso y techo)",
+    "568",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas a lo profundo (piso y techo)",
+    "368",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Verticales cuerpo",
+    "214",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Verticales tapa",
+    "44",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Frente y trasera (punta larga)",
+    "621",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Laterales (punta larga)",
+    "421",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Frente y trasera (punta larga)",
+    "621",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Laterales (punta larga)",
+    "421",
+    "2",
+    "45/45",
+    ""
+   ]
+  ],
+  "HERRAJE": [
+   [
+    "Esquinero bola",
+    "8",
+    "pata 45 mm",
+    ""
+   ],
+   [
+    "Cierre mariposa",
+    "2",
+    "frente",
+    ""
+   ],
+   [
+    "Manija embutida",
+    "2",
+    "calado 170x100",
+    ""
+   ],
+   [
+    "Pie de goma 38x15 mm",
+    "4",
+    "Ø38 x 15 mm",
+    "08-4907"
+   ],
+   [
+    "Bisagra",
+    "3",
+    "en la trasera",
+    ""
+   ],
+   [
+    "Tope de tapa",
+    "1",
+    "sostiene la tapa abierta",
+    ""
+   ],
+   [
+    "Remache standard 4x14",
+    "240",
+    "estimado: paso 100 mm, +10%",
+    "04-042"
+   ]
+  ]
+ }
+}

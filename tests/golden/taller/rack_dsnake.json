@@ -1,0 +1,866 @@
+{
+ "origen": "rack_dsnake.scad",
+ "params": {
+  "tapas": 2,
+  "orientacion": "frontal",
+  "paredes_enteras": "frente",
+  "paredes_enteras_cuerpo": "frente",
+  "extremos_cubren": true,
+  "descuento_entre": 0,
+  "cantidad_cases": 1,
+  "placa_esp": 10,
+  "placa_material": "Contrachapado 10 mm",
+  "int_ancho": 580,
+  "int_prof": 270,
+  "int_alto_cuerpo": 510,
+  "int_alto_tapa": 90,
+  "angulo_ala": 32,
+  "angulo_esp": 2,
+  "cierre_m_sup": 4,
+  "cierre_h_sup": 4,
+  "cierre_hibrido": true,
+  "ref_cierre_macho": "08-6203",
+  "cierre_m_alto": 25,
+  "cierre_h_alto": 25,
+  "cierre_saliente": 1.5,
+  "manijas": true,
+  "manijas_n": 1,
+  "manija_pos": 0.5,
+  "cierres_laterales": "si",
+  "cierres_frente_n": -1,
+  "cierres_lateral_n": 1,
+  "color_placa": "Black",
+  "refuerzos": 1,
+  "ruedas": 4,
+  "ref_rueda": "08-372151",
+  "ref_rueda_freno": "08-372191",
+  "rueda_frenos": 2,
+  "base_ruedas": [
+   590,
+   500,
+   18
+  ],
+  "base_material": "Fenólico 18 mm",
+  "base_pasantes": true
+ },
+ "datos": {
+  "INFO": [
+   [
+    "sistema",
+    "angulo"
+   ],
+   [
+    "material",
+    "Contrachapado 10 mm"
+   ],
+   [
+    "espesor",
+    "10"
+   ],
+   [
+    "color",
+    "Black",
+    "Black"
+   ],
+   [
+    "interior",
+    "580",
+    "270",
+    "510",
+    "90"
+   ],
+   [
+    "exterior",
+    "600",
+    "290",
+    "510",
+    "100"
+   ],
+   [
+    "espuma",
+    "0"
+   ],
+   [
+    "rebaje",
+    "3",
+    "2"
+   ],
+   [
+    "tapa_abatible",
+    "0",
+    "0"
+   ],
+   [
+    "tipo",
+    "2",
+    "frontal",
+    "100",
+    "510",
+    "100"
+   ],
+   [
+    "mundo",
+    "600",
+    "710",
+    "290"
+   ],
+   [
+    "barra",
+    "6000",
+    "3"
+   ],
+   [
+    "montaje",
+    "100",
+    "4.8",
+    "25",
+    "1",
+    "2",
+    "1",
+    "4",
+    "0",
+    "0",
+    "0",
+    "1"
+   ],
+   [
+    "encastres",
+    "0",
+    "30"
+   ],
+   [
+    "ruedas",
+    "4",
+    "145",
+    "9",
+    "80",
+    "60"
+   ],
+   [
+    "placa",
+    "2440",
+    "1220",
+    "4",
+    "10",
+    ""
+   ],
+   [
+    "cantidad",
+    "1"
+   ],
+   [
+    "cierre",
+    "1",
+    "08-6203",
+    "25",
+    "25",
+    "4",
+    "4",
+    "1.5",
+    "21",
+    "10"
+   ],
+   [
+    "descuento",
+    "0"
+   ]
+  ],
+  "PANEL": [
+   [
+    "cuerpo_frente",
+    "Piso cuerpo",
+    "cuerpo",
+    "600",
+    "502"
+   ],
+   [
+    "cuerpo_trasera",
+    "Techo cuerpo",
+    "cuerpo",
+    "600",
+    "502"
+   ],
+   [
+    "cuerpo_izq",
+    "Lateral izq. cuerpo",
+    "cuerpo",
+    "270",
+    "502"
+   ],
+   [
+    "cuerpo_der",
+    "Lateral der. cuerpo",
+    "cuerpo",
+    "270",
+    "502"
+   ],
+   [
+    "techo",
+    "Cara tapa delantera",
+    "tapa",
+    "600",
+    "290"
+   ],
+   [
+    "tapa_frente",
+    "Piso tapa del.",
+    "tapa",
+    "600",
+    "86"
+   ],
+   [
+    "tapa_trasera",
+    "Techo tapa del.",
+    "tapa",
+    "600",
+    "86"
+   ],
+   [
+    "tapa_izq",
+    "Lateral izq. tapa del.",
+    "tapa",
+    "270",
+    "86"
+   ],
+   [
+    "tapa_der",
+    "Lateral der. tapa del.",
+    "tapa",
+    "270",
+    "86"
+   ],
+   [
+    "base2",
+    "Cara tapa trasera",
+    "tapa2",
+    "600",
+    "290"
+   ],
+   [
+    "tapa2_frente",
+    "Piso tapa tras.",
+    "tapa2",
+    "600",
+    "86"
+   ],
+   [
+    "tapa2_trasera",
+    "Techo tapa tras.",
+    "tapa2",
+    "600",
+    "86"
+   ],
+   [
+    "tapa2_izq",
+    "Lateral izq. tapa tras.",
+    "tapa2",
+    "270",
+    "86"
+   ],
+   [
+    "tapa2_der",
+    "Lateral der. tapa tras.",
+    "tapa2",
+    "270",
+    "86"
+   ],
+   [
+    "base_ruedas",
+    "Base de ruedas",
+    "cuerpo",
+    "590",
+    "500"
+   ]
+  ],
+  "CALADO": [
+   [
+    "cuerpo_izq",
+    "manija",
+    "135",
+    "251",
+    "100",
+    "170",
+    "10"
+   ],
+   [
+    "cuerpo_der",
+    "manija",
+    "135",
+    "251",
+    "100",
+    "170",
+    "10"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "61.5",
+    "35.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "61.5",
+    "95.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "141.5",
+    "35.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "141.5",
+    "95.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "61.5",
+    "406.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "61.5",
+    "466.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "141.5",
+    "406.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "141.5",
+    "466.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "458.5",
+    "35.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "458.5",
+    "95.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "538.5",
+    "35.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "538.5",
+    "95.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "458.5",
+    "406.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "458.5",
+    "466.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "538.5",
+    "406.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "cuerpo_frente",
+    "agujero",
+    "538.5",
+    "466.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "56.5",
+    "34.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "56.5",
+    "94.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "136.5",
+    "34.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "136.5",
+    "94.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "56.5",
+    "405.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "56.5",
+    "465.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "136.5",
+    "405.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "136.5",
+    "465.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "453.5",
+    "34.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "453.5",
+    "94.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "533.5",
+    "34.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "533.5",
+    "94.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "453.5",
+    "405.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "453.5",
+    "465.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "533.5",
+    "405.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "agujero",
+    "533.5",
+    "465.5",
+    "9",
+    "9",
+    "4.5"
+   ],
+   [
+    "base_ruedas",
+    "rebaje",
+    "21",
+    "50",
+    "42",
+    "64",
+    "0"
+   ],
+   [
+    "base_ruedas",
+    "rebaje",
+    "21",
+    "450",
+    "42",
+    "64",
+    "0"
+   ],
+   [
+    "base_ruedas",
+    "rebaje",
+    "569",
+    "50",
+    "42",
+    "64",
+    "0"
+   ],
+   [
+    "base_ruedas",
+    "rebaje",
+    "569",
+    "450",
+    "42",
+    "64",
+    "0"
+   ]
+  ],
+  "MARCA": [
+   [
+    "cuerpo_izq",
+    "cierre",
+    "135",
+    "481",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_izq",
+    "cierre",
+    "135",
+    "21",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_der",
+    "cierre",
+    "135",
+    "481",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_der",
+    "cierre",
+    "135",
+    "21",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_izq",
+    "cierre",
+    "135",
+    "21",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "tapa2_izq",
+    "cierre",
+    "135",
+    "65",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "cuerpo_der",
+    "cierre",
+    "135",
+    "21",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "tapa2_der",
+    "cierre",
+    "135",
+    "65",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "base_ruedas",
+    "rueda",
+    "96.5",
+    "64.5",
+    "100",
+    "85",
+    "freno"
+   ],
+   [
+    "base_ruedas",
+    "rueda",
+    "96.5",
+    "435.5",
+    "100",
+    "85",
+    "freno"
+   ],
+   [
+    "base_ruedas",
+    "rueda",
+    "493.5",
+    "64.5",
+    "100",
+    "85",
+    "placa rueda"
+   ],
+   [
+    "base_ruedas",
+    "rueda",
+    "493.5",
+    "435.5",
+    "100",
+    "85",
+    "placa rueda"
+   ]
+  ],
+  "PERFIL": [
+   [
+    "Ángulo 32x32x2",
+    "Aristas horizontales de las caras",
+    "550",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 32x32x2",
+    "Aristas verticales de las caras",
+    "240",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 32x32x2",
+    "Aristas a lo profundo cuerpo",
+    "460",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 32x32x2",
+    "Aristas a lo profundo tapa del.",
+    "50",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 32x32x2",
+    "Aristas a lo profundo tapa tras.",
+    "50",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Perfil híbrido",
+    "Lados horizontales (punta larga)",
+    "603",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Perfil híbrido",
+    "Lados verticales (punta larga)",
+    "293",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Perfil híbrido",
+    "Lados horizontales (punta larga)",
+    "603",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Perfil híbrido",
+    "Lados verticales (punta larga)",
+    "293",
+    "4",
+    "45/45",
+    ""
+   ]
+  ],
+  "HERRAJE": [
+   [
+    "Esquinero bola",
+    "8",
+    "pata 45 mm",
+    ""
+   ],
+   [
+    "Cierre mariposa",
+    "4",
+    "laterales",
+    ""
+   ],
+   [
+    "Manija embutida",
+    "2",
+    "calado 170x100",
+    ""
+   ],
+   [
+    "Rueda giratoria 100 mm azul y freno",
+    "2",
+    "agujeros 80x60",
+    "08-372191"
+   ],
+   [
+    "Rueda giratoria 100 mm azul",
+    "2",
+    "agujeros 80x60",
+    "08-372151"
+   ],
+   [
+    "Bulón M8 + arandela + tuerca autofrenante",
+    "16",
+    "para agujero Ø9, largo ≥ 45 mm",
+    ""
+   ],
+   [
+    "Refuerzo de esquina en L",
+    "8",
+    "esquinas de la junta de cierre (cuerpo)",
+    ""
+   ],
+   [
+    "Remache standard 4,8x16",
+    "357",
+    "estimado: paso 100 mm, +10%",
+    "04-048"
+   ]
+  ],
+  "PANELMAT": [
+   [
+    "base_ruedas",
+    "Fenólico 18 mm",
+    "18"
+   ]
+  ],
+  "AVISO": [
+   [
+    "No hay remache de Ø4 con largo suficiente (≥ 15 mm): se eligió Remache standard 4,8x16. Perforá con la mecha de ese diámetro."
+   ]
+  ]
+ }
+}

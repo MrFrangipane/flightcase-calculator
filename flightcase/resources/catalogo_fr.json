@@ -1,0 +1,1286 @@
+[
+ {
+  "ref": "08-4018",
+  "categoria": "esquinero",
+  "nombre": "Cantonera apilable de plástico negro",
+  "datos": {
+   "pata": 50,
+   "paso": 0,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4072",
+  "categoria": "esquinero",
+  "nombre": "Cantonera apilable de plástico negro",
+  "datos": {
+   "pata": 45,
+   "paso": 0,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4013",
+  "categoria": "esquinero",
+  "nombre": "Cantonera apilable de plástico negro",
+  "datos": {
+   "pata": 50,
+   "paso": 0,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4000",
+  "categoria": "esquinero",
+  "nombre": "Cantonera cuadrada pequeña",
+  "datos": {
+   "pata": 30,
+   "paso": 0,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4050",
+  "categoria": "esquinero",
+  "nombre": "Cantonera plata 3 patas cromo",
+  "datos": {
+   "pata": 40,
+   "paso": 0,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4058",
+  "categoria": "esquinero",
+  "nombre": "Cantonera con paso de perfil 22 mm cromo",
+  "datos": {
+   "pata": 50,
+   "paso": 22,
+   "remaches": 3
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4112",
+  "categoria": "esquinero",
+  "nombre": "Cantonera bola pequeña 3 patas 6 orificios",
+  "datos": {
+   "pata": 40,
+   "paso": 0,
+   "remaches": 6
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-4113",
+  "categoria": "esquinero",
+  "nombre": "Cantonera bola pequeña 3 patas paso perfil 22 mm",
+  "datos": {
+   "pata": 40,
+   "paso": 22,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-41076",
+  "categoria": "esquinero",
+  "nombre": "Cantonera bola grande 3 patas paso perfil 30 mm",
+  "datos": {
+   "pata": 65,
+   "paso": 30,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-4040",
+  "categoria": "escuadra",
+  "nombre": "Escuadra de 19x30 cromo",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4054",
+  "categoria": "escuadra",
+  "nombre": "Escuadra de 47x52 con paso perfil",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-40403",
+  "categoria": "escuadra",
+  "nombre": "Escuadra de 40x34",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-40406",
+  "categoria": "escuadra",
+  "nombre": "Refuerzo en L",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-40407",
+  "categoria": "escuadra",
+  "nombre": "Escuadra de 30x24",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-40432",
+  "categoria": "escuadra",
+  "nombre": "Escuadra de 40x29",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4145",
+  "categoria": "escuadra",
+  "nombre": "Cantonera tapa embutida",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4146",
+  "categoria": "escuadra",
+  "nombre": "Cantonera cuadrada tapa embutida",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-2709",
+  "categoria": "tope",
+  "nombre": "Tope de tapa mediano sin tapa perfil",
+  "datos": {
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-27095",
+  "categoria": "tope",
+  "nombre": "Tope de tapa mediano con bisagra integrada",
+  "datos": {
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-27083",
+  "categoria": "tope",
+  "nombre": "Tope de tapa grande con paso de perfil",
+  "datos": {
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-270836",
+  "categoria": "tope",
+  "nombre": "Tope de tapa grande con paso de perfil y bisagra",
+  "datos": {
+   "remaches": 10
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-2251",
+  "categoria": "bisagra",
+  "nombre": "Bisagra desmontable grande cinc",
+  "datos": {
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-2524",
+  "categoria": "bisagra",
+  "nombre": "Bisagra con tope grande cinc",
+  "datos": {
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-2602",
+  "categoria": "bisagra",
+  "nombre": "Bisagra mediana cinc",
+  "datos": {
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-2605",
+  "categoria": "bisagra",
+  "nombre": "Bisagra de piano acero taladrado 1,83 m",
+  "datos": {
+   "largo": 1830
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-2640",
+  "categoria": "bisagra",
+  "nombre": "Bisagra en L acero galvanizado",
+  "datos": {
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-1600",
+  "categoria": "cierre",
+  "nombre": "Cierre mediano cromado",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 6
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-1602",
+  "categoria": "cierre",
+  "nombre": "Cierre grande con paso candado",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 6
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-1909",
+  "categoria": "cierre",
+  "nombre": "Cierre mediano cromo con llave",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 6
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-17290C",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa mediano sin base",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 6
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-17250S",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa grande sin paso perfil prof. 14 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    106,
+    100
+   ],
+   "radio": 10,
+   "prof": 14,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17251S",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa grande con paso perfil prof. 14 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    106,
+    100
+   ],
+   "radio": 10,
+   "prof": 14,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17373S",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa pequeño prof. 10 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    76,
+    70
+   ],
+   "radio": 8,
+   "prof": 10,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17295",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa mediano sin paso perfil prof. 9 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    92,
+    86
+   ],
+   "radio": 8,
+   "prof": 9,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17284",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa mediano sin paso perfil prof. 12 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    92,
+    86
+   ],
+   "radio": 8,
+   "prof": 12,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17290S",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa con llave sin paso perfil prof. 14 mm",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    92,
+    86
+   ],
+   "radio": 8,
+   "prof": 14,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-17290P",
+  "categoria": "cierre",
+  "nombre": "Cierre de mariposa mediano prof. 14 mm con paso candado",
+  "datos": {
+   "tipo": "embutido",
+   "corte": [
+    92,
+    86
+   ],
+   "radio": 8,
+   "prof": 14,
+   "remaches": 8
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-372081",
+  "categoria": "rueda",
+  "nombre": "Rueda giratoria 80 mm azul",
+  "datos": {
+   "diametro": 80,
+   "alto": 103,
+   "placa": [
+    100,
+    85
+   ],
+   "agujeros": [
+    80,
+    60
+   ],
+   "agujero_d": 9,
+   "freno": 0
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-372091",
+  "categoria": "rueda",
+  "nombre": "Rueda giratoria 80 mm azul y freno",
+  "datos": {
+   "diametro": 80,
+   "alto": 103,
+   "placa": [
+    100,
+    85
+   ],
+   "agujeros": [
+    80,
+    60
+   ],
+   "agujero_d": 9,
+   "freno": 1
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-372151",
+  "categoria": "rueda",
+  "nombre": "Rueda giratoria 100 mm azul",
+  "datos": {
+   "diametro": 100,
+   "alto": 125,
+   "placa": [
+    100,
+    85
+   ],
+   "agujeros": [
+    80,
+    60
+   ],
+   "agujero_d": 9,
+   "freno": 0
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-372191",
+  "categoria": "rueda",
+  "nombre": "Rueda giratoria 100 mm azul y freno",
+  "datos": {
+   "diametro": 100,
+   "alto": 125,
+   "placa": [
+    100,
+    85
+   ],
+   "agujeros": [
+    80,
+    60
+   ],
+   "agujero_d": 9,
+   "freno": 1
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-37223",
+  "categoria": "rueda",
+  "nombre": "Rueda giratoria 100 mm azul (Blickle)",
+  "datos": {
+   "diametro": 100,
+   "alto": 128,
+   "placa": [
+    100,
+    85
+   ],
+   "agujeros": [
+    80,
+    60
+   ],
+   "agujero_d": 9,
+   "freno": 0
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-3780",
+  "categoria": "rueda_otra",
+  "nombre": "Rueda blanda para montaje en ángulo 50 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-374505",
+  "categoria": "rueda_otra",
+  "nombre": "Rueda blanda empotrada para esquina 75 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-38083",
+  "categoria": "plato",
+  "nombre": "Base empotrable de acero galvanizado (plato para ruedas)",
+  "datos": {
+   "exterior": [
+    136,
+    90
+   ],
+   "corte": [
+    120,
+    74
+   ],
+   "radio": 8,
+   "prof": 27,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-34082",
+  "categoria": "manija",
+  "nombre": "Asa retráctil mediana con resorte, base 8 mm",
+  "datos": {
+   "tipo": "embutida",
+   "exterior": [
+    154,
+    101
+   ],
+   "corte": [
+    134,
+    81
+   ],
+   "radio": 8,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-3412",
+  "categoria": "manija",
+  "nombre": "Asa retráctil pequeña con resorte",
+  "datos": {
+   "tipo": "embutida",
+   "exterior": [
+    120,
+    80
+   ],
+   "corte": [
+    102,
+    62
+   ],
+   "radio": 8,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-340822",
+  "categoria": "manija",
+  "nombre": "Asa retráctil pequeña con resorte, base 8 mm",
+  "datos": {
+   "tipo": "embutida",
+   "exterior": [
+    122,
+    78
+   ],
+   "corte": [
+    104,
+    60
+   ],
+   "radio": 8,
+   "remaches": 6
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-3417",
+  "categoria": "manija",
+  "nombre": "Asa piel para maletín negra",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 4
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-3426",
+  "categoria": "manija",
+  "nombre": "Asa tipo correa de plástico negra",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 4
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-34331",
+  "categoria": "manija",
+  "nombre": "Asa de plástico para maletín negro",
+  "datos": {
+   "tipo": "superficie",
+   "remaches": 4
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-3476031",
+  "categoria": "extra",
+  "nombre": "Asa telescópica escamoteable 2 ext. negra",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4906",
+  "categoria": "pie",
+  "nombre": "Pie de goma 38x10 mm",
+  "datos": {
+   "diametro": 38,
+   "alto": 10
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-4907",
+  "categoria": "pie",
+  "nombre": "Pie de goma 38x15 mm",
+  "datos": {
+   "diametro": 38,
+   "alto": 15
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-4909",
+  "categoria": "pie",
+  "nombre": "Pie de goma 38x20 mm",
+  "datos": {
+   "diametro": 38,
+   "alto": 20
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-4945",
+  "categoria": "pie",
+  "nombre": "Pie de plástico 62x31x24 mm",
+  "datos": {
+   "diametro": 62,
+   "alto": 24
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-6105",
+  "categoria": "angulo",
+  "nombre": "Perfil ángulo de aluminio 30x30 mm",
+  "datos": {
+   "ala": 30,
+   "esp": 1.5
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-6209",
+  "categoria": "angulo",
+  "nombre": "Perfil ángulo de aluminio 20x20 mm",
+  "datos": {
+   "ala": 20,
+   "esp": 1.5
+  },
+  "verificado": false
+ },
+ {
+  "ref": "08-6304",
+  "categoria": "hibrido",
+  "nombre": "Perfil híbrido de aluminio de 9,5 mm",
+  "datos": {
+   "placa": 9.5
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-6203",
+  "categoria": "hibrido",
+  "nombre": "Perfil híbrido de aluminio de 10 mm (6203)",
+  "datos": {
+   "placa": 10,
+   "canal": 21,
+   "junta": 8,
+   "ala_corta": 22.5,
+   "ala_larga": 27.5,
+   "pared": 1.5
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-6201",
+  "categoria": "hibrido",
+  "nombre": "Perfil híbrido de aluminio de 11 mm",
+  "datos": {
+   "placa": 11
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-Q6502M",
+  "categoria": "tapa_m",
+  "nombre": "Perfil de tapa macho (EasyCase)",
+  "datos": {
+   "placa": 7
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-Q6502F",
+  "categoria": "tapa_h",
+  "nombre": "Perfil de tapa hembra (EasyCase)",
+  "datos": {
+   "placa": 7
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-Q6504",
+  "categoria": "extra",
+  "nombre": "Perfil lindmaker hembra",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-Q6506",
+  "categoria": "extra",
+  "nombre": "Perfil casemaker 30x30",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-6230",
+  "categoria": "extra",
+  "nombre": "Perfil separador de aluminio de 9,5 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-6240",
+  "categoria": "extra",
+  "nombre": "Perfil U de aluminio de 9,5 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-6145",
+  "categoria": "extra",
+  "nombre": "Perfil para tapa embutida",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-Q4504AG",
+  "categoria": "extra",
+  "nombre": "Cantonera para lindmaker gris aluminio",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4506AG",
+  "categoria": "extra",
+  "nombre": "Cantonera para casemaker gris aluminio",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-4502MAG",
+  "categoria": "extra",
+  "nombre": "Cantonera para perfil de tapa macho",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-Q4502FAG",
+  "categoria": "extra",
+  "nombre": "Cantonera para perfil de tapa hembra",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-001",
+  "categoria": "placa",
+  "nombre": "Tablero abedul 2 caras revestidas 9,6 mm",
+  "datos": {
+   "esp": 9.6,
+   "largo": 2500,
+   "ancho": 1120
+  },
+  "verificado": true
+ },
+ {
+  "ref": "05-004",
+  "categoria": "extra",
+  "nombre": "Plancha de aluminio gofrado 0,6 mm 1,25x2 m",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-019305",
+  "categoria": "espuma",
+  "nombre": "Espuma plastazote (LD29) 5 mm",
+  "datos": {
+   "esp": 5
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019310",
+  "categoria": "espuma",
+  "nombre": "Espuma plastazote (LD29) 10 mm",
+  "datos": {
+   "esp": 10
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019315",
+  "categoria": "espuma",
+  "nombre": "Espuma plastazote (LD29) 15 mm",
+  "datos": {
+   "esp": 15
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019320",
+  "categoria": "espuma",
+  "nombre": "Espuma plastazote (LD29) 20 mm",
+  "datos": {
+   "esp": 20
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019330",
+  "categoria": "espuma",
+  "nombre": "Espuma plastazote (LD29) 30 mm",
+  "datos": {
+   "esp": 30
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019430",
+  "categoria": "espuma",
+  "nombre": "Espuma gris eggbox 30 mm",
+  "datos": {
+   "esp": 30
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019505",
+  "categoria": "espuma",
+  "nombre": "Espuma acústica negra 5 mm",
+  "datos": {
+   "esp": 5
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-019512",
+  "categoria": "espuma",
+  "nombre": "Espuma acústica negra 12 mm",
+  "datos": {
+   "esp": 12
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-040",
+  "categoria": "remache",
+  "nombre": "Remache standard 4x10",
+  "datos": {
+   "d": 4,
+   "l": 10
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-041",
+  "categoria": "remache",
+  "nombre": "Remache standard 4x12",
+  "datos": {
+   "d": 4,
+   "l": 12
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-042",
+  "categoria": "remache",
+  "nombre": "Remache standard 4x14",
+  "datos": {
+   "d": 4,
+   "l": 14
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-045",
+  "categoria": "remache",
+  "nombre": "Remache standard 4,8x10",
+  "datos": {
+   "d": 4.8,
+   "l": 10
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-046",
+  "categoria": "remache",
+  "nombre": "Remache standard 4,8x12",
+  "datos": {
+   "d": 4.8,
+   "l": 12
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-047",
+  "categoria": "remache",
+  "nombre": "Remache standard 4,8x14",
+  "datos": {
+   "d": 4.8,
+   "l": 14
+  },
+  "verificado": true
+ },
+ {
+  "ref": "04-048",
+  "categoria": "remache",
+  "nombre": "Remache standard 4,8x16",
+  "datos": {
+   "d": 4.8,
+   "l": 16
+  },
+  "verificado": true
+ },
+ {
+  "ref": "08-5544BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo autorroscante cabeza plana 12/15 mm negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5546BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo autorroscante cabeza plana 19 mm negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5417BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo de estrella M6x12 negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5410BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo de estrella M6x16 negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5416BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo de estrella M6x20 negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5420BLK",
+  "categoria": "extra",
+  "nombre": "Tornillo de estrella M3x10 con tuerca (XLR)",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5313",
+  "categoria": "extra",
+  "nombre": "Tuerca para clavar en madera M5",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5312",
+  "categoria": "extra",
+  "nombre": "Tuerca para clavar en madera M6",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5314",
+  "categoria": "extra",
+  "nombre": "Tuerca para clavar en madera M4",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-020",
+  "categoria": "extra",
+  "nombre": "Tornillo allen 6x10 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-021",
+  "categoria": "extra",
+  "nombre": "Tornillo allen 6x15 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-022",
+  "categoria": "extra",
+  "nombre": "Tornillo allen 6x20 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-023",
+  "categoria": "extra",
+  "nombre": "Tornillo allen 6x30 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "05-024",
+  "categoria": "extra",
+  "nombre": "Tornillo allen 6x40 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5651",
+  "categoria": "extra",
+  "nombre": "Tuerca enjaulada M6 para 1,5 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5653",
+  "categoria": "extra",
+  "nombre": "Tuerca enjaulada M6 para 2 mm",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5620",
+  "categoria": "extra",
+  "nombre": "Arandela embutida",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5621",
+  "categoria": "extra",
+  "nombre": "Arandela plana",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5922",
+  "categoria": "extra",
+  "nombre": "Anclaje para altavoz acero negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5923",
+  "categoria": "extra",
+  "nombre": "Anclaje para altavoz acero negro",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5740A",
+  "categoria": "extra",
+  "nombre": "Punto de anclaje (argolla)",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-5745",
+  "categoria": "extra",
+  "nombre": "Punto de anclaje",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87555",
+  "categoria": "rack",
+  "nombre": "Bandeja 19\" 1 unidad con raíles",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-8754",
+  "categoria": "rack",
+  "nombre": "Bandeja 19\" 1 unidad",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-8755",
+  "categoria": "rack",
+  "nombre": "Bandeja 19\" 2 unidades",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87412",
+  "categoria": "rack",
+  "nombre": "Bandeja para teclado 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87556",
+  "categoria": "rack",
+  "nombre": "Bandeja 19\" 1 unidad con raíles",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87402E",
+  "categoria": "rack",
+  "nombre": "Cajón de rack 2 unidades acero",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87403",
+  "categoria": "rack",
+  "nombre": "Cajón de rack 3 unidades acero",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-87302",
+  "categoria": "rack",
+  "nombre": "Cajón de rack con cierre 2 unidades",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-61532BLK",
+  "categoria": "rack",
+  "nombre": "Perfil de rack negro 45U",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "08-61552BLK",
+  "categoria": "rack",
+  "nombre": "Perfil doble de rack negro 45U",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-2535",
+  "categoria": "rack",
+  "nombre": "Perfil omega para sujeción de mecanismos",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8100",
+  "categoria": "rack",
+  "nombre": "Carátula ciega 1/2 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8101",
+  "categoria": "rack",
+  "nombre": "Carátula ciega 1 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8102",
+  "categoria": "rack",
+  "nombre": "Carátula ciega 2 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8103",
+  "categoria": "rack",
+  "nombre": "Carátula ciega 3 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8104",
+  "categoria": "rack",
+  "nombre": "Carátula ciega 4 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8110",
+  "categoria": "rack",
+  "nombre": "Carátula ventilada 1/2 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8111",
+  "categoria": "rack",
+  "nombre": "Carátula ventilada 1 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8112",
+  "categoria": "rack",
+  "nombre": "Carátula ventilada 2 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8113",
+  "categoria": "rack",
+  "nombre": "Carátula ventilada 3 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8114",
+  "categoria": "rack",
+  "nombre": "Carátula ventilada 4 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8116",
+  "categoria": "rack",
+  "nombre": "Carátula 6 schuko 2 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8123",
+  "categoria": "rack",
+  "nombre": "Carátula 12 schuko 3 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8121",
+  "categoria": "rack",
+  "nombre": "Carátula 24 schuko 6 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8120",
+  "categoria": "rack",
+  "nombre": "Carátula 12 XLR 1 U 19\"",
+  "datos": {},
+  "verificado": true
+ },
+ {
+  "ref": "04-8117",
+  "categoria": "rack",
+  "nombre": "Carátula 24 XLR 2 U 19\"",
+  "datos": {},
+  "verificado": true
+ }
+]

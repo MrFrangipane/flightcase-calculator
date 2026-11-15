@@ -1,0 +1,375 @@
+{
+ "origen": "mi_case.scad",
+ "params": {
+  "int_ancho": 600,
+  "int_prof": 400,
+  "int_alto_cuerpo": 250,
+  "int_alto_tapa": 80,
+  "placa_esp": 9,
+  "placa_material": "Fenólico 9 mm",
+  "sistema": "angulo",
+  "color_placa": "Black",
+  "angulo_ala": 30,
+  "esq_pata": 45,
+  "esq_descuento": 25,
+  "manijas": true,
+  "ruedas": 0,
+  "encastres": false,
+  "abrir_tapa": 0,
+  "bisagras": 1,
+  "ref_bisagra": "08-2605",
+  "ref_espuma": "08-019310"
+ },
+ "datos": {
+  "INFO": [
+   [
+    "sistema",
+    "angulo"
+   ],
+   [
+    "material",
+    "Fenólico 9 mm"
+   ],
+   [
+    "espesor",
+    "9"
+   ],
+   [
+    "color",
+    "Black",
+    "Black"
+   ],
+   [
+    "interior",
+    "600",
+    "400",
+    "250",
+    "80"
+   ],
+   [
+    "exterior",
+    "638",
+    "438",
+    "269",
+    "99"
+   ],
+   [
+    "espuma",
+    "10"
+   ],
+   [
+    "tapa_abatible",
+    "1",
+    "0"
+   ],
+   [
+    "tipo",
+    "1",
+    "vertical",
+    "0",
+    "269",
+    "99"
+   ],
+   [
+    "mundo",
+    "638",
+    "438",
+    "368"
+   ],
+   [
+    "barra",
+    "6000",
+    "3"
+   ],
+   [
+    "montaje",
+    "100",
+    "4",
+    "25",
+    "1",
+    "2",
+    "0",
+    "2",
+    "0",
+    "1",
+    "0",
+    "1"
+   ],
+   [
+    "encastres",
+    "0",
+    "30"
+   ],
+   [
+    "ruedas",
+    "0",
+    "0",
+    "8.5",
+    "80",
+    "60"
+   ],
+   [
+    "placa",
+    "2440",
+    "1220",
+    "4",
+    "10",
+    ""
+   ],
+   [
+    "cantidad",
+    "1"
+   ],
+   [
+    "cierre",
+    "0",
+    "",
+    "20",
+    "20",
+    "6",
+    "3",
+    "1.5",
+    "0",
+    "9"
+   ],
+   [
+    "descuento",
+    "0"
+   ]
+  ],
+  "PANEL": [
+   [
+    "piso",
+    "Piso (cuerpo)",
+    "cuerpo",
+    "620",
+    "420"
+   ],
+   [
+    "cuerpo_frente",
+    "Frente cuerpo",
+    "cuerpo",
+    "638",
+    "263"
+   ],
+   [
+    "cuerpo_trasera",
+    "Trasera cuerpo",
+    "cuerpo",
+    "638",
+    "263"
+   ],
+   [
+    "cuerpo_izq",
+    "Lateral izq. cuerpo",
+    "cuerpo",
+    "420",
+    "263"
+   ],
+   [
+    "cuerpo_der",
+    "Lateral der. cuerpo",
+    "cuerpo",
+    "420",
+    "263"
+   ],
+   [
+    "techo",
+    "Techo (tapa)",
+    "tapa",
+    "620",
+    "420"
+   ],
+   [
+    "tapa_frente",
+    "Frente tapa",
+    "tapa",
+    "638",
+    "96"
+   ],
+   [
+    "tapa_trasera",
+    "Trasera tapa",
+    "tapa",
+    "638",
+    "96"
+   ],
+   [
+    "tapa_izq",
+    "Lateral izq. tapa",
+    "tapa",
+    "420",
+    "96"
+   ],
+   [
+    "tapa_der",
+    "Lateral der. tapa",
+    "tapa",
+    "420",
+    "96"
+   ]
+  ],
+  "CALADO": [
+   [
+    "cuerpo_izq",
+    "manija",
+    "210",
+    "183",
+    "170",
+    "100",
+    "10"
+   ],
+   [
+    "cuerpo_der",
+    "manija",
+    "210",
+    "183",
+    "170",
+    "100",
+    "10"
+   ]
+  ],
+  "MARCA": [
+   [
+    "cuerpo_frente",
+    "cierre",
+    "100",
+    "249",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "100",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "538",
+    "249",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "538",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ]
+  ],
+  "PERFIL": [
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas a lo ancho (piso y techo)",
+    "588",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas a lo profundo (piso y techo)",
+    "388",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Verticales cuerpo",
+    "224",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Verticales tapa",
+    "54",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Frente y trasera (punta larga)",
+    "641",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Laterales (punta larga)",
+    "441",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Frente y trasera (punta larga)",
+    "641",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Laterales (punta larga)",
+    "441",
+    "2",
+    "45/45",
+    ""
+   ]
+  ],
+  "HERRAJE": [
+   [
+    "Esquinero bola",
+    "8",
+    "pata 45 mm",
+    ""
+   ],
+   [
+    "Cierre mariposa",
+    "2",
+    "frente",
+    ""
+   ],
+   [
+    "Manija embutida",
+    "2",
+    "calado 170x100",
+    ""
+   ],
+   [
+    "Bisagra de piano acero taladrado 1,83 m",
+    "1",
+    "cortar a 528 mm",
+    "08-2605"
+   ],
+   [
+    "Espuma plastazote (LD29) 10 mm",
+    "1",
+    "planchas 2x1 m para 1.25 m² (+20%)",
+    "08-019310"
+   ],
+   [
+    "Remache standard 4x14",
+    "245",
+    "estimado: paso 100 mm, +10%",
+    "04-042"
+   ]
+  ]
+ }
+}

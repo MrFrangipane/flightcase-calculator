@@ -1,0 +1,459 @@
+{
+ "origen": "anvil_absen.scad",
+ "params": {
+  "tapas": 2,
+  "orientacion": "horizontal",
+  "paredes_enteras": "laterales",
+  "extremos_cubren": true,
+  "cantidad_cases": 1,
+  "placa_esp": 10,
+  "placa_material": "Contrachapado 10 mm",
+  "int_ancho": 330,
+  "int_prof": 520,
+  "int_alto_cuerpo": 450,
+  "int_alto_tapa": 85,
+  "descuento_entre": 5,
+  "cierre_m_sup": 7.5,
+  "cierre_h_sup": 5,
+  "manijas": true,
+  "cierres_laterales": "no",
+  "color_placa": "Black",
+  "piezas_extra": [
+   [
+    "TA6 (ver uso)",
+    530,
+    440,
+    18,
+    1,
+    "Fenólico 18 mm"
+   ]
+  ]
+ },
+ "datos": {
+  "INFO": [
+   [
+    "sistema",
+    "angulo"
+   ],
+   [
+    "material",
+    "Contrachapado 10 mm"
+   ],
+   [
+    "espesor",
+    "10"
+   ],
+   [
+    "color",
+    "Black",
+    "Black"
+   ],
+   [
+    "interior",
+    "330",
+    "520",
+    "450",
+    "85"
+   ],
+   [
+    "exterior",
+    "350",
+    "540",
+    "450",
+    "95"
+   ],
+   [
+    "espuma",
+    "0"
+   ],
+   [
+    "tapa_abatible",
+    "0",
+    "0"
+   ],
+   [
+    "tipo",
+    "2",
+    "horizontal",
+    "95",
+    "450",
+    "95"
+   ],
+   [
+    "mundo",
+    "640",
+    "540",
+    "350"
+   ],
+   [
+    "barra",
+    "6000",
+    "3"
+   ],
+   [
+    "montaje",
+    "100",
+    "4.8",
+    "25",
+    "1",
+    "2",
+    "0",
+    "4",
+    "0",
+    "0",
+    "0",
+    "1"
+   ],
+   [
+    "encastres",
+    "0",
+    "30"
+   ],
+   [
+    "ruedas",
+    "0",
+    "0",
+    "8.5",
+    "80",
+    "60"
+   ],
+   [
+    "placa",
+    "2440",
+    "1220",
+    "4",
+    "10",
+    ""
+   ],
+   [
+    "cantidad",
+    "1"
+   ],
+   [
+    "cierre",
+    "0",
+    "",
+    "20",
+    "20",
+    "7.5",
+    "5",
+    "1.5",
+    "0",
+    "10"
+   ],
+   [
+    "descuento",
+    "5"
+   ]
+  ],
+  "PANEL": [
+   [
+    "cuerpo_frente",
+    "Frente cuerpo",
+    "cuerpo",
+    "325",
+    "435"
+   ],
+   [
+    "cuerpo_trasera",
+    "Trasera cuerpo",
+    "cuerpo",
+    "325",
+    "435"
+   ],
+   [
+    "cuerpo_izq",
+    "Piso cuerpo",
+    "cuerpo",
+    "540",
+    "435"
+   ],
+   [
+    "cuerpo_der",
+    "Techo cuerpo",
+    "cuerpo",
+    "540",
+    "435"
+   ],
+   [
+    "techo",
+    "Cara tapa izq.",
+    "tapa",
+    "350",
+    "540"
+   ],
+   [
+    "tapa_frente",
+    "Frente tapa izq.",
+    "tapa",
+    "325",
+    "80"
+   ],
+   [
+    "tapa_trasera",
+    "Trasera tapa izq.",
+    "tapa",
+    "325",
+    "80"
+   ],
+   [
+    "tapa_izq",
+    "Piso tapa izq.",
+    "tapa",
+    "540",
+    "80"
+   ],
+   [
+    "tapa_der",
+    "Techo tapa izq.",
+    "tapa",
+    "540",
+    "80"
+   ],
+   [
+    "base2",
+    "Cara tapa der.",
+    "tapa2",
+    "350",
+    "540"
+   ],
+   [
+    "tapa2_frente",
+    "Frente tapa der.",
+    "tapa2",
+    "325",
+    "80"
+   ],
+   [
+    "tapa2_trasera",
+    "Trasera tapa der.",
+    "tapa2",
+    "325",
+    "80"
+   ],
+   [
+    "tapa2_izq",
+    "Piso tapa der.",
+    "tapa2",
+    "540",
+    "80"
+   ],
+   [
+    "tapa2_der",
+    "Techo tapa der.",
+    "tapa2",
+    "540",
+    "80"
+   ]
+  ],
+  "CALADO": [
+   [
+    "cuerpo_frente",
+    "manija",
+    "162.5",
+    "217.5",
+    "100",
+    "170",
+    "10"
+   ],
+   [
+    "cuerpo_trasera",
+    "manija",
+    "162.5",
+    "217.5",
+    "100",
+    "170",
+    "10"
+   ]
+  ],
+  "MARCA": [
+   [
+    "cuerpo_frente",
+    "cierre",
+    "162.5",
+    "422.5",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "162.5",
+    "15",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "162.5",
+    "422.5",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "cierre",
+    "162.5",
+    "15",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "162.5",
+    "12.5",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "tapa2_frente",
+    "cierre",
+    "162.5",
+    "65",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "162.5",
+    "12.5",
+    "0",
+    "0",
+    "c2"
+   ],
+   [
+    "tapa2_trasera",
+    "cierre",
+    "162.5",
+    "65",
+    "0",
+    "0",
+    "c2"
+   ]
+  ],
+  "PERFIL": [
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas verticales de las caras",
+    "300",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Aristas a lo profundo de las caras",
+    "490",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Largueros cuerpo",
+    "410",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Largueros tapa izq.",
+    "50",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Ángulo 30x30x1.5",
+    "Largueros tapa der.",
+    "50",
+    "4",
+    "recto",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Lados verticales (punta larga)",
+    "353",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Lados horizontales (punta larga)",
+    "543",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Lados verticales (punta larga)",
+    "353",
+    "4",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Lados horizontales (punta larga)",
+    "543",
+    "4",
+    "45/45",
+    ""
+   ]
+  ],
+  "EXTRA": [
+   [
+    "TA6 (ver uso)",
+    "530",
+    "440",
+    "18",
+    "1",
+    "Fenólico 18 mm"
+   ]
+  ],
+  "HERRAJE": [
+   [
+    "Esquinero bola",
+    "8",
+    "pata 45 mm",
+    ""
+   ],
+   [
+    "Cierre mariposa",
+    "4",
+    "frente y trasera",
+    ""
+   ],
+   [
+    "Manija embutida",
+    "2",
+    "calado 170x100",
+    ""
+   ],
+   [
+    "Remache standard 4,8x16",
+    "278",
+    "estimado: paso 100 mm, +10%",
+    "04-048"
+   ]
+  ],
+  "AVISO": [
+   [
+    "No hay remache de Ø4 con largo suficiente (≥ 14.5 mm): se eligió Remache standard 4,8x16. Perforá con la mecha de ese diámetro."
+   ]
+  ]
+ }
+}

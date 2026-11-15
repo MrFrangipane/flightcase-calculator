@@ -1,0 +1,688 @@
+{
+ "origen": "mi_case.scad",
+ "params": {
+  "int_ancho": 600,
+  "int_prof": 400,
+  "int_alto_cuerpo": 400,
+  "int_alto_tapa": 80,
+  "placa_esp": 9,
+  "placa_material": "Fenólico 9 mm",
+  "sistema": "angulo",
+  "color_placa": "Black",
+  "angulo_ala": 30,
+  "esq_pata": 45,
+  "esq_descuento": 25,
+  "manijas": true,
+  "ruedas": 4,
+  "encastres": true,
+  "abrir_tapa": 0,
+  "ref_cierre": "08-17250S",
+  "ref_manija": "08-34082",
+  "ref_esquinero": "08-41076",
+  "ref_angulo": "08-6105",
+  "ref_placa": "05-001"
+ },
+ "datos": {
+  "INFO": [
+   [
+    "sistema",
+    "angulo"
+   ],
+   [
+    "material",
+    "Tablero abedul 2 caras revestidas 9,6 mm"
+   ],
+   [
+    "espesor",
+    "9.6"
+   ],
+   [
+    "color",
+    "Black",
+    "Black"
+   ],
+   [
+    "interior",
+    "600",
+    "400",
+    "400",
+    "80"
+   ],
+   [
+    "exterior",
+    "619.2",
+    "419.2",
+    "409.6",
+    "89.6"
+   ],
+   [
+    "espuma",
+    "0"
+   ],
+   [
+    "tapa_abatible",
+    "0",
+    "0"
+   ],
+   [
+    "tipo",
+    "1",
+    "vertical",
+    "0",
+    "409.6",
+    "89.6"
+   ],
+   [
+    "mundo",
+    "619.2",
+    "419.2",
+    "499.2"
+   ],
+   [
+    "barra",
+    "6000",
+    "3"
+   ],
+   [
+    "montaje",
+    "100",
+    "4.8",
+    "15",
+    "1",
+    "2",
+    "0",
+    "4",
+    "1",
+    "0",
+    "0",
+    "1"
+   ],
+   [
+    "encastres",
+    "1",
+    "30"
+   ],
+   [
+    "ruedas",
+    "4",
+    "100",
+    "8.5",
+    "80",
+    "60"
+   ],
+   [
+    "placa",
+    "2500",
+    "1120",
+    "4",
+    "10",
+    "05-001"
+   ],
+   [
+    "cantidad",
+    "1"
+   ],
+   [
+    "cierre",
+    "0",
+    "",
+    "20",
+    "20",
+    "6",
+    "3",
+    "1.5",
+    "0",
+    "9.6"
+   ],
+   [
+    "descuento",
+    "0"
+   ]
+  ],
+  "PANEL": [
+   [
+    "piso",
+    "Piso (cuerpo)",
+    "cuerpo",
+    "600",
+    "400"
+   ],
+   [
+    "cuerpo_frente",
+    "Frente cuerpo",
+    "cuerpo",
+    "619.2",
+    "403.6"
+   ],
+   [
+    "cuerpo_trasera",
+    "Trasera cuerpo",
+    "cuerpo",
+    "619.2",
+    "403.6"
+   ],
+   [
+    "cuerpo_izq",
+    "Lateral izq. cuerpo",
+    "cuerpo",
+    "400",
+    "403.6"
+   ],
+   [
+    "cuerpo_der",
+    "Lateral der. cuerpo",
+    "cuerpo",
+    "400",
+    "403.6"
+   ],
+   [
+    "techo",
+    "Techo (tapa)",
+    "tapa",
+    "600",
+    "400"
+   ],
+   [
+    "tapa_frente",
+    "Frente tapa",
+    "tapa",
+    "619.2",
+    "86.6"
+   ],
+   [
+    "tapa_trasera",
+    "Trasera tapa",
+    "tapa",
+    "619.2",
+    "86.6"
+   ],
+   [
+    "tapa_izq",
+    "Lateral izq. tapa",
+    "tapa",
+    "400",
+    "86.6"
+   ],
+   [
+    "tapa_der",
+    "Lateral der. tapa",
+    "tapa",
+    "400",
+    "86.6"
+   ]
+  ],
+  "CALADO": [
+   [
+    "cuerpo_izq",
+    "manija",
+    "200",
+    "323.6",
+    "134",
+    "81",
+    "8"
+   ],
+   [
+    "cuerpo_der",
+    "manija",
+    "200",
+    "323.6",
+    "134",
+    "81",
+    "8"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "100",
+    "337.6",
+    "106",
+    "100",
+    "10"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "519.2",
+    "337.6",
+    "106",
+    "100",
+    "10"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "100",
+    "337.6",
+    "106",
+    "100",
+    "10"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "519.2",
+    "337.6",
+    "106",
+    "100",
+    "10"
+   ],
+   [
+    "piso",
+    "agujero",
+    "100.4",
+    "100.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "100.4",
+    "160.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "180.4",
+    "100.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "180.4",
+    "160.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "100.4",
+    "239.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "100.4",
+    "299.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "180.4",
+    "239.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "180.4",
+    "299.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "419.6",
+    "100.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "419.6",
+    "160.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "499.6",
+    "100.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "499.6",
+    "160.4",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "419.6",
+    "239.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "419.6",
+    "299.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "499.6",
+    "239.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "piso",
+    "agujero",
+    "499.6",
+    "299.6",
+    "8.5",
+    "8.5",
+    "4.25"
+   ],
+   [
+    "techo",
+    "encastre",
+    "140.4",
+    "130.4",
+    "130",
+    "110",
+    "20"
+   ],
+   [
+    "techo",
+    "encastre",
+    "140.4",
+    "269.6",
+    "130",
+    "110",
+    "20"
+   ],
+   [
+    "techo",
+    "encastre",
+    "459.6",
+    "130.4",
+    "130",
+    "110",
+    "20"
+   ],
+   [
+    "techo",
+    "encastre",
+    "459.6",
+    "269.6",
+    "130",
+    "110",
+    "20"
+   ]
+  ],
+  "MARCA": [
+   [
+    "cuerpo_frente",
+    "cierre",
+    "100",
+    "389.6",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "100",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_frente",
+    "cierre",
+    "519.2",
+    "389.6",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_frente",
+    "cierre",
+    "519.2",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "100",
+    "389.6",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "cierre",
+    "100",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "cuerpo_trasera",
+    "cierre",
+    "519.2",
+    "389.6",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "tapa_trasera",
+    "cierre",
+    "519.2",
+    "17",
+    "0",
+    "0",
+    "c1"
+   ],
+   [
+    "piso",
+    "rueda",
+    "140.4",
+    "130.4",
+    "100",
+    "85",
+    "freno"
+   ],
+   [
+    "piso",
+    "rueda",
+    "140.4",
+    "269.6",
+    "100",
+    "85",
+    "freno"
+   ],
+   [
+    "piso",
+    "rueda",
+    "459.6",
+    "130.4",
+    "100",
+    "85",
+    "placa rueda"
+   ],
+   [
+    "piso",
+    "rueda",
+    "459.6",
+    "269.6",
+    "100",
+    "85",
+    "placa rueda"
+   ]
+  ],
+  "PERFIL": [
+   [
+    "Perfil ángulo de aluminio 30x30 mm",
+    "Aristas a lo ancho (piso y techo)",
+    "589.2",
+    "4",
+    "recto",
+    "08-6105"
+   ],
+   [
+    "Perfil ángulo de aluminio 30x30 mm",
+    "Aristas a lo profundo (piso y techo)",
+    "389.2",
+    "4",
+    "recto",
+    "08-6105"
+   ],
+   [
+    "Perfil ángulo de aluminio 30x30 mm",
+    "Verticales cuerpo",
+    "374.6",
+    "4",
+    "recto",
+    "08-6105"
+   ],
+   [
+    "Perfil ángulo de aluminio 30x30 mm",
+    "Verticales tapa",
+    "54.6",
+    "4",
+    "recto",
+    "08-6105"
+   ],
+   [
+    "Cierre macho",
+    "Frente y trasera (punta larga)",
+    "622.2",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre macho",
+    "Laterales (punta larga)",
+    "422.2",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Frente y trasera (punta larga)",
+    "622.2",
+    "2",
+    "45/45",
+    ""
+   ],
+   [
+    "Cierre hembra",
+    "Laterales (punta larga)",
+    "422.2",
+    "2",
+    "45/45",
+    ""
+   ]
+  ],
+  "HERRAJE": [
+   [
+    "Cantonera bola grande 3 patas paso perfil 30 mm",
+    "8",
+    "pata 65 mm",
+    "08-41076"
+   ],
+   [
+    "Cierre de mariposa grande sin paso perfil prof. 14 mm",
+    "4",
+    "frente y trasera, embutido: calado 106x100",
+    "08-17250S"
+   ],
+   [
+    "Asa retráctil mediana con resorte, base 8 mm",
+    "2",
+    "calado 134x81",
+    "08-34082"
+   ],
+   [
+    "Rueda giratoria Ø75 con freno",
+    "2",
+    "agujeros 80x60",
+    ""
+   ],
+   [
+    "Rueda giratoria Ø75 sin freno",
+    "2",
+    "agujeros 80x60",
+    ""
+   ],
+   [
+    "Bulón M8 + arandela + tuerca autofrenante",
+    "16",
+    "para agujero Ø8.5, largo ≥ 24.6 mm",
+    ""
+   ],
+   [
+    "Plato de apilado (encastre de rueda)",
+    "4",
+    "calado 130x110, prof. 30",
+    ""
+   ],
+   [
+    "Remache standard 4,8x16",
+    "304",
+    "estimado: paso 100 mm, +10%",
+    "04-048"
+   ]
+  ],
+  "AVISO": [
+   [
+    "Medidas estimadas (no figuran en el catálogo) para 08-6105, 08-41076, 08-17250S, 08-34082: confirmalas con el herraje real o con su plano 2D en adamhall.com antes de cortar o calar."
+   ],
+   [
+    "No hay remache de Ø4 con largo suficiente (≥ 14.1 mm): se eligió Remache standard 4,8x16. Perforá con la mecha de ese diámetro."
+   ],
+   [
+    "Los platos de apilado quedan pegados o superpuestos: el case es chico para esos platos (usá platos más chicos)."
+   ]
+  ]
+ }
+}
