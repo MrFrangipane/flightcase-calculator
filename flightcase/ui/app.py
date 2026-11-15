@@ -42,7 +42,12 @@ from .widgets import (
     AluProfilesWidget,
     WoodPanelsSvgWidget,
     WoodTypesWidget,
+    CostsWidget,
+    CatalogWidget,
 )
+from ..application import CalculateQuoteUseCase, ExportProductionPackUseCase
+from ..production.catalog import Catalog
+from ..production.pack import full_report_csv
 
 
 class FlightCaseMainWindow(QMainWindow):
@@ -89,10 +94,16 @@ class FlightCaseMainWindow(QMainWindow):
         self.cutlist_widget = CutListTableWidget(self)
         self.alu_widget = AluProfilesWidget(self)
         self.wood_types_widget = WoodTypesWidget(self)
+        self.catalog = Catalog()
+        self._current_quote = None
+        self.costs_widget = CostsWidget(self)
+        self.catalog_widget = CatalogWidget(self.catalog, self)
 
         self.tabs.addTab(self.cutlist_widget, "Lista de cortes")
         self.tabs.addTab(self.alu_widget, "Perfiles de aluminio")
+        self.tabs.addTab(self.costs_widget, "Presupuesto y herrajes")
         self.tabs.addTab(self.wood_types_widget, "Tipos de madera")
+        self.tabs.addTab(self.catalog_widget, "Catálogo de herrajes y perfiles")
         self.main_splitter.addWidget(self.tabs)
 
         # 2. Center Pane: Central tabs containing 3D Schema and 2D Wood Panels Diagram
@@ -182,6 +193,11 @@ class FlightCaseMainWindow(QMainWindow):
         export_svg_action.setStatusTip("Exportar el plano de todos los paneles de madera a un archivo SVG")
         export_svg_action.triggered.connect(self._export_wood_panels_svg)
         self.file_menu.addAction(export_svg_action)
+
+        export_pack_action = QAction("Exportar paquete de &producción (PDF, DXF, CSV, SVG)...", self)
+        export_pack_action.setShortcut("Ctrl+P")
+        export_pack_action.triggered.connect(self._export_production_pack)
+        self.file_menu.addAction(export_pack_action)
 
         self.file_menu.addSeparator()
 
@@ -343,8 +359,7 @@ class FlightCaseMainWindow(QMainWindow):
         if self._current_project_path:
             settings.setValue("lastProjectPath", self._current_project_path)
         try:
-            input_dto = self.input_panel.get_input_dto()
-            input_dto.walls = self.walls_widget.get_walls()
+            input_dto = self._collect_input_dto()
             input_dto.ui_settings = self._get_current_ui_settings()
             settings.setValue("lastProjectSnapshot", input_dto.to_json())
         except Exception:
@@ -420,6 +435,7 @@ class FlightCaseMainWindow(QMainWindow):
     def _apply_project_dto(self, dto: CaseInputDTO) -> None:
         self.input_panel.set_input_dto(dto)
         self.walls_widget.set_walls(dto.walls)
+        self.costs_widget.set_settings(dto.production)
         if dto.ui_settings:
             self._apply_ui_settings(dto.ui_settings)
         self.recalculate()
@@ -484,8 +500,7 @@ class FlightCaseMainWindow(QMainWindow):
 
     def _save_project_file(self, file_path: str) -> None:
         try:
-            input_dto = self.input_panel.get_input_dto()
-            input_dto.walls = self.walls_widget.get_walls()
+            input_dto = self._collect_input_dto()
             input_dto.ui_settings = self._get_current_ui_settings()
             SaveProjectUseCase.execute(input_dto, file_path)
             self._current_project_path = file_path
@@ -510,6 +525,8 @@ class FlightCaseMainWindow(QMainWindow):
         self.schema_widget.toggles_changed.connect(self._update_schema_geometry)
         self.cutlist_widget.export_svg_requested.connect(self._export_wood_panels_svg)
         self.wood_types_widget.materials_changed.connect(self._on_wood_materials_changed)
+        self.costs_widget.settings_changed.connect(self.recalculate)
+        self.catalog_widget.catalog_changed.connect(self.recalculate)
 
         # Highlight synchronization across dimension tables and 3D schema
         self.walls_widget.wall_selection_changed.connect(self._on_wall_selection_changed)
@@ -542,9 +559,16 @@ class FlightCaseMainWindow(QMainWindow):
         else:
             self.schema_widget.clear_highlights()
 
+    def _collect_input_dto(self) -> CaseInputDTO:
+        input_dto = self.input_panel.get_input_dto()
+        input_dto.walls = self.walls_widget.get_walls()
+        input_dto.production = self.costs_widget.get_settings()
+        return input_dto
+
     def recalculate(self) -> None:
         """Executes application use cases to update all outputs live."""
         input_dto = self.input_panel.get_input_dto()
+        input_dto.production = self.costs_widget.get_settings()
         self.walls_widget.set_case_dimensions(
             inner_length=input_dto.inner_length,
             inner_width=input_dto.inner_width,
@@ -560,6 +584,8 @@ class FlightCaseMainWindow(QMainWindow):
             # 2. Update UI widgets
             self.cutlist_widget.set_calculation_result(result)
             self.alu_widget.set_calculation_result(result)
+            self._current_quote = CalculateQuoteUseCase.execute(input_dto, self.catalog)
+            self.costs_widget.set_quote(self._current_quote)
 
             # Generate and update wood panels SVG diagram
             svg_data = GenerateWoodPanelsSvgUseCase.execute(input_dto)
@@ -574,7 +600,8 @@ class FlightCaseMainWindow(QMainWindow):
                 f"✓ Interior: {input_dto.inner_length:.0f}×{input_dto.inner_width:.0f}×{input_dto.inner_total_height:.0f} mm | "
                 f"Exterior: {input_dto.outer_length:.0f}×{input_dto.outer_width:.0f}×{input_dto.total_height:.0f} mm | "
                 f"Perfil de cierre necesario: {result.total_lid_mating_profile_length_mm:.1f} mm ({lid_m:.2f} m) | "
-                f"Paneles de madera: {len(result.wood_cut_list)} piezas ({result.total_wood_area_m2:.2f} m²)"
+                f"Paneles de madera: {len(result.wood_cut_list)} piezas ({result.total_wood_area_m2:.2f} m²) | "
+                f"Precio: {self._current_quote.total_price:.2f} € | Peso: {self._current_quote.total_weight_kg:.1f} kg"
             )
         except FlightCaseDomainError as e:
             self.status_bar.showMessage(f"⚠ Error de validación: {str(e)}")
@@ -611,26 +638,29 @@ class FlightCaseMainWindow(QMainWindow):
         if file_path:
             try:
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write("=== INFORME DE CÁLCULO DEL FLIGHTCASE ===\n\n")
-                    f.write(f"Superficie total de madera (m2),{self._current_result.total_wood_area_m2:.4f}\n")
-                    f.write(f"Peso estimado de la madera (kg),{self._current_result.total_wood_weight_kg:.2f}\n")
-                    f.write(f"Placas estándar (2440x1220),{self._current_result.standard_sheets_required:.2f}\n")
-                    f.write(f"Largo necesario de perfil de cierre (mm),{self._current_result.total_lid_mating_profile_length_mm:.1f}\n")
-                    f.write(f"Largo necesario de ángulos de borde (mm),{self._current_result.total_edge_angle_profile_length_mm:.1f}\n\n")
-
-                    f.write("=== LISTA DE CORTES DE PANELES DE MADERA ===\n")
-                    f.write("Panel,Categoría,Cant.,Largo_mm,Ancho_mm,Espesor_mm,SuperficieTotal_m2,Notas\n")
-                    for p in self._current_result.wood_cut_list:
-                        f.write(f'"{tr(p.name)}","{tr(p.category)}",{p.quantity},{p.length_mm:.1f},{p.width_mm:.1f},{p.thickness_mm:.1f},{p.total_area_m2:.4f},"{tr(p.notes)}"\n')
-
-                    f.write("\n=== LISTA DE CORTES DE PERFILES DE ALUMINIO ===\n")
-                    f.write("Perfil,Categoría,Cant.,LargoCorte_mm,LargoTotal_m,Notas\n")
-                    for p in self._current_result.alu_profiles_list:
-                        f.write(f'"{tr(p.name)}","{tr(p.category)}",{p.quantity},{p.length_mm:.1f},{p.total_length_m:.2f},"{tr(p.notes)}"\n')
+                    f.write(full_report_csv(self._current_result, self._current_quote))
 
                 QMessageBox.information(self, "Exportación correcta", f"Informe completo exportado a:\n{file_path}")
             except Exception as e:
                 QMessageBox.critical(self, "Error de exportación", f"No se pudo guardar el archivo CSV:\n{str(e)}")
+
+    def _export_production_pack(self) -> None:
+        folder = QFileDialog.getExistingDirectory(self, "Carpeta para el paquete de producción")
+        if not folder:
+            return
+        input_dto = self._collect_input_dto()
+        title = input_dto.title.strip() or "flightcase"
+        import re
+        sub = re.sub(r"[^\w\-]+", "_", title).strip("_") or "flightcase"
+        target = os.path.join(folder, f"{sub}_produccion")
+        try:
+            files = ExportProductionPackUseCase.execute(input_dto, target, self.catalog)
+            QMessageBox.information(
+                self, "Paquete de producción",
+                f"Se generaron {len(files)} archivos en:\n{target}\n\n" + "\n".join(os.path.basename(f) for f in files),
+            )
+        except Exception as e:
+            QMessageBox.critical(self, "Paquete de producción", f"No se pudo generar el paquete:\n{e}")
 
 
 def run_app() -> int:

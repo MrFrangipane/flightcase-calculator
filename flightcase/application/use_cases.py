@@ -1,7 +1,11 @@
 """Application Use Cases orchestrating Domain Services and Entities."""
 
 from __future__ import annotations
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+
+from ..production.catalog import Catalog
+from ..production.quote import Quote, build_quote
+from ..production.pack import write_production_pack
 from ..domain import (
     Dimensions3D,
     FlightCase,
@@ -255,3 +259,79 @@ class LoadProjectUseCase:
         with open(file_path, "r", encoding="utf-8") as f:
             json_content = f.read()
         return CaseInputDTO.from_json(json_content)
+
+
+def _build_flight_case(input_dto: CaseInputDTO) -> FlightCase:
+    """Convierte la entrada en el agregado de dominio (mismo mapeo que los demás casos de uso)."""
+    domain_walls: List[InsideWall] = []
+    for w_dto in input_dto.walls:
+        orientation = (
+            WallOrientation.WIDTH_WISE
+            if w_dto.orientation.lower().startswith("width")
+            else WallOrientation.LENGTH_WISE
+        )
+        domain_walls.append(InsideWall(
+            orientation=orientation,
+            position_mm=w_dto.position_mm,
+            thickness_mm=w_dto.thickness_mm,
+            height_mm=w_dto.height_mm,
+            label=w_dto.label,
+        ))
+    return FlightCase(
+        dimensions=Dimensions3D(
+            length_mm=input_dto.inner_length,
+            width_mm=input_dto.inner_width,
+            height_mm=input_dto.inner_total_height,
+        ),
+        lid_height=input_dto.inner_lid_height,
+        wood_thickness=input_dto.wood_thickness,
+        lid_alu_profile_offset=input_dto.lid_alu_profile_offset,
+        corner_extrusion_rebate=input_dto.corner_extrusion_rebate,
+        edge_profile_width=input_dto.edge_profile_width,
+        self_cut_lid=input_dto.self_cut_lid,
+        _walls=domain_walls,
+        wood_material=input_dto.wood_material,
+        wood_density=input_dto.wood_density,
+        wood_price=input_dto.wood_price,
+    )
+
+
+class CalculateQuoteUseCase:
+    """Calcula herrajes, barras de perfil, despiece de placas, peso total y precio de venta."""
+
+    @staticmethod
+    def execute(input_dto: CaseInputDTO, catalog: Optional[Catalog] = None) -> Quote:
+        case = _build_flight_case(input_dto)
+        return build_quote(
+            wood_pieces=case.calculate_wood_cut_list(),
+            alu_pieces=case.calculate_alu_profiles(),
+            outer_length=case.outer_length,
+            outer_width=case.outer_width,
+            outer_height=case.total_height,
+            wood_density=input_dto.wood_density,
+            wood_price_m2=input_dto.wood_price,
+            settings=input_dto.production,
+            catalog=catalog,
+        )
+
+
+class ExportProductionPackUseCase:
+    """Genera en una carpeta todo lo necesario para fabricar: PDF, DXF por espesor, SVG y CSV."""
+
+    @staticmethod
+    def execute(input_dto: CaseInputDTO, folder: str, catalog: Optional[Catalog] = None) -> List[str]:
+        case = _build_flight_case(input_dto)
+        quote = CalculateQuoteUseCase.execute(input_dto, catalog)
+        svg = GenerateWoodPanelsSvgUseCase.execute(input_dto)
+        result = CalculateFlightCaseUseCase.execute(input_dto)
+        return write_production_pack(
+            folder=folder,
+            title=input_dto.title,
+            inner_dims=(case.inner_length, case.inner_width, case.inner_total_height),
+            outer_dims=(case.outer_length, case.outer_width, case.total_height),
+            wood_material=input_dto.wood_material,
+            wood_pieces=case.calculate_wood_cut_list(),
+            result=result,
+            quote=quote,
+            svg=svg,
+        )

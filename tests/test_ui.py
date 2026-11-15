@@ -262,10 +262,12 @@ def test_main_window_permanent_3d_view_and_highlighting(qapp):
     left_tabs = splitter.widget(0)
     assert isinstance(left_tabs, QTabWidget)
     assert left_tabs == window.tabs
-    assert left_tabs.count() == 3
+    assert left_tabs.count() == 5
     assert left_tabs.tabText(0).endswith("Lista de cortes")
     assert left_tabs.tabText(1).endswith("Perfiles de aluminio")
-    assert left_tabs.tabText(2).endswith("Tipos de madera")
+    assert left_tabs.tabText(2).endswith("Presupuesto y herrajes")
+    assert left_tabs.tabText(3).endswith("Tipos de madera")
+    assert left_tabs.tabText(4).endswith("Catálogo de herrajes y perfiles")
 
     # Center child must be QTabWidget containing 3D schema and 2D wood panels SVG
     center_tabs = splitter.widget(1)
@@ -1061,7 +1063,7 @@ def test_wood_panels_svg_widget_ui_and_export(qapp, tmp_path, monkeypatch):
     # 2. Main Window central tab integration
     window = FlightCaseMainWindow(restore_settings=False, load_last_project=False)
     assert window.svg_widget is not None
-    assert window.tabs.count() == 3
+    assert window.tabs.count() == 5
     assert window.center_tabs.count() == 2
     assert window.center_tabs.widget(0) == window.schema_widget
     assert window.center_tabs.widget(1) == window.svg_widget

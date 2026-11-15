@@ -1,0 +1,5 @@
+[
+  {"id": "lid_male", "name": "Perfil de cierre macho (híbrido)", "kind": "lid_male", "price_per_m": 6.50, "weight_kg_per_m": 0.45, "bar_length_mm": 4000.0},
+  {"id": "lid_female", "name": "Perfil de cierre hembra (híbrido)", "kind": "lid_female", "price_per_m": 6.50, "weight_kg_per_m": 0.45, "bar_length_mm": 4000.0},
+  {"id": "angle_30", "name": "Ángulo de aluminio 30x30 mm", "kind": "edge_angle", "price_per_m": 3.20, "weight_kg_per_m": 0.30, "bar_length_mm": 4000.0}
+]

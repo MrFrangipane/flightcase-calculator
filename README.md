@@ -34,6 +34,17 @@ Herramienta de escritorio de diseño y cálculo (CAD/CAM) hecha con Python, PySi
 - **Listado de materiales y listas de cortes**:
   - Tablas detalladas de cortes de madera y de perfiles de aluminio con desplazamiento suave.
   - Exportación del listado completo de materiales a CSV para el taller y los pedidos a proveedores.
+- **Presupuesto, herrajes y peso total**:
+  - Catálogo editable de herrajes y perfiles (`resources/hardware.json` y `resources/alu_profiles.json`) con precio, peso y largo de barra.
+  - Conteo automático de esquineros, cierres, asas, bisagras, ruedas, tazas de apilado y remaches según el tamaño y las opciones de la caja.
+  - Desglose de precio: madera, perfiles, herrajes, consumibles, mano de obra (horas fijas + horas por m²), margen e IVA. Se guarda con cada proyecto.
+- **Optimización de corte**:
+  - Despiece real de los paneles en placas (corte de guillotina, grosor de sierra, saneado de borde y opción de no girar por la veta).
+  - Reparto de los cortes de perfil en barras con su sobrante.
+- **Paquete de producción en un clic** (*Archivo → Exportar paquete de producción*):
+  - DXF por espesor con las placas despiezadas (capas PLACA, CORTE y ETIQUETAS) para CNC o sierra.
+  - Hoja de montaje en PDF para el taller (sin precios) y presupuesto interno en PDF (con precios).
+  - Listado de materiales en CSV y planos de paneles en SVG.
 - **Gestión de proyectos e interfaz cómoda**:
   - Guardado y apertura de archivos de proyecto `.fcproj`, con restauración automática del estado de la ventana y del último proyecto.
   - Acceso rápido a los proyectos abiertos recientemente.

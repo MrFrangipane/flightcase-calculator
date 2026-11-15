@@ -1,0 +1,12 @@
+[
+  {"id": "ball_corner", "name": "Esquinero de bola grande", "category": "Esquineros", "unit_price": 1.20, "weight_kg": 0.085, "rivets_per_unit": 3},
+  {"id": "butterfly_latch", "name": "Cierre de mariposa mediano", "category": "Cierres", "unit_price": 3.50, "weight_kg": 0.180, "rivets_per_unit": 6},
+  {"id": "recessed_handle", "name": "Asa empotrada con muelle", "category": "Asas", "unit_price": 6.00, "weight_kg": 0.350, "rivets_per_unit": 6},
+  {"id": "hinge", "name": "Bisagra de caja reforzada", "category": "Bisagras", "unit_price": 2.80, "weight_kg": 0.120, "rivets_per_unit": 6},
+  {"id": "lid_stay", "name": "Compás de tapa", "category": "Bisagras", "unit_price": 4.50, "weight_kg": 0.150, "rivets_per_unit": 4},
+  {"id": "castor_100", "name": "Rueda giratoria 100 mm", "category": "Ruedas", "unit_price": 9.00, "weight_kg": 0.700, "rivets_per_unit": 0},
+  {"id": "castor_100_brake", "name": "Rueda giratoria 100 mm con freno", "category": "Ruedas", "unit_price": 11.00, "weight_kg": 0.750, "rivets_per_unit": 0},
+  {"id": "castor_bolt", "name": "Tornillo con tuerca M8 para rueda", "category": "Tornillería", "unit_price": 0.25, "weight_kg": 0.020, "rivets_per_unit": 0},
+  {"id": "stacking_cup", "name": "Taza de apilado", "category": "Ruedas", "unit_price": 3.20, "weight_kg": 0.200, "rivets_per_unit": 4},
+  {"id": "rivet", "name": "Remache 4,8 mm", "category": "Tornillería", "unit_price": 0.03, "weight_kg": 0.002, "rivets_per_unit": 0}
+]
